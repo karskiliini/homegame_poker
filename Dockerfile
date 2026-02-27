@@ -2,9 +2,8 @@ FROM node:20 AS builder
 WORKDIR /app
 COPY . .
 RUN npm install
-RUN cd shared && npx tsc && echo "shared build ok"
-RUN ls -la shared/dist/ && ls shared/dist/types/
-RUN ls -la node_modules/@poker/shared/dist/ || echo "symlink dist not found"
+RUN cd shared && npx tsc --force && echo "shared build ok"
+RUN ls -la shared/dist/
 RUN cd server && npx tsc --skipLibCheck
 
 FROM node:20-slim
