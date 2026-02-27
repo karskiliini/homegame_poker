@@ -1,9 +1,9 @@
-FROM oven/bun:1 AS builder
+FROM node:20 AS builder
 WORKDIR /app
+RUN npm install -g bun
 COPY . .
 RUN bun install
-RUN cd shared && bun run build
-RUN cd server && bun run build
+RUN npm run build:railway
 
 FROM node:20-slim
 WORKDIR /app
