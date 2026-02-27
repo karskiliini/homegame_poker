@@ -53,7 +53,7 @@
   --ftp-card-bg: #F5F5F0;
   --ftp-card-back: #C41E2A;
   --ftp-card-border: #CCCCCC;
-  --ftp-suit-spade: #1a1a1a;
+  --ftp-suit-spade: #000000;
   --ftp-suit-heart: #CC0000;
   --ftp-suit-diamond: #0066CC;
   --ftp-suit-club: #008800;
@@ -66,11 +66,29 @@
   /* TYPOGRAPHY */
   --ftp-font-primary: 'Helvetica Neue', 'Arial', sans-serif;
 
+  /* CHIPS */
+  --ftp-chip-white: #E0E0E0;
+  --ftp-chip-red: #CC2222;
+  --ftp-chip-green: #228B22;
+  --ftp-chip-black: #222222;
+  --ftp-chip-blue: #2244AA;
+
+  /* LOBBY */
+  --ftp-bg-lobby: #1E3A5F;
+  --ftp-bg-lobby-dark: #0F1E33;
+
   /* ANIMATION TIMINGS */
   --ftp-anim-card-deal: 350ms;
+  --ftp-anim-card-deal-stagger: 120ms;
+  --ftp-anim-card-flip: 300ms;
   --ftp-anim-chip-bet: 500ms;
   --ftp-anim-chip-win: 600ms;
+  --ftp-anim-flop-stagger: 80ms;
   --ftp-anim-winner-glow: 800ms;
+  --ftp-anim-winner-flash: 600ms;
+  --ftp-anim-seat-join: 400ms;
+  --ftp-anim-seat-leave: 300ms;
+  --ftp-anim-allin-pulse: 2000ms;
   --ftp-anim-btn-hover: 100ms;
   --ftp-anim-btn-click: 50ms;
 
@@ -101,23 +119,24 @@ html, body {
 
 /* Winner glow animation */
 @keyframes winner-glow {
-  0% { box-shadow: 0 0 5px rgba(234, 179, 8, 0.3); }
-  50% { box-shadow: 0 0 25px rgba(234, 179, 8, 0.8), 0 0 50px rgba(234, 179, 8, 0.4); }
-  100% { box-shadow: 0 0 5px rgba(234, 179, 8, 0.3); }
+  0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+  30% { box-shadow: 0 0 20px 8px rgba(234, 179, 8, 0.6); }
+  100% { box-shadow: 0 0 10px 4px rgba(234, 179, 8, 0.3); }
 }
 
 .animate-winner-glow {
-  animation: winner-glow 800ms ease-out 2;
+  animation: winner-glow 800ms ease-out forwards;
 }
 
 /* All-in pulse animation */
 @keyframes allin-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(234, 179, 8, 0.4); }
-  50% { box-shadow: 0 0 20px rgba(234, 179, 8, 0.8), 0 0 40px rgba(234, 179, 8, 0.3); }
+  0%, 100% { box-shadow: 0 0 15px 5px rgba(234, 179, 8, 0.4); }
+  50% { box-shadow: 0 0 25px 10px rgba(234, 179, 8, 0.7); }
 }
 
 .animate-allin-pulse {
   animation: allin-pulse 2000ms ease-in-out infinite;
+  border-color: rgba(234, 179, 8, 0.6) !important;
 }
 
 /* Card flip animation */
@@ -143,13 +162,11 @@ html, body {
 /* Winner card flash */
 @keyframes winner-card-flash {
   0%, 100% { filter: brightness(1); }
-  25% { filter: brightness(1.5); }
-  50% { filter: brightness(1); }
-  75% { filter: brightness(1.5); }
+  50% { filter: brightness(1.4); }
 }
 
 .animate-winner-flash {
-  animation: winner-card-flash 1200ms ease-in-out;
+  animation: winner-card-flash 600ms ease-in-out 2;
 }
 
 /* Chip fly to winner */
@@ -201,7 +218,131 @@ input[type="range"].ftp-slider::-webkit-slider-thumb {
   background: radial-gradient(circle at 30% 30%, #FBBF24, #D97706);
   border: 2px solid #92400E;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+input[type="range"].ftp-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Bet chips collect to pot */
+@keyframes bet-collect {
+  0%   { transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(1); opacity: 1; }
+  70%  { transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.9); opacity: 1; }
+  100% { transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.5); opacity: 0; }
+}
+
+.animate-bet-collect {
+  animation: bet-collect 500ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+}
+
+/* Pot grows when chips arrive */
+@keyframes pot-grow {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.animate-pot-grow {
+  animation: pot-grow 400ms ease-out;
+}
+
+/* Community card deal: slide from right + scale in */
+@keyframes community-card-deal {
+  0% {
+    opacity: 0;
+    transform: translateX(200px) translateY(-40px) scale(0.7);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+.animate-community-deal {
+  animation: community-card-deal 350ms var(--ftp-ease-deal) both;
+}
+
+/* Bet chip fly: from seat position to pot center */
+@keyframes chip-bet-fly {
+  0% {
+    opacity: 1;
+    transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.5);
+  }
+}
+
+.animate-chip-bet-fly {
+  animation: chip-bet-fly 500ms var(--ftp-ease-chip-bet) forwards;
+}
+
+/* Card deal fly: from dealer to seat position */
+@keyframes card-deal-fly {
+  0% {
+    opacity: 0;
+    transform: translate(var(--deal-start-x, 0), var(--deal-start-y, 0)) scale(0.5) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(
+      calc(var(--deal-start-x, 0) * 0.5),
+      calc(var(--deal-start-y, 0) * 0.5 - 40px)
+    ) scale(0.8) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+}
+
+.animate-card-deal-fly {
+  animation: card-deal-fly var(--ftp-anim-card-deal) var(--ftp-ease-deal) both;
+}
+
+/* Player joins seat */
+@keyframes seat-join {
+  0% { opacity: 0; transform: scale(0.8) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-seat-join {
+  animation: seat-join 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Player leaves seat */
+@keyframes seat-leave {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.85); }
+}
+
+.animate-seat-leave {
+  animation: seat-leave 300ms ease-in forwards;
+}
+
+/* All-in label pop-in */
+@keyframes allin-label-appear {
+  0% { transform: translate(-50%, 0) scale(0) rotate(-10deg); opacity: 0; }
+  50% { transform: translate(-50%, 0) scale(1.15) rotate(2deg); opacity: 1; }
+  100% { transform: translate(-50%, 0) scale(1) rotate(0deg); opacity: 1; }
+}
+
+.animate-allin-label {
+  animation: allin-label-appear 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 /* Timer bar */

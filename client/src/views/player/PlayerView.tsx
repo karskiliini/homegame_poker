@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { S2C_PLAYER } from '@poker/shared';
 import type { GameConfig, PrivatePlayerState, HandRecord, SoundType } from '@poker/shared';
 import { createPlayerSocket } from '../../socket.js';
@@ -122,7 +123,7 @@ export function PlayerView() {
     }
   }, [selectedHand, handHistoryData]);
 
-  const mainContent = (() => {
+  const renderScreen = () => {
     switch (screen) {
       case 'login':
         return <LoginScreen socket={socketRef.current} />;
@@ -133,13 +134,23 @@ export function PlayerView() {
       default:
         return <LoginScreen socket={socketRef.current} />;
     }
-  })();
+  };
 
   const selectedIdx = selectedHand ? handHistoryData.findIndex(h => h.handId === selectedHand.handId) : -1;
 
   return (
     <>
-      {mainContent}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={screen}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
+        >
+          {renderScreen()}
+        </motion.div>
+      </AnimatePresence>
 
       {/* Top-right controls (visible during game) */}
       {screen === 'game' && handHistoryView === 'none' && (

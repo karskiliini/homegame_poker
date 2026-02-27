@@ -173,7 +173,7 @@ function FTPButton({
         textTransform: 'uppercase',
         letterSpacing: '0.5px',
         transition: 'transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease',
-        minWidth: 90,
+        minWidth: 100,
       }}
       onPointerDown={(e) => {
         const btn = e.currentTarget;

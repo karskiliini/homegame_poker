@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import type { GameState } from '@poker/shared';
 import { PlayerSeat } from './PlayerSeat.js';
 import { CommunityCards } from './CommunityCards.js';
 import { PotDisplay } from './PotDisplay.js';
+import { BetChip } from './BetChip.js';
+import { CardBack } from '../../components/CardBack.js';
 
 // Seat positions around an oval table (percentage-based, for 10 seats)
-const SEAT_POSITIONS: { x: number; y: number }[] = [
+export const SEAT_POSITIONS: { x: number; y: number }[] = [
   { x: 50, y: 92 },   // 0: bottom center
   { x: 18, y: 82 },   // 1: bottom left
   { x: 3, y: 55 },    // 2: left
@@ -18,11 +20,33 @@ const SEAT_POSITIONS: { x: number; y: number }[] = [
   { x: 82, y: 82 },   // 9: bottom right
 ];
 
+// Bet chip positions: 40% of the way from seat to center (50%, 50%)
+export const BET_POSITIONS: { x: number; y: number }[] = [
+  { x: 50, y: 75 },   // 0
+  { x: 31, y: 69 },   // 1
+  { x: 22, y: 53 },   // 2
+  { x: 22, y: 38 },   // 3
+  { x: 31, y: 26 },   // 4
+  { x: 50, y: 22 },   // 5
+  { x: 69, y: 26 },   // 6
+  { x: 78, y: 38 },   // 7
+  { x: 78, y: 53 },   // 8
+  { x: 69, y: 69 },   // 9
+];
+
+// Pot center position (percentage)
+const POT_CENTER = { x: 50, y: 58 };
+
 interface PotAward {
   potIndex: number;
   amount: number;
   winnerSeatIndex: number;
   winnerName: string;
+}
+
+interface CollectingBet {
+  seatIndex: number;
+  amount: number;
 }
 
 interface ChipAnimation {
@@ -32,19 +56,54 @@ interface ChipAnimation {
   amount: number;
 }
 
+export interface BetChipAnimation {
+  id: number;
+  startX: number;
+  startY: number;
+  seatIndex: number;
+  amount: number;
+}
+
+export interface DealCardAnimation {
+  id: number;
+  seatIndex: number;
+  startX: number;
+  startY: number;
+}
+
 interface PokerTableProps {
   gameState: GameState;
   potAwards?: PotAward[];
   winnerSeats?: number[];
   timerData?: { seatIndex: number; secondsRemaining: number } | null;
+  collectingBets?: CollectingBet[] | null;
+  potGrow?: boolean;
+  betChipAnimations?: BetChipAnimation[];
+  dealCardAnimations?: DealCardAnimation[];
 }
+
+// Table center in percentage coordinates
+const TABLE_CENTER = { x: 50, y: 50 };
 
 let chipAnimId = 0;
 
-export function PokerTable({ gameState, potAwards, winnerSeats = [], timerData }: PokerTableProps) {
+export function PokerTable({
+  gameState, potAwards, winnerSeats = [], timerData,
+  collectingBets, potGrow,
+  betChipAnimations = [], dealCardAnimations = [],
+}: PokerTableProps) {
   const { players, communityCards, pots, phase, handNumber, config } = gameState;
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
+
+  // Build player name map for PotDisplay
+  const playerNames = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const p of players) {
+      map[p.id] = p.name;
+    }
+    return map;
+  }, [players]);
 
   // Animate chips flying to winner when potAwards arrive
   useEffect(() => {
@@ -76,6 +135,17 @@ export function PokerTable({ gameState, potAwards, winnerSeats = [], timerData }
 
     return () => clearTimeout(timer);
   }, [potAwards]);
+
+  // Calculate fold direction vectors (from seat toward table center)
+  const getFoldDirection = (seatIndex: number) => {
+    const seat = SEAT_POSITIONS[seatIndex];
+    const dx = TABLE_CENTER.x - seat.x;
+    const dy = TABLE_CENTER.y - seat.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len === 0) return { x: 0, y: -40 };
+    const scale = 80;
+    return { x: (dx / len) * scale, y: (dy / len) * scale };
+  };
 
   return (
     <div ref={tableRef} className="relative w-full h-full max-w-[1400px] max-h-[900px]">
@@ -133,16 +203,151 @@ export function PokerTable({ gameState, potAwards, winnerSeats = [], timerData }
       {/* Community cards */}
       {communityCards.length > 0 && (
         <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <CommunityCards cards={communityCards} />
+          <CommunityCards
+            cards={communityCards}
+            winningCards={winnerSeats.length > 0 ? communityCards : undefined}
+          />
         </div>
       )}
 
       {/* Pots */}
       {pots.length > 0 && (
         <div className="absolute top-[58%] left-1/2 -translate-x-1/2">
-          <PotDisplay pots={pots} />
+          <PotDisplay pots={pots} playerNames={playerNames} potGrow={potGrow} />
         </div>
       )}
+
+      {/* Bet chips on the table */}
+      {!collectingBets && players
+        .filter(p => p.currentBet > 0)
+        .map(p => {
+          const betPos = BET_POSITIONS[p.seatIndex];
+          return (
+            <div
+              key={`bet-${p.seatIndex}`}
+              className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
+              style={{
+                left: `${betPos.x}%`,
+                top: `${betPos.y}%`,
+                zIndex: 20,
+              }}
+            >
+              <BetChip amount={p.currentBet} />
+            </div>
+          );
+        })}
+
+      {/* Collecting bet chips animation */}
+      {collectingBets && tableRef.current && collectingBets.map(bet => {
+        const betPos = BET_POSITIONS[bet.seatIndex];
+        const rect = tableRef.current!.getBoundingClientRect();
+        // Calculate pixel offset from bet position to pot center
+        const startX = 0;
+        const startY = 0;
+        const endX = ((POT_CENTER.x - betPos.x) / 100) * rect.width;
+        const endY = ((POT_CENTER.y - betPos.y) / 100) * rect.height;
+
+        return (
+          <div
+            key={`collect-${bet.seatIndex}`}
+            className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
+            style={{
+              left: `${betPos.x}%`,
+              top: `${betPos.y}%`,
+              zIndex: 20,
+            }}
+          >
+            <BetChip
+              amount={bet.amount}
+              collecting
+              style={{
+                '--start-x': `${startX}px`,
+                '--start-y': `${startY}px`,
+                '--end-x': `${endX}px`,
+                '--end-y': `${endY}px`,
+              } as React.CSSProperties}
+            />
+          </div>
+        );
+      })}
+
+      {/* Deal card animations (flying from dealer to seats) */}
+      {dealCardAnimations.map(anim => {
+        const seatPos = SEAT_POSITIONS[anim.seatIndex];
+        return (
+          <div
+            key={anim.id}
+            className="absolute pointer-events-none"
+            style={{
+              left: `${seatPos.x}%`,
+              top: `${seatPos.y}%`,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 45,
+            }}
+          >
+            <div
+              className="animate-card-deal-fly"
+              style={{
+                '--deal-start-x': `${anim.startX}px`,
+                '--deal-start-y': `${anim.startY}px`,
+              } as React.CSSProperties}
+            >
+              <CardBack size="sm" />
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Bet chip fly animations (from seat to bet position) */}
+      {betChipAnimations.map(anim => {
+        const betPos = BET_POSITIONS[anim.seatIndex];
+        return (
+          <div
+            key={anim.id}
+            className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
+            style={{
+              left: `${betPos.x}%`,
+              top: `${betPos.y}%`,
+              zIndex: 48,
+            }}
+          >
+            <div
+              className="animate-chip-bet-fly"
+              style={{
+                '--start-x': `${anim.startX}px`,
+                '--start-y': `${anim.startY}px`,
+                '--end-x': '0px',
+                '--end-y': '0px',
+              } as React.CSSProperties}
+            >
+              <div className="flex items-center gap-1">
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle at 35% 35%, #FBBF24, #D97706)',
+                    border: '2px dashed rgba(255,255,255,0.4)',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  className="font-mono font-bold tabular-nums"
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: 12,
+                    textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {anim.amount.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
 
       {/* Chip fly animations */}
       {chipAnimations.map(anim => (
@@ -222,6 +427,7 @@ export function PokerTable({ gameState, potAwards, winnerSeats = [], timerData }
                 isWinner={winnerSeats.includes(seatIndex)}
                 timerSeconds={timerData?.seatIndex === seatIndex ? timerData.secondsRemaining : undefined}
                 timerMax={config.actionTimeSeconds}
+                foldDirection={getFoldDirection(seatIndex)}
               />
             ) : (
               <div

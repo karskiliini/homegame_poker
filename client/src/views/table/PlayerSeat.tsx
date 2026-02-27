@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import type { PublicPlayerState } from '@poker/shared';
 import { CardComponent } from '../../components/Card.js';
 import { CardBack } from '../../components/CardBack.js';
@@ -36,9 +37,10 @@ interface PlayerSeatProps {
   isWinner?: boolean;
   timerSeconds?: number;
   timerMax?: number;
+  foldDirection?: { x: number; y: number };
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30 }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection }: PlayerSeatProps) {
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
   const isAllIn = player.status === 'all_in';
@@ -51,6 +53,9 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30 }: Pl
   const timerColor = timerPercent > 60 ? 'var(--ftp-timer-safe)' :
     timerPercent > 25 ? 'var(--ftp-timer-warning)' : 'var(--ftp-timer-critical)';
 
+  // Show card backs when player has cards but they're not revealed
+  const showCardBacks = player.hasCards && !player.holeCards && !isFolded;
+
   return (
     <div className={`relative flex flex-col items-center ${isFolded ? 'opacity-40' : ''}`}>
       {/* Cards above the panel */}
@@ -61,25 +66,42 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30 }: Pl
               <CardComponent card={card} size="sm" isWinner={isWinner} />
             </div>
           ))
-        ) : player.hasCards ? (
-          <>
-            <CardBack size="sm" />
-            <CardBack size="sm" />
-          </>
-        ) : null}
+        ) : (
+          <AnimatePresence>
+            {showCardBacks && (
+              <motion.div
+                className="flex gap-0.5"
+                initial={false}
+                exit={{
+                  x: foldDirection?.x ?? 0,
+                  y: foldDirection?.y ?? -40,
+                  scale: 0.4,
+                  rotate: -20,
+                  opacity: 0,
+                }}
+                transition={{ duration: 0.4, ease: 'easeIn' }}
+              >
+                <CardBack size="sm" />
+                <CardBack size="sm" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
       </div>
 
       {/* Player panel */}
       <div
         className={`
-          relative flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-all duration-200
+          relative flex items-center gap-2 rounded-md px-3 py-2 transition-all duration-200
           ${isWinner ? 'animate-winner-glow' : ''}
           ${isAllIn ? 'animate-allin-pulse' : ''}
         `}
         style={{
           minWidth: 120,
           background: isActive ? 'var(--ftp-panel-active)' : 'var(--ftp-panel-bg)',
-          border: `1px solid ${isActive ? 'var(--ftp-panel-active-border)' : 'var(--ftp-panel-border)'}`,
+          border: isAllIn
+            ? '2px solid #EAB308'
+            : `1px solid ${isActive ? 'var(--ftp-panel-active-border)' : 'var(--ftp-panel-border)'}`,
           borderRadius: 6,
           boxShadow: isActive
             ? '0 0 15px 5px rgba(234, 179, 8, 0.3)'
@@ -90,11 +112,11 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30 }: Pl
         <div
           className="flex items-center justify-center text-white font-bold shrink-0"
           style={{
-            width: 40,
-            height: 40,
+            width: 48,
+            height: 48,
             borderRadius: 4,
             background: `linear-gradient(135deg, ${color1}, ${color2})`,
-            fontSize: 14,
+            fontSize: 16,
             boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 1px 3px rgba(0,0,0,0.2)',
             border: isActive ? '2px solid rgba(234, 179, 8, 0.6)' : '1px solid rgba(255,255,255,0.1)',
           }}
@@ -130,10 +152,10 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30 }: Pl
         {/* All-in badge */}
         {isAllIn && (
           <div
-            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
+            className="absolute -bottom-2.5 left-1/2 animate-allin-label px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
             style={{
-              fontSize: 9,
-              background: 'linear-gradient(180deg, #D97706, #B45309)',
+              fontSize: 11,
+              background: 'linear-gradient(135deg, #DC2626, #991B1B)',
               boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
               whiteSpace: 'nowrap',
             }}
@@ -146,14 +168,16 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30 }: Pl
         {isActive && timerSeconds != null && (
           <div
             className="absolute bottom-0 left-0 right-0 overflow-hidden"
-            style={{ height: 3, borderRadius: '0 0 6px 6px' }}
+            style={{ height: 4, borderRadius: '0 0 6px 6px', background: '#333' }}
           >
             <div
               style={{
                 height: '100%',
-                width: `${timerPercent}%`,
+                width: '100%',
                 background: timerColor,
-                transition: 'width 1s linear, background-color 0.5s ease',
+                transform: `scaleX(${timerPercent / 100})`,
+                transformOrigin: 'left',
+                transition: 'transform 1s linear, background-color 0.5s ease',
               }}
             />
           </div>
@@ -211,19 +235,6 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30 }: Pl
         </div>
       )}
 
-      {/* Current bet */}
-      {player.currentBet > 0 && (
-        <div
-          className="mt-1 font-mono font-bold tabular-nums animate-fade-in-up"
-          style={{
-            fontSize: 12,
-            color: '#EAB308',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-          }}
-        >
-          {player.currentBet.toLocaleString()}
-        </div>
-      )}
     </div>
   );
 }

@@ -15,7 +15,7 @@ const SIZE_STYLES = {
 
 // FTP 4-color deck
 const SUIT_COLORS: Record<Suit, string> = {
-  s: '#1a1a1a', // Spades - black
+  s: '#000000', // Spades - black
   h: '#CC0000', // Hearts - red
   d: '#0066CC', // Diamonds - blue
   c: '#008800', // Clubs - green

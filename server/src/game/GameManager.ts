@@ -291,6 +291,23 @@ export class GameManager {
 
       case 'cards_dealt':
         this.currentPlayerCards = event.playerCards;
+
+        // Emit deal animation event to table view
+        {
+          const seatIndices = [...event.playerCards.keys()]
+            .map(pid => {
+              const sid = this.playerIdToSocketId.get(pid);
+              return sid ? this.players.get(sid)?.seatIndex : undefined;
+            })
+            .filter((s): s is number => s !== undefined)
+            .sort((a, b) => a - b);
+
+          this.io.of('/table').emit(S2C_TABLE.CARDS_DEALT, {
+            dealerSeatIndex: this.dealerSeatIndex,
+            seatIndices,
+          });
+        }
+
         // Send each player their hole cards
         for (const [playerId, cards] of event.playerCards) {
           const socketId = this.playerIdToSocketId.get(playerId);

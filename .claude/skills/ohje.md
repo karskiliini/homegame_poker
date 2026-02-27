@@ -6,7 +6,21 @@ user_invocable: true
 
 Tulosta seuraava ohje käyttäjälle:
 
-## Serverin käynnistys
+## Kehitystila (dev)
+
+```bash
+bun run dev
+```
+
+Käynnistää sekä serverin (portti 3000) että Vite-clientin (portti 5173) samaan aikaan.
+
+- **TV/pöytänäkymä:** `http://localhost:5173/table`
+- **Pelaajat (sama kone):** `http://localhost:5173`
+- **Pelaajat (puhelimella):** `http://<koneen-ip>:5173` (esim. `http://192.168.1.100:5173`)
+
+Vite proxyy WebSocket-yhteydet automaattisesti serverille.
+
+## Tuotantotila (lokaali)
 
 ```bash
 bun run start -- --small-blind 1 --big-blind 2 --max-buy-in 200 --game nlhe
@@ -20,12 +34,13 @@ Parametrit ovat säädettävissä:
 - `--action-time <sekunnit>` — aikaraja toiminnolle (oletus: 30)
 - `--port <portti>` — portti (oletus: 3000)
 
-## Clientien yhdistäminen
+Serveri tarjoaa buildin suoraan:
 
-Serveri käynnistyy osoitteeseen `http://localhost:3000`.
+- **TV/pöytänäkymä:** `http://localhost:3000/table`
+- **Pelaajat (sama kone):** `http://localhost:3000`
+- **Pelaajat (puhelimella):** `http://<koneen-ip>:3000` (esim. `http://192.168.1.100:3000`)
 
-- **TV/pöytänäkymä:** avaa tietokoneella `http://localhost:3000/table`
-- **Pelaajat:** avaa puhelimella `http://<koneen-ip>:3000` (esim. `http://192.168.1.100:3000`)
+## IP-osoite ja lähiverkko
 
 Pelaajien tulee olla samassa lähiverkossa (Wi-Fi) kuin serveri. Koneen IP-osoitteen saat komennolla:
 ```bash
@@ -49,8 +64,8 @@ vercel env add VITE_SERVER_URL
 
 ### Clientien avaaminen
 
-- **Pelaajat:** avaa Vercel-URL puhelimella (esim. `https://homegame-poker.vercel.app`)
-- **TV/pöytänäkymä:** avaa sama URL + `/table` tietokoneella
+- **Pelaajat:** avaa puhelimella `https://pokersofta.vercel.app`
+- **TV/pöytänäkymä:** avaa tietokoneella `https://pokersofta.vercel.app/table`
 
 ### Deploy-komennot
 
