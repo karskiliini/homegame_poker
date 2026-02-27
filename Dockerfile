@@ -2,7 +2,10 @@ FROM node:20 AS builder
 WORKDIR /app
 COPY . .
 RUN npm install
-RUN npm run build:railway
+RUN ls -la node_modules/@poker/ && ls -la node_modules/@poker/shared/
+RUN npm run build:shared
+RUN ls -la shared/dist/
+RUN npm run build:server
 
 FROM node:20-slim
 WORKDIR /app
