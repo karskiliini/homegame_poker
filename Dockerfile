@@ -1,8 +1,7 @@
 FROM node:20 AS builder
 WORKDIR /app
-RUN npm install -g bun
 COPY . .
-RUN bun install
+RUN npm install
 RUN npm run build:railway
 
 FROM node:20-slim
