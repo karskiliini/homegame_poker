@@ -1,6 +1,6 @@
 FROM oven/bun:1 AS builder
 WORKDIR /app
-COPY package.json bun.lockb* package-lock.json* ./
+COPY package.json bun.lockb* package-lock.json* tsconfig.base.json ./
 COPY shared/package.json shared/
 COPY server/package.json server/
 COPY client/package.json client/
