@@ -2,8 +2,8 @@ FROM node:20 AS builder
 WORKDIR /app
 COPY . .
 RUN npm install
-RUN npx tsc --build shared/tsconfig.json
-RUN npx tsc --build server/tsconfig.json
+RUN cd shared && npx tsc
+RUN cd server && npx tsc --skipLibCheck
 
 FROM node:20-slim
 WORKDIR /app
