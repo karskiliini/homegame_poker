@@ -3,7 +3,6 @@ WORKDIR /app
 COPY . .
 RUN npm install
 RUN npx tsc -b --force shared/tsconfig.json
-RUN ls shared/dist/index.js && echo "shared dist ok"
 RUN npx tsc -b --force server/tsconfig.json
 
 FROM node:20-slim
