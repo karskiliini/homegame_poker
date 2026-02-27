@@ -3,24 +3,24 @@ import { CardComponent } from '../../components/Card.js';
 import { CardBack } from '../../components/CardBack.js';
 
 const AVATAR_COLORS = [
-  'from-red-500 to-red-700',
-  'from-blue-500 to-blue-700',
-  'from-green-500 to-green-700',
-  'from-purple-500 to-purple-700',
-  'from-orange-500 to-orange-700',
-  'from-pink-500 to-pink-700',
-  'from-teal-500 to-teal-700',
-  'from-indigo-500 to-indigo-700',
-  'from-amber-500 to-amber-700',
-  'from-cyan-500 to-cyan-700',
+  ['#DC2626', '#991B1B'],
+  ['#2563EB', '#1E40AF'],
+  ['#16A34A', '#15803D'],
+  ['#9333EA', '#7E22CE'],
+  ['#EA580C', '#C2410C'],
+  ['#DB2777', '#BE185D'],
+  ['#0D9488', '#0F766E'],
+  ['#4F46E5', '#4338CA'],
+  ['#D97706', '#B45309'],
+  ['#0891B2', '#0E7490'],
 ];
 
-function getAvatarColor(name: string): string {
+function getAvatarColors(name: string): [string, string] {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length] as [string, string];
 }
 
 function getInitials(name: string): string {
@@ -33,22 +33,33 @@ function getInitials(name: string): string {
 
 interface PlayerSeatProps {
   player: PublicPlayerState;
+  isWinner?: boolean;
+  timerSeconds?: number;
+  timerMax?: number;
 }
 
-export function PlayerSeat({ player }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30 }: PlayerSeatProps) {
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
+  const isAllIn = player.status === 'all_in';
   const isDisconnected = !player.isConnected;
-  const colorClass = getAvatarColor(player.name);
+  const [color1, color2] = getAvatarColors(player.name);
   const initials = getInitials(player.name);
+
+  // Timer bar color
+  const timerPercent = timerSeconds != null && timerMax > 0 ? (timerSeconds / timerMax) * 100 : 0;
+  const timerColor = timerPercent > 60 ? 'var(--ftp-timer-safe)' :
+    timerPercent > 25 ? 'var(--ftp-timer-warning)' : 'var(--ftp-timer-critical)';
 
   return (
     <div className={`relative flex flex-col items-center ${isFolded ? 'opacity-40' : ''}`}>
-      {/* Cards */}
-      <div className="flex gap-0.5 mb-1 h-10">
+      {/* Cards above the panel */}
+      <div className="flex gap-0.5 mb-1" style={{ minHeight: 52 }}>
         {player.holeCards ? (
           player.holeCards.map((card, i) => (
-            <CardComponent key={i} card={card} size="sm" />
+            <div key={i} className="animate-card-flip">
+              <CardComponent card={card} size="sm" isWinner={isWinner} />
+            </div>
           ))
         ) : player.hasCards ? (
           <>
@@ -58,59 +69,158 @@ export function PlayerSeat({ player }: PlayerSeatProps) {
         ) : null}
       </div>
 
-      {/* Avatar + info box */}
-      <div className={`
-        flex items-center gap-2 min-w-[120px] rounded-lg px-2 py-1.5
-        ${isActive
-          ? 'bg-yellow-500/90 text-black ring-2 ring-yellow-300 shadow-[0_0_15px_rgba(234,179,8,0.5)]'
-          : 'bg-gray-800/90 text-white'
-        }
-        ${isDisconnected ? 'border border-red-500/50' : ''}
-      `}>
-        {/* Avatar circle */}
-        <div className={`
-          w-9 h-9 rounded-full bg-gradient-to-br ${colorClass}
-          flex items-center justify-center text-white text-sm font-bold
-          shadow-inner shrink-0
-          ${isActive ? 'ring-2 ring-yellow-200' : ''}
-        `}>
+      {/* Player panel */}
+      <div
+        className={`
+          relative flex items-center gap-2 rounded-md px-2.5 py-1.5 transition-all duration-200
+          ${isWinner ? 'animate-winner-glow' : ''}
+          ${isAllIn ? 'animate-allin-pulse' : ''}
+        `}
+        style={{
+          minWidth: 120,
+          background: isActive ? 'var(--ftp-panel-active)' : 'var(--ftp-panel-bg)',
+          border: `1px solid ${isActive ? 'var(--ftp-panel-active-border)' : 'var(--ftp-panel-border)'}`,
+          borderRadius: 6,
+          boxShadow: isActive
+            ? '0 0 15px 5px rgba(234, 179, 8, 0.3)'
+            : '0 2px 8px rgba(0, 0, 0, 0.3)',
+        }}
+      >
+        {/* Avatar */}
+        <div
+          className="flex items-center justify-center text-white font-bold shrink-0"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${color1}, ${color2})`,
+            fontSize: 14,
+            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 1px 3px rgba(0,0,0,0.2)',
+            border: isActive ? '2px solid rgba(234, 179, 8, 0.6)' : '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
           {initials}
         </div>
 
-        {/* Name + stack */}
+        {/* Name + Stack */}
         <div className="min-w-0">
-          <div className="text-sm font-bold truncate max-w-[80px]">
+          <div
+            className="font-semibold truncate"
+            style={{
+              fontSize: 13,
+              maxWidth: 80,
+              color: isActive ? '#1a1a1a' : '#FFFFFF',
+            }}
+          >
             {player.name}
-            {isDisconnected && <span className="text-red-400 ml-1">DC</span>}
+            {isDisconnected && <span style={{ color: '#EF4444', marginLeft: 4, fontSize: 10 }}>DC</span>}
           </div>
-          <div className="text-xs font-mono">
+          <div
+            className="font-mono tabular-nums"
+            style={{
+              fontSize: 12,
+              color: isActive ? '#1a1a1a' : 'var(--ftp-text-secondary)',
+              fontWeight: 600,
+            }}
+          >
             {player.stack.toLocaleString()}
           </div>
         </div>
+
+        {/* All-in badge */}
+        {isAllIn && (
+          <div
+            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
+            style={{
+              fontSize: 9,
+              background: 'linear-gradient(180deg, #D97706, #B45309)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            ALL IN
+          </div>
+        )}
+
+        {/* Timer bar */}
+        {isActive && timerSeconds != null && (
+          <div
+            className="absolute bottom-0 left-0 right-0 overflow-hidden"
+            style={{ height: 3, borderRadius: '0 0 6px 6px' }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${timerPercent}%`,
+                background: timerColor,
+                transition: 'width 1s linear, background-color 0.5s ease',
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Dealer button */}
       {player.isDealer && (
-        <div className="absolute -top-1 -right-2 w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center shadow-md">
+        <div
+          className="absolute -top-1 -right-3 flex items-center justify-center font-bold"
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 35% 35%, #FFFFFF, #E0E0E0)',
+            border: '2px solid #999',
+            color: '#333',
+            fontSize: 11,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          }}
+        >
           D
         </div>
       )}
 
       {/* Blind indicators */}
-      {player.isSmallBlind && (
-        <div className="absolute -top-1 -left-2 w-6 h-6 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center shadow-md">
+      {player.isSmallBlind && !player.isDealer && (
+        <div
+          className="absolute -top-1 -left-3 flex items-center justify-center font-bold text-white"
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+            fontSize: 9,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+          }}
+        >
           SB
         </div>
       )}
       {player.isBigBlind && (
-        <div className="absolute -top-1 -left-2 w-6 h-6 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow-md">
+        <div
+          className="absolute -top-1 -left-3 flex items-center justify-center font-bold text-white"
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+            fontSize: 9,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+          }}
+        >
           BB
         </div>
       )}
 
       {/* Current bet */}
       {player.currentBet > 0 && (
-        <div className="mt-1 text-xs text-yellow-400 font-mono">
+        <div
+          className="mt-1 font-mono font-bold tabular-nums animate-fade-in-up"
+          style={{
+            fontSize: 12,
+            color: '#EAB308',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+          }}
+        >
           {player.currentBet.toLocaleString()}
         </div>
       )}

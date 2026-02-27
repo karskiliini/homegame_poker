@@ -10,10 +10,11 @@ interface ActionButtonsProps {
   minRaise: number;
   maxRaise: number;
   stack: number;
+  potTotal: number;
 }
 
 export function ActionButtons({
-  socket, availableActions, callAmount, minRaise, maxRaise, stack,
+  socket, availableActions, callAmount, minRaise, maxRaise, stack, potTotal,
 }: ActionButtonsProps) {
   const [raiseAmount, setRaiseAmount] = useState(minRaise);
   const [showRaiseSlider, setShowRaiseSlider] = useState(false);
@@ -29,104 +30,198 @@ export function ActionButtons({
   const canRaise = availableActions.includes('raise');
 
   if (showRaiseSlider) {
+    // Calculate pot-based presets
+    const halfPot = Math.max(Math.round(potTotal * 0.5), minRaise);
+    const fullPot = Math.max(Math.round(potTotal), minRaise);
+
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
+        {/* Preset buttons */}
+        <div className="flex gap-2 justify-center">
+          <PresetButton label="Min" onClick={() => setRaiseAmount(minRaise)} />
+          <PresetButton label="1/2 Pot" onClick={() => setRaiseAmount(Math.min(halfPot, maxRaise))} />
+          <PresetButton label="Pot" onClick={() => setRaiseAmount(Math.min(fullPot, maxRaise))} />
+          <PresetButton label="All-in" onClick={() => setRaiseAmount(maxRaise)} active={raiseAmount === maxRaise} />
+        </div>
+
         {/* Slider */}
-        <div className="px-2">
+        <div className="px-1">
           <input
             type="range"
             min={minRaise}
             max={maxRaise}
             value={raiseAmount}
             onChange={(e) => setRaiseAmount(Number(e.target.value))}
-            className="w-full h-3 rounded-lg appearance-none bg-gray-700 accent-yellow-500"
+            className="w-full ftp-slider"
           />
-          <div className="flex justify-between text-sm text-gray-400 mt-1">
-            <span>{minRaise}</span>
-            <span className="text-yellow-400 font-bold text-lg">{raiseAmount}</span>
-            <span>All-in ({maxRaise})</span>
+          <div className="flex justify-between items-center mt-1">
+            <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>{minRaise}</span>
+            <span
+              className="font-bold font-mono tabular-nums"
+              style={{ color: '#EAB308', fontSize: 20 }}
+            >
+              {raiseAmount.toLocaleString()}
+            </span>
+            <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>All-in ({maxRaise})</span>
           </div>
-        </div>
-
-        {/* Quick buttons */}
-        <div className="flex gap-2 justify-center">
-          {[0.33, 0.5, 0.75, 1].map((fraction) => {
-            const amount = Math.min(Math.round(maxRaise * fraction), maxRaise);
-            if (amount < minRaise) return null;
-            return (
-              <button
-                key={fraction}
-                onClick={() => setRaiseAmount(amount)}
-                className="px-3 py-1 rounded bg-gray-700 text-white text-sm hover:bg-gray-600"
-              >
-                {fraction === 1 ? 'All-in' : `${Math.round(fraction * 100)}%`}
-              </button>
-            );
-          })}
         </div>
 
         {/* Confirm / Cancel */}
         <div className="flex gap-3">
           <button
             onClick={() => setShowRaiseSlider(false)}
-            className="flex-1 py-3 rounded-lg bg-gray-700 text-white font-bold"
+            className="flex-1"
+            style={{
+              padding: '12px 20px',
+              borderRadius: 8,
+              background: 'var(--ftp-bg-tertiary)',
+              color: 'var(--ftp-text-secondary)',
+              fontWeight: 700,
+              fontSize: 16,
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
             Cancel
           </button>
-          <button
+          <FTPButton
+            color="raise"
             onClick={() => {
               sendAction(raiseAmount === maxRaise ? 'all_in' : (canBet ? 'bet' : 'raise'), raiseAmount);
               setShowRaiseSlider(false);
             }}
-            className="flex-1 py-3 rounded-lg bg-yellow-600 text-white font-bold"
+            className="flex-1"
           >
-            {raiseAmount === maxRaise ? 'All-in' : `Raise to ${raiseAmount}`}
-          </button>
+            {raiseAmount === maxRaise ? 'ALL IN' : `${canBet ? 'BET' : 'RAISE'} ${raiseAmount.toLocaleString()}`}
+          </FTPButton>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
       {canFold && (
-        <button
-          onClick={() => sendAction('fold')}
-          className="flex-1 py-4 rounded-lg bg-red-700 hover:bg-red-600 text-white font-bold text-lg transition-colors"
-        >
-          Fold
-        </button>
+        <FTPButton color="fold" onClick={() => sendAction('fold')} className="flex-1">
+          FOLD
+        </FTPButton>
       )}
 
       {canCheck && (
-        <button
-          onClick={() => sendAction('check')}
-          className="flex-1 py-4 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-bold text-lg transition-colors"
-        >
-          Check
-        </button>
+        <FTPButton color="check" onClick={() => sendAction('check')} className="flex-1">
+          CHECK
+        </FTPButton>
       )}
 
       {canCall && (
-        <button
-          onClick={() => sendAction('call', callAmount)}
-          className="flex-1 py-4 rounded-lg bg-green-700 hover:bg-green-600 text-white font-bold text-lg transition-colors"
-        >
-          Call {callAmount}
-        </button>
+        <FTPButton color="call" onClick={() => sendAction('call', callAmount)} className="flex-1">
+          CALL {callAmount.toLocaleString()}
+        </FTPButton>
       )}
 
       {(canBet || canRaise) && (
-        <button
+        <FTPButton
+          color="raise"
           onClick={() => {
             setRaiseAmount(minRaise);
             setShowRaiseSlider(true);
           }}
-          className="flex-1 py-4 rounded-lg bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-lg transition-colors"
+          className="flex-1"
         >
-          {canBet ? 'Bet' : 'Raise'}
-        </button>
+          {canBet ? 'BET' : 'RAISE'}
+        </FTPButton>
       )}
     </div>
+  );
+}
+
+// FTP-style 3D action button
+function FTPButton({
+  color,
+  onClick,
+  children,
+  className = '',
+}: {
+  color: 'fold' | 'check' | 'call' | 'raise';
+  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const styles: Record<string, { bg1: string; bg2: string; shadow: string }> = {
+    fold: { bg1: '#DC2626', bg2: '#B91C1C', shadow: '#7F1D1D' },
+    check: { bg1: '#2563EB', bg2: '#1D4ED8', shadow: '#1E3A8A' },
+    call: { bg1: '#16A34A', bg2: '#15803D', shadow: '#14532D' },
+    raise: { bg1: '#D97706', bg2: '#B45309', shadow: '#78350F' },
+  };
+
+  const s = styles[color];
+
+  return (
+    <button
+      onClick={onClick}
+      className={className}
+      style={{
+        padding: '14px 24px',
+        borderRadius: 8,
+        fontWeight: 700,
+        fontSize: 16,
+        color: 'white',
+        border: 'none',
+        cursor: 'pointer',
+        background: `linear-gradient(180deg, ${s.bg1}, ${s.bg2})`,
+        boxShadow: `0 4px 0 ${s.shadow}, 0 6px 12px rgba(0,0,0,0.3)`,
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        transition: 'transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease',
+        minWidth: 90,
+      }}
+      onPointerDown={(e) => {
+        const btn = e.currentTarget;
+        btn.style.transform = 'translateY(2px)';
+        btn.style.boxShadow = `0 2px 0 ${s.shadow}, 0 3px 6px rgba(0,0,0,0.3)`;
+      }}
+      onPointerUp={(e) => {
+        const btn = e.currentTarget;
+        btn.style.transform = '';
+        btn.style.boxShadow = '';
+      }}
+      onPointerLeave={(e) => {
+        const btn = e.currentTarget;
+        btn.style.transform = '';
+        btn.style.boxShadow = '';
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Preset button for bet sizing
+function PresetButton({
+  label,
+  onClick,
+  active,
+}: {
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '6px 14px',
+        borderRadius: 4,
+        background: active ? '#D97706' : 'rgba(255,255,255,0.1)',
+        border: `1px solid ${active ? '#D97706' : 'rgba(255,255,255,0.2)'}`,
+        color: active ? '#FFFFFF' : '#E0E0E0',
+        fontSize: 12,
+        fontWeight: 700,
+        cursor: 'pointer',
+        transition: 'background 0.1s ease',
+      }}
+    >
+      {label}
+    </button>
   );
 }

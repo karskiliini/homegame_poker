@@ -2,11 +2,14 @@ import type { Server, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   GameConfig, GameState, Player, PublicPlayerState, PrivatePlayerState,
-  ActionType, CardString, HandPlayer,
+  ActionType, CardString, HandPlayer, SoundType,
 } from '@poker/shared';
 import {
   S2C_PLAYER, S2C_TABLE, HAND_COMPLETE_PAUSE_MS, RIT_TIMEOUT_MS,
   SHOW_CARDS_TIMEOUT_MS,
+  DELAY_AFTER_CARDS_DEALT_MS, DELAY_AFTER_STREET_DEALT_MS,
+  DELAY_AFTER_PLAYER_ACTED_MS, DELAY_SHOWDOWN_TO_RESULT_MS,
+  DELAY_POT_AWARD_MS,
 } from '@poker/shared';
 import { HandEngine } from './HandEngine.js';
 import type { HandEngineEvent, HandResult, ShowdownEntry } from './HandEngine.js';
@@ -48,6 +51,12 @@ export class GameManager {
   private ritResponses: Map<string, boolean> = new Map();
   private ritTimer: ReturnType<typeof setTimeout> | null = null;
   private ritPlayerIds: string[] = [];
+
+  // Event queue for animation pacing
+  private eventQueue: HandEngineEvent[] = [];
+  private isProcessingQueue = false;
+  private lastProcessedEventType: string = '';
+  private queueTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(config: GameConfig, io: Server) {
     this.config = config;
@@ -157,6 +166,15 @@ export class GameManager {
     this.currentShowdownEntries = [];
     this.currentHandPlayers.clear();
 
+    // Reset event queue
+    this.eventQueue = [];
+    this.isProcessingQueue = false;
+    this.lastProcessedEventType = '';
+    if (this.queueTimer) {
+      clearTimeout(this.queueTimer);
+      this.queueTimer = null;
+    }
+
     // Get eligible players (ready, connected, has chips)
     const eligiblePlayers = [...this.players.values()]
       .filter(p => p.isReady && p.isConnected && p.stack > 0)
@@ -175,7 +193,7 @@ export class GameManager {
     console.log(`Players: ${eligiblePlayers.map(p => `${p.name}(${p.stack})`).join(', ')}`);
 
     // Create hand engine
-    this.handEngine = new HandEngine(this.config, (event) => this.handleHandEvent(event));
+    this.handEngine = new HandEngine(this.config, (event) => this.enqueueEvent(event));
 
     this.handEngine.startHand(
       this.handNumber,
@@ -203,7 +221,66 @@ export class GameManager {
     }
   }
 
-  private handleHandEvent(event: HandEngineEvent) {
+  // === Event Queue System ===
+  // Events from HandEngine are queued and processed with animation-appropriate delays
+
+  private enqueueEvent(event: HandEngineEvent) {
+    this.eventQueue.push(event);
+    if (!this.isProcessingQueue) {
+      this.processEventQueue();
+    }
+  }
+
+  private processEventQueue() {
+    this.isProcessingQueue = true;
+
+    const event = this.eventQueue.shift();
+    if (!event) {
+      this.isProcessingQueue = false;
+      return;
+    }
+
+    // Determine delay before processing this event
+    const delay = this.getEventDelay(event);
+
+    if (delay > 0) {
+      this.queueTimer = setTimeout(() => {
+        this.queueTimer = null;
+        this.processEvent(event);
+        this.lastProcessedEventType = event.type;
+        this.processEventQueue();
+      }, delay);
+    } else {
+      this.processEvent(event);
+      this.lastProcessedEventType = event.type;
+      this.processEventQueue();
+    }
+  }
+
+  private getEventDelay(event: HandEngineEvent): number {
+    // Delay player_turn events based on what preceded them
+    if (event.type === 'player_turn') {
+      switch (this.lastProcessedEventType) {
+        case 'cards_dealt':
+          return DELAY_AFTER_CARDS_DEALT_MS;
+        case 'street_dealt':
+          return DELAY_AFTER_STREET_DEALT_MS;
+        case 'player_acted':
+          return DELAY_AFTER_PLAYER_ACTED_MS;
+        default:
+          return 0;
+      }
+    }
+
+    // Delay hand_complete after showdown to let players see the hands
+    if (event.type === 'hand_complete' && this.lastProcessedEventType === 'showdown') {
+      return DELAY_SHOWDOWN_TO_RESULT_MS;
+    }
+
+    return 0;
+  }
+
+  private processEvent(event: HandEngineEvent) {
     switch (event.type) {
       case 'hand_started':
         for (const p of event.players) {
@@ -227,6 +304,7 @@ export class GameManager {
             }
           }
         }
+        this.emitSound('card_deal');
         this.broadcastTableState();
         break;
 
@@ -236,19 +314,24 @@ export class GameManager {
         this.lastTurnEvent = event;
 
         // Send to the active player
-        const socketId = this.playerIdToSocketId.get(event.playerId);
-        if (socketId) {
-          const socket = this.socketMap.get(socketId);
-          if (socket) {
-            socket.emit(S2C_PLAYER.YOUR_TURN, {
-              availableActions: event.availableActions,
-              callAmount: event.callAmount,
-              minRaise: event.minRaise,
-              maxRaise: event.maxRaise,
-              timeLimit: this.config.actionTimeSeconds,
-            });
+        {
+          const socketId = this.playerIdToSocketId.get(event.playerId);
+          if (socketId) {
+            const socket = this.socketMap.get(socketId);
+            if (socket) {
+              socket.emit(S2C_PLAYER.YOUR_TURN, {
+                availableActions: event.availableActions,
+                callAmount: event.callAmount,
+                minRaise: event.minRaise,
+                maxRaise: event.maxRaise,
+                timeLimit: this.config.actionTimeSeconds,
+              });
+            }
           }
         }
+
+        // Notify the player it's their turn
+        this.emitSoundToPlayer(event.playerId, 'your_turn');
 
         // Start action timer
         this.actionTimer.start(
@@ -259,6 +342,9 @@ export class GameManager {
               seatIndex: event.seatIndex,
               secondsRemaining: remaining,
             });
+            if (remaining === 5) {
+              this.emitSound('timer_warning');
+            }
           },
         );
 
@@ -287,6 +373,17 @@ export class GameManager {
           isAllIn: event.isAllIn,
         });
 
+        // Emit action sound
+        if (event.isAllIn) {
+          this.emitSound('all_in');
+        } else if (event.action === 'fold') {
+          this.emitSound('fold');
+        } else if (event.action === 'check') {
+          this.emitSound('check');
+        } else {
+          this.emitSound('chip_bet');
+        }
+
         console.log(`${event.playerName}: ${event.action}${event.amount > 0 ? ' ' + event.amount : ''}${event.isAllIn ? ' (ALL-IN)' : ''}`);
         break;
 
@@ -298,6 +395,7 @@ export class GameManager {
           street: event.street,
           cards: event.cards,
         });
+        this.emitSound('card_flip');
 
         console.log(`--- ${event.street.toUpperCase()} --- [${event.cards.join(' ')}]`);
         this.broadcastTableState();
@@ -331,6 +429,19 @@ export class GameManager {
       case 'hand_complete':
         this.handleHandComplete(event.result);
         break;
+    }
+  }
+
+  private emitSound(sound: SoundType) {
+    this.io.of('/table').emit(S2C_TABLE.SOUND, { sound });
+    this.io.of('/player').emit(S2C_PLAYER.SOUND, { sound });
+  }
+
+  private emitSoundToPlayer(playerId: string, sound: SoundType) {
+    const socketId = this.playerIdToSocketId.get(playerId);
+    if (socketId) {
+      const socket = this.socketMap.get(socketId);
+      socket?.emit(S2C_PLAYER.SOUND, { sound });
     }
   }
 
@@ -419,6 +530,7 @@ export class GameManager {
   private handleHandComplete(result: HandResult) {
     this.phase = 'hand_complete';
     this.actionTimer.cancel();
+    this.currentActorSeatIndex = null;
 
     // Update player stacks from hand result
     for (const hp of result.players) {
@@ -442,40 +554,65 @@ export class GameManager {
     // Store hand history
     this.storeHandHistory(result);
 
-    // Broadcast results
-    this.io.of('/table').emit(S2C_TABLE.HAND_RESULT, {
-      pots: result.pots,
-    });
-
-    // Send individual results to each player
-    for (const hp of result.players) {
-      const socketId = this.playerIdToSocketId.get(hp.playerId);
-      if (socketId) {
-        const socket = this.socketMap.get(socketId);
-        const player = this.players.get(socketId);
-        if (socket && player) {
-          const netResult = hp.currentStack - hp.startingStack;
-          socket.emit(S2C_PLAYER.HAND_RESULT, {
-            pots: result.pots,
-            netResult,
-            finalStack: hp.currentStack,
+    // Emit pot award event with winner seat info for chip animation
+    const potAwards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string }[] = [];
+    for (let i = 0; i < result.pots.length; i++) {
+      const pot = result.pots[i];
+      for (const winner of pot.winners) {
+        const hp = result.players.find(p => p.playerId === winner.playerId);
+        if (hp) {
+          potAwards.push({
+            potIndex: i,
+            amount: winner.amount,
+            winnerSeatIndex: hp.seatIndex,
+            winnerName: winner.playerName,
           });
-
-          // Check if busted
-          if (hp.currentStack <= 0) {
-            socket.emit(S2C_PLAYER.BUSTED, {
-              previousName: player.name,
-              previousBuyIn: hp.startingStack,
-            });
-          }
         }
       }
     }
 
-    // Offer show cards to winners of uncontested pots
-    this.offerShowCards(result);
+    this.io.of('/table').emit(S2C_TABLE.POT_AWARD, { awards: potAwards });
+    this.emitSound('chip_win');
 
-    this.broadcastTableState();
+    // Broadcast results after a delay (let pot award animation play)
+    setTimeout(() => {
+      this.io.of('/table').emit(S2C_TABLE.HAND_RESULT, {
+        pots: result.pots,
+      });
+
+      // Send individual results to each player
+      for (const hp of result.players) {
+        const socketId = this.playerIdToSocketId.get(hp.playerId);
+        if (socketId) {
+          const socket = this.socketMap.get(socketId);
+          const player = this.players.get(socketId);
+          if (socket && player) {
+            const netResult = hp.currentStack - hp.startingStack;
+            socket.emit(S2C_PLAYER.HAND_RESULT, {
+              pots: result.pots,
+              netResult,
+              finalStack: hp.currentStack,
+            });
+
+            // Check if busted
+            if (hp.currentStack <= 0) {
+              socket.emit(S2C_PLAYER.BUSTED, {
+                previousName: player.name,
+                previousBuyIn: hp.startingStack,
+              });
+            }
+          }
+        }
+      }
+
+      // Clear private state for all players (fix: buttons still visible after hand)
+      this.sendClearedPrivateStateToAll();
+
+      // Offer show cards to winners of uncontested pots
+      this.offerShowCards(result);
+
+      this.broadcastTableState();
+    }, DELAY_POT_AWARD_MS);
 
     // Auto-start next hand after pause
     setTimeout(() => {
@@ -493,6 +630,35 @@ export class GameManager {
         this.checkStartGame();
       }
     }, HAND_COMPLETE_PAUSE_MS);
+  }
+
+  // Send cleared private state to all players after hand ends (fixes button visibility bug)
+  private sendClearedPrivateStateToAll() {
+    for (const [socketId, player] of this.players) {
+      const socket = this.socketMap.get(socketId);
+      if (!socket || !player.isConnected) continue;
+
+      const state: PrivatePlayerState = {
+        id: player.id,
+        name: player.name,
+        seatIndex: player.seatIndex,
+        stack: player.stack,
+        status: player.status as any,
+        holeCards: [],
+        currentBet: 0,
+        availableActions: [],
+        minRaise: 0,
+        maxRaise: 0,
+        callAmount: 0,
+        potTotal: 0,
+        isMyTurn: false,
+        showCardsOption: false,
+        runItTwiceOffer: false,
+        runItTwiceDeadline: 0,
+      };
+
+      socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
+    }
   }
 
   private offerShowCards(result: HandResult) {

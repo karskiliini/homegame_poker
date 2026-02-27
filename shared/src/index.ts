@@ -4,5 +4,6 @@ export * from './types/hand.js';
 export * from './types/game.js';
 export * from './types/hand-history.js';
 export * from './types/socket-events.js';
+export * from './types/sound.js';
 export * from './constants.js';
 export * from './utils/card-utils.js';

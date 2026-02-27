@@ -24,31 +24,56 @@ export function LoginScreen({ socket }: LoginScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-gray-800/80 rounded-2xl p-6 shadow-xl">
-        <h1 className="text-2xl font-bold text-white text-center mb-2">
-          Poker Night
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: 'linear-gradient(180deg, #0F1E33, #162D50)' }}
+    >
+      <div
+        className="w-full max-w-sm p-6"
+        style={{
+          background: 'rgba(0,0,0,0.5)',
+          borderRadius: 12,
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        }}
+      >
+        <h1
+          className="text-center mb-1 font-bold"
+          style={{ color: 'var(--ftp-red)', fontSize: 24, letterSpacing: 1 }}
+        >
+          POKER NIGHT
         </h1>
-        <p className="text-gray-400 text-center text-sm mb-6">
+        <p className="text-center mb-6" style={{ color: 'var(--ftp-text-secondary)', fontSize: 13 }}>
           {config ? `${config.gameType} - ${config.smallBlind}/${config.bigBlind}` : 'Connecting...'}
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Name</label>
+            <label className="block mb-1" style={{ color: 'var(--ftp-text-muted)', fontSize: 12, fontWeight: 600 }}>
+              NAME
+            </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter your name"
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-500 border border-gray-600 focus:border-yellow-500 focus:outline-none text-lg"
+              className="w-full"
+              style={{
+                padding: '12px 16px',
+                borderRadius: 6,
+                background: 'rgba(0,0,0,0.4)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255,255,255,0.15)',
+                fontSize: 16,
+                outline: 'none',
+              }}
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              Buy-in (max {maxBuyIn})
+            <label className="block mb-1" style={{ color: 'var(--ftp-text-muted)', fontSize: 12, fontWeight: 600 }}>
+              BUY-IN (max {maxBuyIn})
             </label>
             <input
               type="number"
@@ -56,14 +81,40 @@ export function LoginScreen({ socket }: LoginScreenProps) {
               onChange={(e) => setBuyIn(Number(e.target.value))}
               min={1}
               max={maxBuyIn}
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:border-yellow-500 focus:outline-none text-lg"
+              className="w-full"
+              style={{
+                padding: '12px 16px',
+                borderRadius: 6,
+                background: 'rgba(0,0,0,0.4)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255,255,255,0.15)',
+                fontSize: 16,
+                outline: 'none',
+              }}
             />
           </div>
 
           <button
             onClick={handleJoin}
             disabled={!name.trim() || buyIn <= 0 || buyIn > maxBuyIn}
-            className="w-full py-4 rounded-lg bg-yellow-600 hover:bg-yellow-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold text-lg transition-colors"
+            style={{
+              width: '100%',
+              padding: '14px 24px',
+              borderRadius: 8,
+              background: !name.trim() || buyIn <= 0 || buyIn > maxBuyIn
+                ? 'var(--ftp-bg-tertiary)'
+                : 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: 16,
+              border: 'none',
+              cursor: !name.trim() || buyIn <= 0 || buyIn > maxBuyIn ? 'not-allowed' : 'pointer',
+              boxShadow: !name.trim() || buyIn <= 0 || buyIn > maxBuyIn
+                ? 'none'
+                : '0 4px 0 #5a0d12, 0 6px 12px rgba(0,0,0,0.3)',
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+            }}
           >
             Join Game
           </button>

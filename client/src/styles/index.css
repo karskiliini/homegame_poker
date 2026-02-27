@@ -1,15 +1,84 @@
 @import "tailwindcss";
 
 :root {
-  --felt-green: #1a5c2a;
-  --felt-dark: #0d3518;
-  --table-border: #8b6914;
-  --card-white: #f5f5f0;
-  --chip-red: #cc3333;
-  --chip-blue: #3366cc;
-  --chip-green: #33cc66;
-  --chip-black: #333333;
-  --gold: #c4a634;
+  /* BRAND */
+  --ftp-red: #C41E2A;
+  --ftp-red-light: #E8323E;
+  --ftp-red-dark: #8B1520;
+
+  /* BACKGROUNDS */
+  --ftp-bg-primary: #1C1C1C;
+  --ftp-bg-secondary: #2A2A2A;
+  --ftp-bg-tertiary: #383838;
+
+  /* TABLE */
+  --ftp-felt-green: #2D6B3F;
+  --ftp-felt-green-dark: #1A5C32;
+  --ftp-felt-green-light: #3A8050;
+  --ftp-table-rail: #5C3A1E;
+  --ftp-table-rail-light: #8B6914;
+  --ftp-table-border: #3A2510;
+
+  /* ACCENTS */
+  --ftp-gold: #C9A84C;
+  --ftp-gold-light: #E0C56A;
+  --ftp-gold-dark: #A08030;
+
+  /* TEXT */
+  --ftp-text-primary: #FFFFFF;
+  --ftp-text-secondary: #B0B0B0;
+  --ftp-text-muted: #707070;
+
+  /* PLAYER PANEL */
+  --ftp-panel-bg: rgba(0, 0, 0, 0.65);
+  --ftp-panel-active: rgba(200, 160, 60, 0.3);
+  --ftp-panel-border: rgba(255, 255, 255, 0.15);
+  --ftp-panel-active-border: rgba(234, 179, 8, 0.6);
+
+  /* ACTION BUTTONS */
+  --ftp-btn-fold: #DC2626;
+  --ftp-btn-fold-dark: #B91C1C;
+  --ftp-btn-fold-shadow: #7F1D1D;
+  --ftp-btn-check: #2563EB;
+  --ftp-btn-check-dark: #1D4ED8;
+  --ftp-btn-check-shadow: #1E3A8A;
+  --ftp-btn-call: #16A34A;
+  --ftp-btn-call-dark: #15803D;
+  --ftp-btn-call-shadow: #14532D;
+  --ftp-btn-raise: #D97706;
+  --ftp-btn-raise-dark: #B45309;
+  --ftp-btn-raise-shadow: #78350F;
+
+  /* CARDS */
+  --ftp-card-bg: #F5F5F0;
+  --ftp-card-back: #C41E2A;
+  --ftp-card-border: #CCCCCC;
+  --ftp-suit-spade: #1a1a1a;
+  --ftp-suit-heart: #CC0000;
+  --ftp-suit-diamond: #0066CC;
+  --ftp-suit-club: #008800;
+
+  /* TIMER */
+  --ftp-timer-safe: #33CC66;
+  --ftp-timer-warning: #E6A817;
+  --ftp-timer-critical: #CC3333;
+
+  /* TYPOGRAPHY */
+  --ftp-font-primary: 'Helvetica Neue', 'Arial', sans-serif;
+
+  /* ANIMATION TIMINGS */
+  --ftp-anim-card-deal: 350ms;
+  --ftp-anim-chip-bet: 500ms;
+  --ftp-anim-chip-win: 600ms;
+  --ftp-anim-winner-glow: 800ms;
+  --ftp-anim-btn-hover: 100ms;
+  --ftp-anim-btn-click: 50ms;
+
+  /* EASING */
+  --ftp-ease-deal: cubic-bezier(0.25, 0.1, 0.25, 1.0);
+  --ftp-ease-chip-bet: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ftp-ease-chip-win: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ftp-ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 * {
@@ -19,8 +88,8 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #1a1a2e;
+  font-family: var(--ftp-font-primary);
+  background: var(--ftp-bg-primary);
   color: #e0e0e0;
   -webkit-font-smoothing: antialiased;
 }
@@ -28,4 +97,115 @@ body {
 /* Prevent pull-to-refresh on mobile */
 html, body {
   overscroll-behavior: none;
+}
+
+/* Winner glow animation */
+@keyframes winner-glow {
+  0% { box-shadow: 0 0 5px rgba(234, 179, 8, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(234, 179, 8, 0.8), 0 0 50px rgba(234, 179, 8, 0.4); }
+  100% { box-shadow: 0 0 5px rgba(234, 179, 8, 0.3); }
+}
+
+.animate-winner-glow {
+  animation: winner-glow 800ms ease-out 2;
+}
+
+/* All-in pulse animation */
+@keyframes allin-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(234, 179, 8, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(234, 179, 8, 0.8), 0 0 40px rgba(234, 179, 8, 0.3); }
+}
+
+.animate-allin-pulse {
+  animation: allin-pulse 2000ms ease-in-out infinite;
+}
+
+/* Card flip animation */
+@keyframes card-flip-in {
+  0% { transform: rotateY(90deg) scale(0.8); opacity: 0; }
+  100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+
+.animate-card-flip {
+  animation: card-flip-in 300ms ease-out;
+}
+
+/* Fade in up animation */
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Winner card flash */
+@keyframes winner-card-flash {
+  0%, 100% { filter: brightness(1); }
+  25% { filter: brightness(1.5); }
+  50% { filter: brightness(1); }
+  75% { filter: brightness(1.5); }
+}
+
+.animate-winner-flash {
+  animation: winner-card-flash 1200ms ease-in-out;
+}
+
+/* Chip fly to winner */
+@keyframes chip-fly {
+  0% {
+    opacity: 1;
+    transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.3);
+  }
+}
+
+.animate-chip-fly {
+  animation: chip-fly 600ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+}
+
+/* Pot number pulse */
+@keyframes pot-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.animate-pot-pulse {
+  animation: pot-pulse 500ms ease-in-out;
+}
+
+/* Slider styling for bet slider */
+input[type="range"].ftp-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #374151, #D97706);
+  outline: none;
+}
+
+input[type="range"].ftp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #FBBF24, #D97706);
+  border: 2px solid #92400E;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Timer bar */
+@keyframes timer-shrink {
+  from { width: 100%; }
+  to { width: 0%; }
 }

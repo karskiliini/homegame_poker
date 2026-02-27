@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { S2C_PLAYER } from '@poker/shared';
-import type { GameConfig, PrivatePlayerState, HandRecord } from '@poker/shared';
+import type { GameConfig, PrivatePlayerState, HandRecord, SoundType } from '@poker/shared';
 import { createPlayerSocket } from '../../socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { LoginScreen } from './LoginScreen.js';
@@ -10,6 +10,8 @@ import { RunItTwicePrompt } from './RunItTwicePrompt.js';
 import { ShowCardsPrompt } from './ShowCardsPrompt.js';
 import { HandHistoryList } from '../history/HandHistoryList.js';
 import { HandHistoryDetail } from '../history/HandHistoryDetail.js';
+import { playerSoundManager } from '../../audio/SoundManager.js';
+import { SoundToggle } from '../../components/SoundToggle.js';
 
 export function PlayerView() {
   const socketRef = useRef(createPlayerSocket());
@@ -24,6 +26,7 @@ export function PlayerView() {
   const [handHistoryView, setHandHistoryView] = useState<'none' | 'list' | 'detail'>('none');
   const [handHistoryData, setHandHistoryData] = useState<HandRecord[]>([]);
   const [selectedHand, setSelectedHand] = useState<HandRecord | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(playerSoundManager.enabled);
 
   useEffect(() => {
     const socket = socketRef.current;
@@ -82,10 +85,20 @@ export function PlayerView() {
       alert(data.message);
     });
 
+    socket.on(S2C_PLAYER.SOUND, (data: { sound: SoundType }) => {
+      playerSoundManager.play(data.sound);
+    });
+
     return () => {
       socket.disconnect();
     };
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleSound = useCallback(() => {
+    const next = !playerSoundManager.enabled;
+    playerSoundManager.setEnabled(next);
+    setSoundEnabled(next);
+  }, []);
 
   const openHistory = useCallback(() => {
     socketRef.current.emit('player:get_history');
@@ -128,14 +141,17 @@ export function PlayerView() {
     <>
       {mainContent}
 
-      {/* Hand history link (visible during game) */}
+      {/* Top-right controls (visible during game) */}
       {screen === 'game' && handHistoryView === 'none' && (
-        <button
-          onClick={openHistory}
-          className="fixed top-4 right-4 z-40 text-blue-400 text-sm underline"
-        >
-          Hand History
-        </button>
+        <div className="fixed top-4 right-4 z-40 flex items-center gap-3">
+          <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
+          <button
+            onClick={openHistory}
+            className="text-blue-400 text-sm underline"
+          >
+            Hand History
+          </button>
+        </div>
       )}
 
       {/* Overlays */}

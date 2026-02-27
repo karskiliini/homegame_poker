@@ -22,6 +22,7 @@ export const S2C_PLAYER = {
   BUSTED: 'player:busted',
   HISTORY_LIST: 'player:history_list',
   HAND_DETAIL: 'player:hand_detail',
+  SOUND: 'player:sound',
 } as const;
 
 export const S2C_TABLE = {
@@ -35,6 +36,8 @@ export const S2C_TABLE = {
   POT_UPDATE: 'table:pot_update',
   SHOWDOWN: 'table:showdown',
   HAND_RESULT: 'table:hand_result',
+  POT_AWARD: 'table:pot_award',
   PLAYER_TIMER: 'table:player_timer',
   RIT_ACTIVE: 'table:rit_active',
+  SOUND: 'table:sound',
 } as const;

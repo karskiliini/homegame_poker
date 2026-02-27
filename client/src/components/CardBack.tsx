@@ -2,22 +2,50 @@ interface CardBackProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const SIZE_CLASSES = {
-  sm: 'w-8 h-11',
-  md: 'w-12 h-17',
-  lg: 'w-16 h-22',
+const SIZE_STYLES = {
+  sm: { width: 36, height: 52 },
+  md: { width: 50, height: 72 },
+  lg: { width: 68, height: 96 },
 };
 
 export function CardBack({ size = 'md' }: CardBackProps) {
+  const s = SIZE_STYLES[size];
+
   return (
-    <div className={`
-      ${SIZE_CLASSES[size]}
-      rounded-md shadow-md
-      bg-gradient-to-br from-blue-800 to-blue-950
-      border border-blue-600/50
-      flex items-center justify-center
-    `}>
-      <div className="w-[70%] h-[70%] rounded-sm border border-white/20 bg-blue-900/50" />
+    <div
+      className="relative select-none overflow-hidden"
+      style={{
+        width: s.width,
+        height: s.height,
+        background: 'linear-gradient(135deg, #C41E2A, #8B1520)',
+        border: '2px solid #FFFFFF',
+        borderRadius: 4,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+      }}
+    >
+      {/* Inner pattern */}
+      <div
+        className="absolute"
+        style={{
+          inset: 4,
+          border: '1px solid rgba(255,255,255,0.3)',
+          borderRadius: 2,
+          background: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 8px)',
+        }}
+      />
+      {/* Center diamond */}
+      <div
+        className="absolute"
+        style={{
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) rotate(45deg)',
+          width: s.width * 0.3,
+          height: s.width * 0.3,
+          background: 'rgba(255,255,255,0.15)',
+          border: '1px solid rgba(255,255,255,0.25)',
+        }}
+      />
     </div>
   );
 }
