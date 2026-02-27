@@ -1,13 +1,9 @@
 FROM oven/bun:1 AS builder
 WORKDIR /app
-COPY package.json bun.lockb* package-lock.json* tsconfig.base.json ./
-COPY shared/package.json shared/
-COPY server/package.json server/
-COPY client/package.json client/
+COPY . .
 RUN bun install
-COPY shared/ shared/
-COPY server/ server/
-RUN cd shared && bun run build && cd ../server && bun run build
+RUN cd shared && bun run build
+RUN cd server && bun run build
 
 FROM node:20-slim
 WORKDIR /app
