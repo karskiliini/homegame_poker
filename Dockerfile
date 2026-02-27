@@ -2,7 +2,8 @@ FROM node:20 AS builder
 WORKDIR /app
 COPY . .
 RUN npm install
-RUN npm run build:railway
+RUN npx tsc --build shared/tsconfig.json
+RUN npx tsc --build server/tsconfig.json
 
 FROM node:20-slim
 WORKDIR /app
