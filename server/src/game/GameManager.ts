@@ -272,6 +272,16 @@ export class GameManager {
       }
     }
 
+    // Delay between consecutive street_dealt events (all-in runout)
+    if (event.type === 'street_dealt' && this.lastProcessedEventType === 'street_dealt') {
+      return DELAY_AFTER_STREET_DEALT_MS;
+    }
+
+    // Delay showdown after street_dealt (all-in runout → showdown)
+    if (event.type === 'showdown' && this.lastProcessedEventType === 'street_dealt') {
+      return DELAY_AFTER_STREET_DEALT_MS;
+    }
+
     // Delay hand_complete after showdown to let players see the hands
     if (event.type === 'hand_complete' && this.lastProcessedEventType === 'showdown') {
       return DELAY_SHOWDOWN_TO_RESULT_MS;

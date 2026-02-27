@@ -88,7 +88,7 @@ export function TableView() {
       isAllIn: boolean;
     }) => {
       // Animate bet chip flying from player to bet position
-      if (['bet', 'call', 'raise'].includes(data.action) && data.amount > 0) {
+      if (['bet', 'call', 'raise', 'all_in'].includes(data.action) && data.amount > 0) {
         const container = tableContainerRef.current;
         if (!container) return;
 

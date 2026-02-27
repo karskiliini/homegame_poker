@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Socket } from 'socket.io-client';
 import type { ActionType } from '@poker/shared';
 import { C2S } from '@poker/shared';
@@ -17,7 +17,11 @@ export function ActionButtons({
   socket, availableActions, callAmount, minRaise, maxRaise, stack, potTotal,
 }: ActionButtonsProps) {
   const [raiseAmount, setRaiseAmount] = useState(minRaise);
-  const [showRaiseSlider, setShowRaiseSlider] = useState(false);
+
+  // Reset raiseAmount to minRaise when available actions change
+  useEffect(() => {
+    setRaiseAmount(minRaise);
+  }, [minRaise, availableActions]);
 
   const sendAction = (action: ActionType, amount?: number) => {
     socket.emit(C2S.ACTION, { action, amount });
@@ -29,107 +33,78 @@ export function ActionButtons({
   const canBet = availableActions.includes('bet');
   const canRaise = availableActions.includes('raise');
 
-  if (showRaiseSlider) {
-    // Calculate pot-based presets
-    const halfPot = Math.max(Math.round(potTotal * 0.5), minRaise);
-    const fullPot = Math.max(Math.round(potTotal), minRaise);
+  // Calculate pot-based presets
+  const halfPot = Math.max(Math.round(potTotal * 0.5), minRaise);
+  const fullPot = Math.max(Math.round(potTotal), minRaise);
 
-    return (
-      <div className="space-y-4 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
-        {/* Preset buttons */}
-        <div className="flex gap-2 justify-center">
-          <PresetButton label="Min" onClick={() => setRaiseAmount(minRaise)} />
-          <PresetButton label="1/2 Pot" onClick={() => setRaiseAmount(Math.min(halfPot, maxRaise))} />
-          <PresetButton label="Pot" onClick={() => setRaiseAmount(Math.min(fullPot, maxRaise))} />
-          <PresetButton label="All-in" onClick={() => setRaiseAmount(maxRaise)} active={raiseAmount === maxRaise} />
-        </div>
+  return (
+    <div className="space-y-3 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
+      {/* Main action buttons */}
+      <div className="flex gap-3">
+        {canFold && (
+          <FTPButton color="fold" onClick={() => sendAction('fold')} className="flex-1">
+            FOLD
+          </FTPButton>
+        )}
 
-        {/* Slider */}
-        <div className="px-1">
-          <input
-            type="range"
-            min={minRaise}
-            max={maxRaise}
-            value={raiseAmount}
-            onChange={(e) => setRaiseAmount(Number(e.target.value))}
-            className="w-full ftp-slider"
-          />
-          <div className="flex justify-between items-center mt-1">
-            <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>{minRaise}</span>
-            <span
-              className="font-bold font-mono tabular-nums"
-              style={{ color: '#EAB308', fontSize: 20 }}
-            >
-              {raiseAmount.toLocaleString()}
-            </span>
-            <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>All-in ({maxRaise})</span>
-          </div>
-        </div>
+        {canCheck && (
+          <FTPButton color="check" onClick={() => sendAction('check')} className="flex-1">
+            CHECK
+          </FTPButton>
+        )}
 
-        {/* Confirm / Cancel */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowRaiseSlider(false)}
-            className="flex-1"
-            style={{
-              padding: '12px 20px',
-              borderRadius: 8,
-              background: 'var(--ftp-bg-tertiary)',
-              color: 'var(--ftp-text-secondary)',
-              fontWeight: 700,
-              fontSize: 16,
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
+        {canCall && (
+          <FTPButton color="call" onClick={() => sendAction('call', callAmount)} className="flex-1">
+            CALL {callAmount.toLocaleString()}
+          </FTPButton>
+        )}
+
+        {(canBet || canRaise) && (
           <FTPButton
             color="raise"
             onClick={() => {
               sendAction(raiseAmount === maxRaise ? 'all_in' : (canBet ? 'bet' : 'raise'), raiseAmount);
-              setShowRaiseSlider(false);
             }}
             className="flex-1"
           >
             {raiseAmount === maxRaise ? 'ALL IN' : `${canBet ? 'BET' : 'RAISE'} ${raiseAmount.toLocaleString()}`}
           </FTPButton>
-        </div>
+        )}
       </div>
-    );
-  }
 
-  return (
-    <div className="flex gap-3 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
-      {canFold && (
-        <FTPButton color="fold" onClick={() => sendAction('fold')} className="flex-1">
-          FOLD
-        </FTPButton>
-      )}
-
-      {canCheck && (
-        <FTPButton color="check" onClick={() => sendAction('check')} className="flex-1">
-          CHECK
-        </FTPButton>
-      )}
-
-      {canCall && (
-        <FTPButton color="call" onClick={() => sendAction('call', callAmount)} className="flex-1">
-          CALL {callAmount.toLocaleString()}
-        </FTPButton>
-      )}
-
+      {/* Inline raise slider + presets (always visible when raise/bet available) */}
       {(canBet || canRaise) && (
-        <FTPButton
-          color="raise"
-          onClick={() => {
-            setRaiseAmount(minRaise);
-            setShowRaiseSlider(true);
-          }}
-          className="flex-1"
-        >
-          {canBet ? 'BET' : 'RAISE'}
-        </FTPButton>
+        <>
+          {/* Preset buttons */}
+          <div className="flex gap-2 justify-center">
+            <PresetButton label="Min" onClick={() => setRaiseAmount(minRaise)} />
+            <PresetButton label="1/2 Pot" onClick={() => setRaiseAmount(Math.min(halfPot, maxRaise))} />
+            <PresetButton label="Pot" onClick={() => setRaiseAmount(Math.min(fullPot, maxRaise))} />
+            <PresetButton label="All-in" onClick={() => setRaiseAmount(maxRaise)} active={raiseAmount === maxRaise} />
+          </div>
+
+          {/* Slider */}
+          <div className="px-1">
+            <input
+              type="range"
+              min={minRaise}
+              max={maxRaise}
+              value={raiseAmount}
+              onChange={(e) => setRaiseAmount(Number(e.target.value))}
+              className="w-full ftp-slider"
+            />
+            <div className="flex justify-between items-center mt-1">
+              <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>{minRaise}</span>
+              <span
+                className="font-bold font-mono tabular-nums"
+                style={{ color: '#EAB308', fontSize: 20 }}
+              >
+                {raiseAmount.toLocaleString()}
+              </span>
+              <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>All-in ({maxRaise})</span>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
