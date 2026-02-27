@@ -1,0 +1,27 @@
+{
+  "name": "poker-softa",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "build:shared": "npm -w shared run build",
+    "build:client": "npm -w client run build",
+    "build:server": "npm -w server run build",
+    "build": "npm run build:shared && npm run build:client && npm run build:server",
+    "build:vercel": "npm run build:shared && npm run build:client",
+    "build:railway": "npm run build:shared && npm run build:server",
+    "dev": "concurrently -k \"npm -w server run dev\" \"npm -w client run dev\"",
+    "start": "node server/dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.4"
+  }
+}

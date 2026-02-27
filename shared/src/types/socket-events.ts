@@ -1,0 +1,40 @@
+export const C2S = {
+  JOIN: 'player:join',
+  READY: 'player:ready',
+  REBUY: 'player:rebuy',
+  ACTION: 'player:action',
+  RIT_RESPONSE: 'player:rit_response',
+  SHOW_CARDS: 'player:show_cards',
+  GET_HISTORY: 'player:get_history',
+  GET_HAND: 'player:get_hand',
+} as const;
+
+export const S2C_PLAYER = {
+  CONNECTED: 'player:connected',
+  ERROR: 'player:error',
+  LOBBY_STATE: 'player:lobby_state',
+  PRIVATE_STATE: 'player:private_state',
+  HAND_START: 'player:hand_start',
+  YOUR_TURN: 'player:your_turn',
+  RIT_OFFER: 'player:rit_offer',
+  SHOW_CARDS_OFFER: 'player:show_cards_offer',
+  HAND_RESULT: 'player:hand_result',
+  BUSTED: 'player:busted',
+  HISTORY_LIST: 'player:history_list',
+  HAND_DETAIL: 'player:hand_detail',
+} as const;
+
+export const S2C_TABLE = {
+  GAME_STATE: 'table:game_state',
+  PLAYER_JOINED: 'table:player_joined',
+  PLAYER_LEFT: 'table:player_left',
+  HAND_START: 'table:hand_start',
+  CARDS_DEALT: 'table:cards_dealt',
+  PLAYER_ACTION: 'table:player_action',
+  STREET_DEAL: 'table:street_deal',
+  POT_UPDATE: 'table:pot_update',
+  SHOWDOWN: 'table:showdown',
+  HAND_RESULT: 'table:hand_result',
+  PLAYER_TIMER: 'table:player_timer',
+  RIT_ACTIVE: 'table:rit_active',
+} as const;
