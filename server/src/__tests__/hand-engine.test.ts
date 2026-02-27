@@ -102,6 +102,7 @@ class HandTestHarness {
       this.events.push(e);
       if (e.type === 'hand_complete') this.result = e.result;
       if (e.type === 'player_turn') this.turnEvents.push(e);
+      if (e.type === 'rit_eligible') this.engine.setRunItTwice(false);
     }, deck);
     this.engine.startHand(1, players, dealerSeat);
   }

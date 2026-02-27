@@ -75,6 +75,7 @@ export class HandEngine {
   private bbIndex: number = -1;
   private isComplete: boolean = false;
   private runItTwice: boolean = false;
+  private pendingRunoutStreets?: Street[];
 
   private onEvent: EventHandler;
 
@@ -526,11 +527,18 @@ export class HandEngine {
     // Check for RIT eligibility
     const allInPlayers = this.players.filter(p => !p.isFolded);
     if (remainingStreets.length > 0 && allInPlayers.length >= 2) {
+      // Save remaining streets and wait for RIT decision
+      this.pendingRunoutStreets = remainingStreets;
       this.onEvent({ type: 'rit_eligible', playerIds: allInPlayers.map(p => p.playerId) });
-      // RIT handling is managed by GameManager which calls setRunItTwice()
-      // For now, just deal the remaining streets
+      // GameManager will call setRunItTwice() after players respond
+      return;
     }
 
+    // No RIT eligible - deal immediately
+    this.dealRunout(remainingStreets);
+  }
+
+  private dealRunout(remainingStreets: Street[]) {
     // Deal remaining community cards (first board)
     for (const s of remainingStreets) {
       const cardCount = s === 'flop' ? 3 : 1;
@@ -563,6 +571,13 @@ export class HandEngine {
 
   setRunItTwice(agreed: boolean) {
     this.runItTwice = agreed;
+
+    // Continue the pending runout now that RIT decision is made
+    if (this.pendingRunoutStreets) {
+      const streets = this.pendingRunoutStreets;
+      this.pendingRunoutStreets = undefined;
+      this.dealRunout(streets);
+    }
   }
 
   private awardPotNoShowdown(winner: HandPlayer) {

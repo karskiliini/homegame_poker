@@ -57,6 +57,7 @@ class FullGameHarness {
       if (e.type === 'player_turn') turnEvents.push(e);
       if (e.type === 'street_dealt') streetEvents.push(e);
       if (e.type === 'player_acted') actEvents.push(e);
+      if (e.type === 'rit_eligible') engine.setRunItTwice(false);
     });
 
     // Rotate dealer
