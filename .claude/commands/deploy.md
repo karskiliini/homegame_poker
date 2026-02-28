@@ -19,3 +19,6 @@ bunx vercel --prod
 ## Step 3 — Report
 - Print which commit was deployed
 - Print the Vercel production URL (https://pokersofta.vercel.app)
+
+## Step 4 — Sync bug reports
+After successful deployment, run `/fetch_user_bugs` to sync any new user-submitted bug reports.

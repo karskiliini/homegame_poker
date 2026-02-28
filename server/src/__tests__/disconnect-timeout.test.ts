@@ -30,7 +30,7 @@ function createMockSocket(id: string) {
 
 function createMockIo() {
   const emitFn = vi.fn();
-  const namespaceObj = { emit: emitFn };
+  const namespaceObj = { emit: emitFn, to: vi.fn().mockReturnValue({ emit: emitFn }) };
   return {
     of: vi.fn().mockReturnValue(namespaceObj),
     _emitFn: emitFn,
@@ -48,7 +48,7 @@ describe('Disconnect timeout', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     io = createMockIo();
-    gm = new GameManager(makeConfig(), io);
+    gm = new GameManager(makeConfig(), io, 'test-table');
   });
 
   afterEach(() => {
@@ -115,7 +115,7 @@ describe('Disconnect timeout', () => {
     // Use a very long action timer so the hand stays in progress
     const longConfig = makeConfig();
     longConfig.actionTimeSeconds = 999_999;
-    const longGm = new GameManager(longConfig, io);
+    const longGm = new GameManager(longConfig, io, 'test-table');
 
     const sock1 = createMockSocket('sock-1');
     const sock2 = createMockSocket('sock-2');

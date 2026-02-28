@@ -1,33 +1,23 @@
 import { useState } from 'react';
-import type { Socket } from 'socket.io-client';
-import { C2S, AVATAR_OPTIONS, AVATAR_BACKGROUNDS } from '@poker/shared';
+import { AVATAR_OPTIONS, AVATAR_BACKGROUNDS } from '@poker/shared';
 import type { AvatarId } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
-
-interface LoginScreenProps {
-  socket: Socket;
-}
 
 function getRandomAvatar(): AvatarId {
   const idx = Math.floor(Math.random() * AVATAR_OPTIONS.length);
   return AVATAR_OPTIONS[idx].id;
 }
 
-export function LoginScreen({ socket }: LoginScreenProps) {
-  const { config, previousName, previousBuyIn, setScreen, setPlayerName } = useGameStore();
-  const [name, setName] = useState(previousName || '');
-  const [buyIn, setBuyIn] = useState(previousBuyIn || config?.maxBuyIn || 200);
+export function LoginScreen() {
+  const { setScreen, setPlayerName, setPlayerAvatar } = useGameStore();
+  const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>(getRandomAvatar);
-
-  const maxBuyIn = config?.maxBuyIn || 200;
 
   const handleJoin = () => {
     if (!name.trim()) return;
-    if (buyIn <= 0 || buyIn > maxBuyIn) return;
-
-    socket.emit(C2S.JOIN, { name: name.trim(), buyIn, avatarId: selectedAvatar });
     setPlayerName(name.trim());
-    setScreen('lobby');
+    setPlayerAvatar(selectedAvatar);
+    setScreen('table_lobby');
   };
 
   return (
@@ -51,7 +41,7 @@ export function LoginScreen({ socket }: LoginScreenProps) {
           POKER NIGHT
         </h1>
         <p className="text-center mb-6" style={{ color: 'var(--ftp-text-secondary)', fontSize: 13 }}>
-          {config ? `${config.gameType} - ${config.smallBlind}/${config.bigBlind}` : 'Connecting...'}
+          Choose your name and avatar
         </p>
 
         <div className="space-y-4">
@@ -63,6 +53,7 @@ export function LoginScreen({ socket }: LoginScreenProps) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
               placeholder="Enter your name"
               className="w-full"
               style={{
@@ -115,52 +106,29 @@ export function LoginScreen({ socket }: LoginScreenProps) {
             </div>
           </div>
 
-          <div>
-            <label className="block mb-1" style={{ color: 'var(--ftp-text-muted)', fontSize: 12, fontWeight: 600 }}>
-              BUY-IN (max {maxBuyIn})
-            </label>
-            <input
-              type="number"
-              value={buyIn}
-              onChange={(e) => setBuyIn(Number(e.target.value))}
-              min={1}
-              max={maxBuyIn}
-              className="w-full"
-              style={{
-                padding: '12px 16px',
-                borderRadius: 6,
-                background: 'rgba(0,0,0,0.4)',
-                color: '#FFFFFF',
-                border: '1px solid rgba(255,255,255,0.15)',
-                fontSize: 16,
-                outline: 'none',
-              }}
-            />
-          </div>
-
           <button
             onClick={handleJoin}
-            disabled={!name.trim() || buyIn <= 0 || buyIn > maxBuyIn}
+            disabled={!name.trim()}
             style={{
               width: '100%',
               padding: '14px 24px',
               borderRadius: 8,
-              background: !name.trim() || buyIn <= 0 || buyIn > maxBuyIn
+              background: !name.trim()
                 ? 'var(--ftp-bg-tertiary)'
                 : 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))',
               color: 'white',
               fontWeight: 700,
               fontSize: 16,
               border: 'none',
-              cursor: !name.trim() || buyIn <= 0 || buyIn > maxBuyIn ? 'not-allowed' : 'pointer',
-              boxShadow: !name.trim() || buyIn <= 0 || buyIn > maxBuyIn
+              cursor: !name.trim() ? 'not-allowed' : 'pointer',
+              boxShadow: !name.trim()
                 ? 'none'
                 : '0 4px 0 #5a0d12, 0 6px 12px rgba(0,0,0,0.3)',
               letterSpacing: 1,
               textTransform: 'uppercase',
             }}
           >
-            Join Game
+            Enter Lobby
           </button>
         </div>
       </div>

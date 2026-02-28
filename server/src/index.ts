@@ -3,21 +3,18 @@ import { createApp } from './app.js';
 import { createSocketServer } from './socket/index.js';
 import { parseConfig } from './config.js';
 
-const configWithPort = parseConfig();
-const { port, ...config } = configWithPort;
+const { port } = parseConfig();
 
 const app = createApp();
 const httpServer = createServer(app);
-const { gameManager } = createSocketServer(httpServer, config);
+const { tableManager } = createSocketServer(httpServer);
 
 httpServer.listen(port, () => {
   console.log(`
 ╔══════════════════════════════════════════════╗
 ║          POKER HOME GAME SERVER              ║
 ╠══════════════════════════════════════════════╣
-║  Game:       ${config.gameType.padEnd(30)}║
-║  Blinds:     ${(config.smallBlind + '/' + config.bigBlind).padEnd(30)}║
-║  Max Buy-in: ${String(config.maxBuyIn).padEnd(30)}║
+║  Multi-table lobby enabled                   ║
 ║  Port:       ${String(port).padEnd(30)}║
 ╠══════════════════════════════════════════════╣
 ║  Table view: http://localhost:${port}/table${' '.repeat(Math.max(0, 9 - String(port).length))}║

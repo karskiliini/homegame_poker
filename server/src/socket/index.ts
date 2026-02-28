@@ -1,12 +1,10 @@
 import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
-import type { GameConfig } from '@poker/shared';
-import { S2C_TABLE } from '@poker/shared';
-import { GameManager } from '../game/GameManager.js';
+import { TableManager } from '../game/TableManager.js';
 import { setupPlayerNamespace } from './player-namespace.js';
 import { setupTableNamespace } from './table-namespace.js';
 
-export function createSocketServer(httpServer: HttpServer, config: GameConfig) {
+export function createSocketServer(httpServer: HttpServer) {
   const io = new Server(httpServer, {
     cors: {
       origin: process.env.CLIENT_URL || '*',
@@ -14,13 +12,13 @@ export function createSocketServer(httpServer: HttpServer, config: GameConfig) {
     },
   });
 
-  const gameManager = new GameManager(config, io);
+  const tableManager = new TableManager(io);
 
   const playerNsp = io.of('/player');
   const tableNsp = io.of('/table');
 
-  setupPlayerNamespace(playerNsp, gameManager);
-  setupTableNamespace(tableNsp, gameManager);
+  setupPlayerNamespace(playerNsp, tableManager);
+  setupTableNamespace(tableNsp, tableManager);
 
-  return { io, gameManager };
+  return { io, tableManager };
 }

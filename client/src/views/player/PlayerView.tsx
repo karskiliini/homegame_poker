@@ -1,29 +1,36 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { S2C_PLAYER } from '@poker/shared';
-import type { GameConfig, PrivatePlayerState, HandRecord, SoundType } from '@poker/shared';
+import { S2C_PLAYER, S2C_LOBBY, C2S_LOBBY } from '@poker/shared';
+import type { PrivatePlayerState, HandRecord, SoundType, TableInfo, StakeLevel } from '@poker/shared';
 import { createPlayerSocket } from '../../socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { LoginScreen } from './LoginScreen.js';
 import { LobbyScreen } from './LobbyScreen.js';
 import { GameScreen } from './GameScreen.js';
+import { TableLobbyScreen } from './TableLobbyScreen.js';
 import { RunItTwicePrompt } from './RunItTwicePrompt.js';
 import { ShowCardsPrompt } from './ShowCardsPrompt.js';
+import { RebuyPrompt } from './RebuyPrompt.js';
 import { HandHistoryList } from '../history/HandHistoryList.js';
 import { HandHistoryDetail } from '../history/HandHistoryDetail.js';
 import { playerSoundManager } from '../../audio/SoundManager.js';
 import { SoundToggle } from '../../components/SoundToggle.js';
+import { BugReportButton } from '../../components/BugReportButton.js';
 
 export function PlayerView() {
   const socketRef = useRef(createPlayerSocket());
   const {
-    screen, setScreen, setConnected, setConfig,
-    setLobbyState, setPrivateState, setPreviousInfo,
+    screen, setScreen, setConnected,
+    setLobbyState, setPrivateState,
+    setTables, setPlayerId, setCurrentTableId, setStakeLevels,
   } = useGameStore();
 
   const [showRit, setShowRit] = useState(false);
   const [ritDeadline, setRitDeadline] = useState(0);
   const [showShowCards, setShowShowCards] = useState(false);
+  const [showRebuyPrompt, setShowRebuyPrompt] = useState(false);
+  const [rebuyDeadline, setRebuyDeadline] = useState(0);
+  const [rebuyMaxBuyIn, setRebuyMaxBuyIn] = useState(0);
   const [handHistoryView, setHandHistoryView] = useState<'none' | 'list' | 'detail'>('none');
   const [handHistoryData, setHandHistoryData] = useState<HandRecord[]>([]);
   const [selectedHand, setSelectedHand] = useState<HandRecord | null>(null);
@@ -36,13 +43,25 @@ export function PlayerView() {
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
 
-    socket.on(S2C_PLAYER.CONNECTED, (data: { config: GameConfig }) => {
-      setConfig(data.config);
+    socket.on(S2C_PLAYER.CONNECTED, (data: { stakeLevels: StakeLevel[] }) => {
+      setStakeLevels(data.stakeLevels);
     });
 
+    // Lobby events
+    socket.on(S2C_LOBBY.TABLE_LIST, (tables: TableInfo[]) => {
+      setTables(tables);
+    });
+
+    socket.on(S2C_PLAYER.JOINED, (data: { playerId: string; tableId: string }) => {
+      setPlayerId(data.playerId);
+      setCurrentTableId(data.tableId);
+      setScreen('lobby');
+    });
+
+    // Per-table events
     socket.on(S2C_PLAYER.LOBBY_STATE, (state: any) => {
       setLobbyState(state);
-      if (state.phase === 'hand_in_progress' && screen !== 'game') {
+      if (state.phase === 'hand_in_progress' && useGameStore.getState().screen !== 'game') {
         setScreen('game');
       }
     });
@@ -55,9 +74,10 @@ export function PlayerView() {
       setScreen('game');
     });
 
-    socket.on(S2C_PLAYER.BUSTED, (data: { previousName: string; previousBuyIn: number }) => {
-      setPreviousInfo(data.previousName, data.previousBuyIn);
-      setScreen('login');
+    socket.on(S2C_PLAYER.REBUY_PROMPT, (data: { maxBuyIn: number; deadline: number }) => {
+      setRebuyMaxBuyIn(data.maxBuyIn);
+      setRebuyDeadline(data.deadline);
+      setShowRebuyPrompt(true);
     });
 
     socket.on(S2C_PLAYER.RIT_OFFER, (data: { deadline: number }) => {
@@ -79,10 +99,14 @@ export function PlayerView() {
     });
 
     socket.on(S2C_PLAYER.HAND_RESULT, () => {
-      // Hand finished - could show result overlay
+      // Hand finished
     });
 
     socket.on(S2C_PLAYER.ERROR, (data: { message: string }) => {
+      alert(data.message);
+    });
+
+    socket.on(S2C_LOBBY.ERROR, (data: { message: string }) => {
       alert(data.message);
     });
 
@@ -94,6 +118,14 @@ export function PlayerView() {
       socket.disconnect();
     };
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleLeaveTable = useCallback(() => {
+    socketRef.current.emit(C2S_LOBBY.LEAVE_TABLE);
+    setCurrentTableId(null);
+    setLobbyState(null);
+    setPrivateState(null);
+    setScreen('table_lobby');
+  }, [setCurrentTableId, setLobbyState, setPrivateState, setScreen]);
 
   const toggleSound = useCallback(() => {
     const next = !playerSoundManager.enabled;
@@ -126,13 +158,15 @@ export function PlayerView() {
   const renderScreen = () => {
     switch (screen) {
       case 'login':
-        return <LoginScreen socket={socketRef.current} />;
+        return <LoginScreen />;
+      case 'table_lobby':
+        return <TableLobbyScreen socket={socketRef.current} />;
       case 'lobby':
         return <LobbyScreen socket={socketRef.current} />;
       case 'game':
-        return <GameScreen socket={socketRef.current} onOpenHistory={openHistory} />;
+        return <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} />;
       default:
-        return <LoginScreen socket={socketRef.current} />;
+        return <LoginScreen />;
     }
   };
 
@@ -181,6 +215,15 @@ export function PlayerView() {
         />
       )}
 
+      {showRebuyPrompt && (
+        <RebuyPrompt
+          socket={socketRef.current}
+          maxBuyIn={rebuyMaxBuyIn}
+          deadline={rebuyDeadline}
+          onClose={() => setShowRebuyPrompt(false)}
+        />
+      )}
+
       {handHistoryView === 'list' && (
         <HandHistoryList
           hands={handHistoryData}
@@ -197,6 +240,8 @@ export function PlayerView() {
           onNext={selectedIdx < handHistoryData.length - 1 ? () => navigateHand('next') : undefined}
         />
       )}
+
+      <BugReportButton socket={socketRef.current} />
     </>
   );
 }

@@ -4,6 +4,7 @@ export const DEFAULT_ACTION_TIME_SECONDS = 30;
 export const HAND_COMPLETE_PAUSE_MS = 5000;
 export const RIT_TIMEOUT_MS = 10000;
 export const SHOW_CARDS_TIMEOUT_MS = 10000;
+export const REBUY_PROMPT_MS = 5000;
 export const MAX_HAND_HISTORY = 100;
 
 // Animation timing delays (server-side event pacing)

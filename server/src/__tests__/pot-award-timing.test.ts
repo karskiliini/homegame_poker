@@ -5,7 +5,6 @@ import {
   S2C_TABLE, S2C_PLAYER,
   HAND_COMPLETE_PAUSE_MS,
   DELAY_POT_AWARD_MS,
-  DELAY_BETWEEN_POT_AWARDS_MS,
 } from '@poker/shared';
 import type { HandResult } from '../game/HandEngine.js';
 
@@ -36,7 +35,7 @@ function createMockSocket(id: string) {
 
 function createMockIo() {
   const emitFn = vi.fn();
-  const namespaceObj = { emit: emitFn };
+  const namespaceObj = { emit: emitFn, to: vi.fn().mockReturnValue({ emit: emitFn }) };
   return {
     of: vi.fn().mockReturnValue(namespaceObj),
     _emitFn: emitFn,
@@ -121,7 +120,7 @@ describe('Pot award timing', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     io = createMockIo();
-    gm = new GameManager(makeConfig(), io);
+    gm = new GameManager(makeConfig(), io, 'test-table');
 
     // Add players so GameManager has player mappings for handleHandComplete
     const sock1 = createMockSocket('sock-1');
@@ -142,21 +141,21 @@ describe('Pot award timing', () => {
     (gm as any).playerIdToSocketId.set('p2', 'sock-2');
     (gm as any).handleHandComplete(result);
 
-    // POT_AWARD should be emitted immediately (no sequential delay for single pot)
+    // POT_AWARD should be emitted with all awards in one call
     const potAwardCalls = io._emitFn.mock.calls.filter(
       (call: any[]) => call[0] === S2C_TABLE.POT_AWARD
     );
     expect(potAwardCalls).toHaveLength(1);
-    expect(potAwardCalls[0][1]).toMatchObject({
-      potIndex: 0,
-      isLastPot: true,
-      totalPots: 1,
-    });
     expect(potAwardCalls[0][1].awards).toHaveLength(1);
-    expect(potAwardCalls[0][1].awards[0].winnerName).toBe('Alice');
+    expect(potAwardCalls[0][1].awards[0]).toMatchObject({
+      potIndex: 0,
+      amount: 20,
+      winnerName: 'Alice',
+      winnerSeatIndex: 0,
+    });
   });
 
-  it('emits sequential POT_AWARDs for multi-pot hands', () => {
+  it('emits all pot awards in a single POT_AWARD for multi-pot hands', () => {
     const result = makeMultiPotResult();
     (gm as any).phase = 'hand_in_progress';
     // Add third player
@@ -167,50 +166,38 @@ describe('Pot award timing', () => {
     (gm as any).playerIdToSocketId.set('p3', 'sock-3');
     (gm as any).handleHandComplete(result);
 
-    // First POT_AWARD emitted immediately
-    let potAwardCalls = io._emitFn.mock.calls.filter(
+    // All awards emitted in a single POT_AWARD event
+    const potAwardCalls = io._emitFn.mock.calls.filter(
       (call: any[]) => call[0] === S2C_TABLE.POT_AWARD
     );
     expect(potAwardCalls).toHaveLength(1);
-    expect(potAwardCalls[0][1]).toMatchObject({
+    expect(potAwardCalls[0][1].awards).toHaveLength(2);
+    expect(potAwardCalls[0][1].awards[0]).toMatchObject({
       potIndex: 0,
-      isLastPot: false,
-      totalPots: 2,
+      amount: 150,
+      winnerName: 'Bob',
     });
-
-    // Second POT_AWARD after DELAY_BETWEEN_POT_AWARDS_MS
-    vi.advanceTimersByTime(DELAY_BETWEEN_POT_AWARDS_MS);
-    potAwardCalls = io._emitFn.mock.calls.filter(
-      (call: any[]) => call[0] === S2C_TABLE.POT_AWARD
-    );
-    expect(potAwardCalls).toHaveLength(2);
-    expect(potAwardCalls[1][1]).toMatchObject({
+    expect(potAwardCalls[0][1].awards[1]).toMatchObject({
       potIndex: 1,
-      isLastPot: true,
-      totalPots: 2,
+      amount: 100,
+      winnerName: 'Bob',
     });
   });
 
-  it('emits HAND_RESULT after DELAY_POT_AWARD_MS from last pot award', () => {
-    const result = makeMultiPotResult();
+  it('emits HAND_RESULT after DELAY_POT_AWARD_MS', () => {
+    const result = makeSinglePotResult();
     (gm as any).phase = 'hand_in_progress';
-    const sock3 = createMockSocket('sock-3');
-    gm.addPlayer(sock3, 'Carol', 200);
     (gm as any).playerIdToSocketId.set('p1', 'sock-1');
     (gm as any).playerIdToSocketId.set('p2', 'sock-2');
-    (gm as any).playerIdToSocketId.set('p3', 'sock-3');
     (gm as any).handleHandComplete(result);
 
-    // Advance past all pot awards
-    vi.advanceTimersByTime(DELAY_BETWEEN_POT_AWARDS_MS);
-
-    // HAND_RESULT should NOT be emitted yet
+    // HAND_RESULT should NOT be emitted yet (only POT_AWARD so far)
     let handResultCalls = io._emitFn.mock.calls.filter(
       (call: any[]) => call[0] === S2C_TABLE.HAND_RESULT
     );
     expect(handResultCalls).toHaveLength(0);
 
-    // Advance past DELAY_POT_AWARD_MS from last pot award
+    // Advance past DELAY_POT_AWARD_MS
     vi.advanceTimersByTime(DELAY_POT_AWARD_MS);
 
     handResultCalls = io._emitFn.mock.calls.filter(

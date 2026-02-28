@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import { C2S, resolvePreAction } from '@poker/shared';
+import { C2S, C2S_TABLE, resolvePreAction } from '@poker/shared';
 import type { PreActionType } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { useTableAnimations } from '../../hooks/useTableAnimations.js';
@@ -17,21 +17,37 @@ const TABLE_H = 550;
 interface GameScreenProps {
   socket: Socket;
   onOpenHistory?: () => void;
+  onLeaveTable?: () => void;
 }
 
-export function GameScreen({ socket, onOpenHistory }: GameScreenProps) {
-  const { privateState, lobbyState, gameState, setGameState } = useGameStore();
+export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenProps) {
+  const { privateState, lobbyState, gameState, setGameState, currentTableId } = useGameStore();
   const tableSocketRef = useRef(createTableSocket());
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  // Connect / disconnect the table namespace socket
+  // Connect table socket and watch the current table
   useEffect(() => {
     const ts = tableSocketRef.current;
     ts.connect();
-    return () => { ts.disconnect(); };
-  }, []);
+
+    const handleConnect = () => {
+      if (currentTableId) {
+        ts.emit(C2S_TABLE.WATCH, { tableId: currentTableId });
+      }
+    };
+
+    ts.on('connect', handleConnect);
+    if (ts.connected && currentTableId) {
+      ts.emit(C2S_TABLE.WATCH, { tableId: currentTableId });
+    }
+
+    return () => {
+      ts.off('connect', handleConnect);
+      ts.disconnect();
+    };
+  }, [currentTableId]);
 
   // Animation hook — sound disabled (PlayerView handles sound via /player namespace)
   const seatRotation = privateState?.seatIndex;
@@ -91,9 +107,13 @@ export function GameScreen({ socket, onOpenHistory }: GameScreenProps) {
   }, [privateState?.holeCards.length]);
 
   const isFolded = privateState?.status === 'folded';
+  const isSittingOut = privateState?.status === 'sitting_out';
+  const isBusted = privateState?.status === 'busted';
   const isHandActive = lobbyState?.phase === 'hand_in_progress';
   const showActions = privateState?.isMyTurn && isHandActive && (privateState?.availableActions.length ?? 0) > 0;
-  const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && (privateState?.holeCards.length ?? 0) > 0;
+  const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && !isSittingOut && !isBusted && (privateState?.holeCards.length ?? 0) > 0;
+
+  const config = gameState?.config;
 
   return (
     <div
@@ -109,6 +129,26 @@ export function GameScreen({ socket, onOpenHistory }: GameScreenProps) {
           background: 'radial-gradient(ellipse at 50% 80%, #1A1208, #12100C, #0A0A0F)',
         }}
       >
+        {/* Leave Table button */}
+        {onLeaveTable && !isHandActive && (
+          <button
+            onClick={onLeaveTable}
+            className="absolute top-3 left-3 z-30"
+            style={{
+              padding: '6px 14px',
+              borderRadius: 6,
+              background: 'rgba(255,255,255,0.1)',
+              color: 'var(--ftp-text-secondary)',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            Leave Table
+          </button>
+        )}
+
         {gameState ? (
           <div
             ref={tableContainerRef}
@@ -198,7 +238,19 @@ export function GameScreen({ socket, onOpenHistory }: GameScreenProps) {
 
         {/* Actions */}
         <div className="mt-2">
-          {showActions && privateState ? (
+          {(isSittingOut || isBusted) ? (
+            <div className="text-center py-4 space-y-3">
+              <div style={{ color: 'var(--ftp-text-muted)', fontSize: 15 }}>
+                Sitting Out
+              </div>
+              <button
+                onClick={() => socket.emit(C2S.REBUY, { amount: config?.maxBuyIn ?? 200 })}
+                className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-lg"
+              >
+                Rebuy {config?.maxBuyIn ?? 200}
+              </button>
+            </div>
+          ) : showActions && privateState ? (
             <ActionButtons
               socket={socket}
               availableActions={privateState.availableActions}

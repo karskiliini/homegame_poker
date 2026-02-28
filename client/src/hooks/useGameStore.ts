@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { GameState, GameConfig, PrivatePlayerState } from '@poker/shared';
+import type { GameState, PrivatePlayerState, TableInfo, StakeLevel } from '@poker/shared';
+import type { AvatarId } from '@poker/shared';
 
 interface LobbyPlayer {
   id: string;
@@ -15,6 +16,7 @@ interface LobbyState {
   readyCount: number;
   neededCount: number;
   phase: string;
+  tableId?: string;
 }
 
 interface GameStore {
@@ -22,17 +24,25 @@ interface GameStore {
   isConnected: boolean;
   setConnected: (connected: boolean) => void;
 
-  // Config
-  config: GameConfig | null;
-  setConfig: (config: GameConfig) => void;
+  // Stake levels (from server)
+  stakeLevels: StakeLevel[];
+  setStakeLevels: (levels: StakeLevel[]) => void;
 
   // Player identity
   playerId: string | null;
   setPlayerId: (id: string) => void;
   playerName: string | null;
   setPlayerName: (name: string) => void;
+  playerAvatar: AvatarId;
+  setPlayerAvatar: (avatar: AvatarId) => void;
 
-  // Lobby state
+  // Table lobby
+  tables: TableInfo[];
+  setTables: (tables: TableInfo[]) => void;
+  currentTableId: string | null;
+  setCurrentTableId: (id: string | null) => void;
+
+  // Per-table lobby state
   lobbyState: LobbyState | null;
   setLobbyState: (state: LobbyState) => void;
 
@@ -45,26 +55,28 @@ interface GameStore {
   setPrivateState: (state: PrivatePlayerState) => void;
 
   // UI state
-  screen: 'login' | 'lobby' | 'game' | 'busted';
-  setScreen: (screen: 'login' | 'lobby' | 'game' | 'busted') => void;
-
-  // Busted state (pre-fill)
-  previousName: string;
-  previousBuyIn: number;
-  setPreviousInfo: (name: string, buyIn: number) => void;
+  screen: 'login' | 'table_lobby' | 'lobby' | 'game';
+  setScreen: (screen: 'login' | 'table_lobby' | 'lobby' | 'game') => void;
 }
 
 export const useGameStore = create<GameStore>((set) => ({
   isConnected: false,
   setConnected: (isConnected) => set({ isConnected }),
 
-  config: null,
-  setConfig: (config) => set({ config }),
+  stakeLevels: [],
+  setStakeLevels: (stakeLevels) => set({ stakeLevels }),
 
   playerId: null,
   setPlayerId: (playerId) => set({ playerId }),
   playerName: null,
   setPlayerName: (playerName) => set({ playerName }),
+  playerAvatar: 'ninja',
+  setPlayerAvatar: (playerAvatar) => set({ playerAvatar }),
+
+  tables: [],
+  setTables: (tables) => set({ tables }),
+  currentTableId: null,
+  setCurrentTableId: (currentTableId) => set({ currentTableId }),
 
   lobbyState: null,
   setLobbyState: (lobbyState) => set({ lobbyState }),
@@ -77,8 +89,4 @@ export const useGameStore = create<GameStore>((set) => ({
 
   screen: 'login',
   setScreen: (screen) => set({ screen }),
-
-  previousName: '',
-  previousBuyIn: 0,
-  setPreviousInfo: (previousName, previousBuyIn) => set({ previousName, previousBuyIn }),
 }));

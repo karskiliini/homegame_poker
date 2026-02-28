@@ -2,11 +2,14 @@ export const C2S = {
   JOIN: 'player:join',
   READY: 'player:ready',
   REBUY: 'player:rebuy',
+  SIT_OUT: 'player:sit_out',
   ACTION: 'player:action',
   RIT_RESPONSE: 'player:rit_response',
   SHOW_CARDS: 'player:show_cards',
   GET_HISTORY: 'player:get_history',
   GET_HAND: 'player:get_hand',
+  RECONNECT: 'player:reconnect',
+  REPORT_BUG: 'player:report_bug',
 } as const;
 
 export const S2C_PLAYER = {
@@ -20,9 +23,34 @@ export const S2C_PLAYER = {
   SHOW_CARDS_OFFER: 'player:show_cards_offer',
   HAND_RESULT: 'player:hand_result',
   BUSTED: 'player:busted',
+  REBUY_PROMPT: 'player:rebuy_prompt',
   HISTORY_LIST: 'player:history_list',
   HAND_DETAIL: 'player:hand_detail',
   SOUND: 'player:sound',
+  JOINED: 'player:joined',
+  BUG_REPORTED: 'player:bug_reported',
+} as const;
+
+export const C2S_LOBBY = {
+  GET_TABLES: 'lobby:get_tables',
+  CREATE_TABLE: 'lobby:create_table',
+  JOIN_TABLE: 'lobby:join_table',
+  LEAVE_TABLE: 'lobby:leave_table',
+} as const;
+
+export const S2C_LOBBY = {
+  TABLE_LIST: 'lobby:table_list',
+  TABLE_CREATED: 'lobby:table_created',
+  TABLE_UPDATED: 'lobby:table_updated',
+  TABLE_REMOVED: 'lobby:table_removed',
+  ERROR: 'lobby:error',
+} as const;
+
+export const C2S_TABLE = {
+  GET_HISTORY: 'table:get_history',
+  GET_HAND: 'table:get_hand',
+  WATCH: 'table:watch',
+  UNWATCH: 'table:unwatch',
 } as const;
 
 export const S2C_TABLE = {
@@ -40,5 +68,7 @@ export const S2C_TABLE = {
   PLAYER_TIMER: 'table:player_timer',
   RIT_ACTIVE: 'table:rit_active',
   SECOND_BOARD_DEALT: 'table:second_board_dealt',
+  HISTORY_LIST: 'table:history_list',
+  HAND_DETAIL: 'table:hand_detail',
   SOUND: 'table:sound',
 } as const;
