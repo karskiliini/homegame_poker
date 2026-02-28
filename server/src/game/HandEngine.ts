@@ -8,6 +8,7 @@ import { collectBetsIntoPots } from './PotManager.js';
 import { determineWinners, evaluateHand } from '../evaluation/hand-rank.js';
 import type { EvaluationResult } from '../evaluation/hand-rank.js';
 import { calculateEquity } from '../evaluation/equity.js';
+import { isBadBeat } from '../evaluation/bad-beat.js';
 
 export interface HandResult {
   handId: string;
@@ -49,6 +50,7 @@ export type HandEngineEvent =
   | { type: 'rit_eligible'; playerIds: string[] }
   | { type: 'second_board_dealt'; cards: CardString[] }
   | { type: 'showdown'; entries: ShowdownEntry[] }
+  | { type: 'bad_beat'; loserPlayerId: string; loserSeatIndex: number; loserHandName: string; loserHandDescription: string; winnerPlayerId: string; winnerSeatIndex: number; winnerHandName: string }
   | { type: 'hand_complete'; result: HandResult };
 
 type EventHandler = (event: HandEngineEvent) => void;
@@ -794,6 +796,27 @@ export class HandEngine {
     }
 
     this.onEvent({ type: 'showdown', entries: showdownEntries });
+
+    // Check for bad beat: did a player lose with a strong hand?
+    const allWinnerIds = [...new Set(potResults.flatMap(p => p.winners.map(w => w.playerId)))];
+    const showdownPlayerData = activePlayers.map(p => ({
+      playerId: p.playerId,
+      seatIndex: p.seatIndex,
+      holeCards: p.holeCards,
+    }));
+    const badBeat = isBadBeat(this.gameType, showdownPlayerData, this.communityCards, allWinnerIds);
+    if (badBeat) {
+      this.onEvent({
+        type: 'bad_beat',
+        loserPlayerId: badBeat.loserPlayerId,
+        loserSeatIndex: badBeat.loserSeatIndex,
+        loserHandName: badBeat.loserHandName,
+        loserHandDescription: badBeat.loserHandDescription,
+        winnerPlayerId: badBeat.winnerPlayerId,
+        winnerSeatIndex: badBeat.winnerSeatIndex,
+        winnerHandName: badBeat.winnerHandName,
+      });
+    }
 
     const result: HandResult = {
       handId: this.handId,

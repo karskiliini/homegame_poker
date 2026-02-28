@@ -81,4 +81,5 @@ export const S2C_TABLE = {
   ALLIN_SHOWDOWN: 'table:allin_showdown',
   EQUITY_UPDATE: 'table:equity_update',
   CHAT_MESSAGE: 'table:chat_message',
+  BAD_BEAT: 'table:bad_beat',
 } as const;

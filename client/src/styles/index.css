@@ -101,6 +101,7 @@
   --ftp-anim-allin-pulse: 2000ms;
   --ftp-anim-btn-hover: 100ms;
   --ftp-anim-btn-click: 50ms;
+  --ftp-anim-bad-beat: 3000ms;
 
   /* EASING */
   --ftp-ease-deal: cubic-bezier(0.25, 0.1, 0.25, 1.0);
@@ -421,4 +422,113 @@ input[type="range"].ftp-slider::-webkit-slider-thumb:hover {
 @keyframes timer-shrink {
   from { width: 100%; }
   to { width: 0%; }
+}
+
+/* ============================================================
+   Bad Beat animation
+   ============================================================ */
+
+/* Explosion burst at the loser's seat */
+@keyframes bad-beat-explosion {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  20% {
+    transform: scale(1.8);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(2.5);
+    opacity: 0.8;
+  }
+  60% {
+    transform: scale(3.2);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.animate-bad-beat-explosion {
+  animation: bad-beat-explosion 1.2s ease-out forwards;
+  pointer-events: none;
+}
+
+/* "BAD BEAT!" text slam-in */
+@keyframes bad-beat-text {
+  0% {
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  45% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  75% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+}
+
+.animate-bad-beat-text {
+  animation: bad-beat-text 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  pointer-events: none;
+}
+
+/* Screen edge flash (red vignette) */
+@keyframes bad-beat-flash {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  30% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  70% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-bad-beat-flash {
+  animation: bad-beat-flash 2.5s ease-out forwards;
+  pointer-events: none;
+}
+
+/* Loser seat shake */
+@keyframes bad-beat-shake {
+  0%, 100% { transform: translate(-50%, -50%); }
+  10% { transform: translate(calc(-50% + 4px), calc(-50% - 2px)); }
+  20% { transform: translate(calc(-50% - 6px), calc(-50% + 3px)); }
+  30% { transform: translate(calc(-50% + 5px), calc(-50% + 2px)); }
+  40% { transform: translate(calc(-50% - 3px), calc(-50% - 4px)); }
+  50% { transform: translate(calc(-50% + 2px), calc(-50% + 1px)); }
+  60% { transform: translate(calc(-50% - 4px), calc(-50% + 3px)); }
+  70% { transform: translate(calc(-50% + 3px), calc(-50% - 2px)); }
+  80% { transform: translate(calc(-50% - 1px), calc(-50% + 4px)); }
+  90% { transform: translate(calc(-50% + 2px), calc(-50% - 1px)); }
+}
+
+.animate-bad-beat-shake {
+  animation: bad-beat-shake 0.6s ease-in-out 2;
 }

@@ -400,6 +400,17 @@ export class GameManager {
         this.emitToTableRoom(S2C_TABLE.SHOWDOWN, { reveals: event.entries.map(e => ({ seatIndex: e.seatIndex, cards: e.holeCards, handName: e.handName, handDescription: e.handDescription })) });
         break;
 
+      case 'bad_beat':
+        this.emitToTableRoom(S2C_TABLE.BAD_BEAT, {
+          loserSeatIndex: event.loserSeatIndex,
+          loserHandName: event.loserHandName,
+          loserHandDescription: event.loserHandDescription,
+          winnerSeatIndex: event.winnerSeatIndex,
+          winnerHandName: event.winnerHandName,
+        });
+        console.log(`BAD BEAT! ${event.loserHandName} loses to ${event.winnerHandName}`);
+        break;
+
       case 'hand_complete':
         this.handleHandComplete(event.result);
         break;

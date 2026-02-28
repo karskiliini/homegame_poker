@@ -26,6 +26,14 @@ interface UseTableAnimationsOptions {
   seatRotation?: number;
 }
 
+interface BadBeatData {
+  loserSeatIndex: number;
+  loserHandName: string;
+  loserHandDescription: string;
+  winnerSeatIndex: number;
+  winnerHandName: string;
+}
+
 interface UseTableAnimationsResult {
   potAwards: PotAward[] | undefined;
   winnerSeats: number[];
@@ -37,6 +45,7 @@ interface UseTableAnimationsResult {
   dealCardAnimations: DealCardAnimation[];
   equities: Record<number, number> | null;
   dramaticRiver: boolean;
+  badBeat: BadBeatData | null;
 }
 
 let animId = 0;
@@ -59,6 +68,7 @@ export function useTableAnimations({
   const [dealCardAnimations, setDealCardAnimations] = useState<DealCardAnimation[]>([]);
   const [equities, setEquities] = useState<Record<number, number> | null>(null);
   const [dramaticRiver, setDramaticRiver] = useState(false);
+  const [badBeat, setBadBeat] = useState<BadBeatData | null>(null);
 
   // Helper: resolve display position for a seat index (respects rotation)
   const getSeatPos = (seatIndex: number) => {
@@ -240,6 +250,12 @@ export function useTableAnimations({
       }
     };
 
+    const onBadBeat = (data: BadBeatData) => {
+      setBadBeat(data);
+      // Auto-clear after animation duration (3 seconds)
+      setTimeout(() => setBadBeat(null), 3000);
+    };
+
     const onHandResult = () => {
       // Clear equity display when hand completes
       setEquities(null);
@@ -258,6 +274,7 @@ export function useTableAnimations({
     socket.on(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
     socket.on(S2C_TABLE.STREET_DEAL, onStreetDeal);
     socket.on(S2C_TABLE.HAND_RESULT, onHandResult);
+    socket.on(S2C_TABLE.BAD_BEAT, onBadBeat);
 
     return () => {
       socket.off?.(S2C_TABLE.GAME_STATE, onGameState);
@@ -272,6 +289,7 @@ export function useTableAnimations({
       socket.off?.(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
       socket.off?.(S2C_TABLE.STREET_DEAL, onStreetDeal);
       socket.off?.(S2C_TABLE.HAND_RESULT, onHandResult);
+      socket.off?.(S2C_TABLE.BAD_BEAT, onBadBeat);
     };
   }, [socket, enableSound, seatRotation]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -286,5 +304,6 @@ export function useTableAnimations({
     dealCardAnimations,
     equities,
     dramaticRiver,
+    badBeat,
   };
 }

@@ -104,6 +104,8 @@ interface PokerTableProps {
   equities?: Record<number, number> | null;
   /** Whether the river card should use dramatic peel animation */
   dramaticRiver?: boolean;
+  /** Bad beat data: when set, renders explosion + text overlay */
+  badBeat?: { loserSeatIndex: number; loserHandName: string; winnerHandName: string } | null;
   /** Called when an empty seat is clicked (for seat selection) */
   onSeatClick?: (seatIndex: number) => void;
   /** Active speech bubble to render above a seat */
@@ -165,7 +167,7 @@ export function PokerTable({
   timerData, collectingBets, potGrow,
   betChipAnimations = [], dealCardAnimations = [],
   mySeatIndex, myPlayerId, myHoleCards, highlightMySeat,
-  equities, dramaticRiver, onSeatClick,
+  equities, dramaticRiver, badBeat, onSeatClick,
   speechBubble, onSpeechBubbleDone,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
@@ -599,6 +601,93 @@ export function PokerTable({
         </div>
       ))}
 
+      {/* Bad Beat overlay */}
+      {badBeat && (() => {
+        const loserPos = getDisplaySeatPos(badBeat.loserSeatIndex);
+        return (
+          <>
+            {/* Red screen edge flash */}
+            <div
+              className="absolute inset-0 animate-bad-beat-flash"
+              style={{
+                borderRadius: '50%',
+                boxShadow: 'inset 0 0 80px 40px rgba(196, 30, 42, 0.6)',
+                zIndex: 55,
+              }}
+            />
+
+            {/* Explosion burst at loser's seat */}
+            <div
+              className="absolute animate-bad-beat-explosion"
+              style={{
+                left: `${loserPos.x}%`,
+                top: `${loserPos.y}%`,
+                transform: 'translate(-50%, -50%)',
+                width: 60,
+                height: 60,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(234,179,8,0.9) 0%, rgba(196,30,42,0.8) 40%, rgba(196,30,42,0) 70%)',
+                zIndex: 56,
+              }}
+            />
+
+            {/* Second explosion ring (slightly delayed) */}
+            <div
+              className="absolute animate-bad-beat-explosion"
+              style={{
+                left: `${loserPos.x}%`,
+                top: `${loserPos.y}%`,
+                transform: 'translate(-50%, -50%)',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(234,179,8,0.6) 30%, rgba(196,30,42,0) 60%)',
+                zIndex: 57,
+                animationDelay: '150ms',
+              }}
+            />
+
+            {/* "BAD BEAT!" text in center of table */}
+            <div
+              className="absolute animate-bad-beat-text"
+              style={{
+                left: '50%',
+                top: '42%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 60,
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 42,
+                  fontWeight: 900,
+                  color: 'var(--ftp-red-light)',
+                  textShadow: '0 0 20px rgba(196,30,42,0.8), 0 0 40px rgba(196,30,42,0.4), 0 2px 4px rgba(0,0,0,0.8)',
+                  letterSpacing: 6,
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                BAD BEAT!
+              </div>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.8)',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                  marginTop: 4,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {badBeat.loserHandName} loses to {badBeat.winnerHandName}
+              </div>
+            </div>
+          </>
+        );
+      })()}
+
       {/* Waiting message */}
       {phase === 'waiting_for_players' && (
         <div
@@ -618,14 +707,15 @@ export function PokerTable({
           ? { ...player, holeCards: myHoleCards, hasCards: true }
           : player;
         const isMyHighlightedSeat = highlightMySeat && player && player.id === myPlayerId;
+        const isBadBeatLoser = badBeat?.loserSeatIndex === seatIndex;
         return (
           <div
             key={seatIndex}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
+            className={`absolute -translate-x-1/2 -translate-y-1/2${isBadBeatLoser ? ' animate-bad-beat-shake' : ''}`}
             style={{
               left: `${pos.x}%`,
               top: `${pos.y}%`,
-              zIndex: 10,
+              zIndex: isBadBeatLoser ? 58 : 10,
               ...(isMyHighlightedSeat ? {
                 filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.5))',
               } : {}),
