@@ -10,6 +10,11 @@ import { CardComponent } from '../../components/Card.js';
 import { ChipStack } from '../../components/ChipStack.js';
 import { useT } from '../../hooks/useT.js';
 
+// Virtual table dimensions — defines the fixed aspect ratio (18:11)
+// Both TV and phone views use these to scale the table via CSS transform
+export const TABLE_VIRTUAL_W = 900;
+export const TABLE_VIRTUAL_H = 550;
+
 // Seat positions around an oval table (percentage-based, for 10 seats)
 export const SEAT_POSITIONS: { x: number; y: number }[] = [
   { x: 50, y: 92 },   // 0: bottom center
@@ -225,7 +230,11 @@ export function PokerTable({
   }, [getDisplaySeatPos]);
 
   return (
-    <div ref={tableRef} className="relative w-full h-full max-w-[1400px] max-h-[900px]">
+    <div
+      ref={tableRef}
+      className="relative"
+      style={{ width: TABLE_VIRTUAL_W, height: TABLE_VIRTUAL_H, aspectRatio: '900 / 550' }}
+    >
       {/* Table rail (outer border) — red padded leather */}
       <div
         className="absolute pointer-events-none"

@@ -5,7 +5,7 @@ import { createTableSocket } from '../../socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { useTableAnimations } from '../../hooks/useTableAnimations.js';
 import { useT } from '../../hooks/useT.js';
-import { PokerTable } from '../table/PokerTable.js';
+import { PokerTable, TABLE_VIRTUAL_W, TABLE_VIRTUAL_H } from '../table/PokerTable.js';
 import { tableSoundManager } from '../../audio/SoundManager.js';
 import { SoundToggle } from '../../components/SoundToggle.js';
 import { BugReportButton } from '../../components/BugReportButton.js';
@@ -25,6 +25,8 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
 
   const tableSocketRef = useRef(createTableSocket());
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   const [soundEnabled, setSoundEnabled] = useState(tableSoundManager.enabled);
   const [showBuyIn, setShowBuyIn] = useState(false);
   const [buyInAmount, setBuyInAmount] = useState(0);
@@ -69,6 +71,26 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     enableSound: true,
   });
 
+  // Calculate scale to fit the virtual table into the viewport (contain mode)
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const updateScale = () => {
+      const wrapperWidth = wrapper.clientWidth;
+      const wrapperHeight = wrapper.clientHeight;
+      // Scale to fit both dimensions (contain behavior)
+      const scaleX = wrapperWidth / TABLE_VIRTUAL_W;
+      const scaleY = wrapperHeight / TABLE_VIRTUAL_H;
+      setScale(Math.min(scaleX, scaleY));
+    };
+
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(wrapper);
+    return () => ro.disconnect();
+  }, []);
+
   const toggleSound = useCallback(() => {
     const next = !tableSoundManager.enabled;
     tableSoundManager.setEnabled(next);
@@ -107,7 +129,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
 
   return (
     <div
-      ref={tableContainerRef}
+      ref={wrapperRef}
       className="w-screen h-screen overflow-hidden flex items-center justify-center"
       style={{ background: 'radial-gradient(ellipse at 50% 80%, #1A1208, #12100C, #0A0A0F, #050508)' }}
     >
@@ -134,22 +156,32 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
         <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
       </div>
 
-      {/* Poker table */}
+      {/* Poker table — fixed virtual size, scaled to fit viewport */}
       {gameState ? (
-        <PokerTable
-          gameState={gameState}
-          potAwards={potAwards}
-          winnerSeats={winnerSeats}
-          awardingPotIndex={awardingPotIndex}
-          timerData={timerData}
-          collectingBets={collectingBets}
-          potGrow={potGrow}
-          betChipAnimations={betChipAnimations}
-          dealCardAnimations={dealCardAnimations}
-          equities={equities}
-          dramaticRiver={dramaticRiver}
-          onSeatClick={handleSeatClick}
-        />
+        <div
+          ref={tableContainerRef}
+          style={{
+            width: TABLE_VIRTUAL_W,
+            height: TABLE_VIRTUAL_H,
+            transform: `scale(${scale})`,
+            transformOrigin: 'center center',
+          }}
+        >
+          <PokerTable
+            gameState={gameState}
+            potAwards={potAwards}
+            winnerSeats={winnerSeats}
+            awardingPotIndex={awardingPotIndex}
+            timerData={timerData}
+            collectingBets={collectingBets}
+            potGrow={potGrow}
+            betChipAnimations={betChipAnimations}
+            dealCardAnimations={dealCardAnimations}
+            equities={equities}
+            dramaticRiver={dramaticRiver}
+            onSeatClick={handleSeatClick}
+          />
+        </div>
       ) : (
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22 }}>{t('watching_connecting')}</div>
       )}

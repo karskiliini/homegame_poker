@@ -6,14 +6,14 @@ import { useGameStore } from '../../hooks/useGameStore.js';
 import { useTableAnimations } from '../../hooks/useTableAnimations.js';
 import { useT } from '../../hooks/useT.js';
 import { createTableSocket } from '../../socket.js';
-import { PokerTable } from '../table/PokerTable.js';
+import { PokerTable, TABLE_VIRTUAL_W, TABLE_VIRTUAL_H } from '../table/PokerTable.js';
 import { CardComponent } from '../../components/Card.js';
 import { ActionButtons } from './ActionButtons.js';
 import { PreActionButtons } from './PreActionButtons.js';
 
-// Virtual table dimensions for scaling
-const TABLE_W = 900;
-const TABLE_H = 550;
+// Use canonical virtual table dimensions from PokerTable
+const TABLE_W = TABLE_VIRTUAL_W;
+const TABLE_H = TABLE_VIRTUAL_H;
 
 interface GameScreenProps {
   socket: Socket;
