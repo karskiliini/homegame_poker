@@ -11,7 +11,7 @@ import {
   DELAY_AFTER_CARDS_DEALT_MS, DELAY_AFTER_STREET_DEALT_MS,
   DELAY_AFTER_PLAYER_ACTED_MS, DELAY_SHOWDOWN_TO_RESULT_MS,
   DELAY_POT_AWARD_MS, START_COUNTDOWN_MS,
-  DELAY_AFTER_ALLIN_SHOWDOWN_MS, DELAY_DRAMATIC_RIVER_MS,
+  DELAY_AFTER_ALLIN_SHOWDOWN_MS, DELAY_ALLIN_RUNOUT_STREET_MS, DELAY_DRAMATIC_RIVER_MS,
 } from '@poker/shared';
 import { HandEngine } from './HandEngine.js';
 import type { HandEngineEvent, HandResult, ShowdownEntry } from './HandEngine.js';
@@ -193,6 +193,8 @@ export class GameManager {
     this.eventQueue = [];
     this.isProcessingQueue = false;
     this.lastProcessedEventType = '';
+    this.lastStreetWasDramatic = false;
+    this.isAllInRunout = false;
     if (this.queueTimer) { clearTimeout(this.queueTimer); this.queueTimer = null; }
 
     this.broadcastLobbyState();
@@ -248,6 +250,7 @@ export class GameManager {
   }
 
   private lastStreetWasDramatic = false;
+  private isAllInRunout = false;
 
   private getEventDelay(event: HandEngineEvent): number {
     if (event.type === 'player_turn') {
@@ -258,25 +261,31 @@ export class GameManager {
         default: return 0;
       }
     }
-    // All-in showdown: delay after equity_update so clients see the initial equity
+    // All-in showdown: no delay before revealing cards
     if (event.type === 'allin_showdown') return 0;
-    // First street after allin_showdown: wait for card reveal
+    // All-in runout: no delay, tracking flag set in processEvent
+    if (event.type === 'all_in_runout') return 0;
+    // First equity update after allin_showdown: wait for card reveal animation
     if (event.type === 'equity_update' && this.lastProcessedEventType === 'allin_showdown') return DELAY_AFTER_ALLIN_SHOWDOWN_MS;
-    // Street dealt during runout: use dramatic river delay if applicable
+    // Street dealt during runout: use longer delay so players can see equity percentages
     if (event.type === 'street_dealt' && this.lastProcessedEventType === 'equity_update') {
-      // Check if this street is a dramatic river
-      if (event.type === 'street_dealt' && 'dramatic' in event && event.dramatic) {
+      // Dramatic river gets extra suspense
+      if ('dramatic' in event && event.dramatic) {
         this.lastStreetWasDramatic = true;
         return DELAY_DRAMATIC_RIVER_MS;
       }
+      // All-in runout: longer delay between streets so players can study equity %
+      if (this.isAllInRunout) return DELAY_ALLIN_RUNOUT_STREET_MS;
       return DELAY_AFTER_STREET_DEALT_MS;
     }
     if (event.type === 'street_dealt' && this.lastProcessedEventType === 'street_dealt') return DELAY_AFTER_STREET_DEALT_MS;
     if (event.type === 'second_board_dealt' && this.lastProcessedEventType === 'street_dealt') return DELAY_AFTER_STREET_DEALT_MS;
-    // Showdown after equity_update (the final one): short delay
+    // Showdown after equity_update (the final one)
     if (event.type === 'showdown' && this.lastProcessedEventType === 'equity_update') {
-      const delay = this.lastStreetWasDramatic ? DELAY_DRAMATIC_RIVER_MS : DELAY_AFTER_STREET_DEALT_MS;
+      const delay = this.lastStreetWasDramatic ? DELAY_DRAMATIC_RIVER_MS :
+        this.isAllInRunout ? DELAY_ALLIN_RUNOUT_STREET_MS : DELAY_AFTER_STREET_DEALT_MS;
       this.lastStreetWasDramatic = false;
+      this.isAllInRunout = false;
       return delay;
     }
     if (event.type === 'showdown' && (this.lastProcessedEventType === 'street_dealt' || this.lastProcessedEventType === 'second_board_dealt')) return DELAY_AFTER_STREET_DEALT_MS;
@@ -337,6 +346,10 @@ export class GameManager {
         else if (event.action === 'check') this.emitSound('check');
         else this.emitSound('chip_bet');
         console.log(`${event.playerName}: ${event.action}${event.amount > 0 ? ' ' + event.amount : ''}${event.isAllIn ? ' (ALL-IN)' : ''}`);
+        break;
+
+      case 'all_in_runout':
+        this.isAllInRunout = true;
         break;
 
       case 'allin_showdown':

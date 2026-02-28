@@ -19,6 +19,7 @@ export const START_COUNTDOWN_MS = 5000;
 
 // All-in showdown timing
 export const DELAY_AFTER_ALLIN_SHOWDOWN_MS = 2000;
+export const DELAY_ALLIN_RUNOUT_STREET_MS = 2500; // Between streets during all-in runout (longer so players can see equity %)
 export const DELAY_DRAMATIC_RIVER_MS = 3500;
 
 // Disconnect timeout: remove player from table after this duration
