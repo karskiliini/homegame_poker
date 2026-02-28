@@ -164,7 +164,6 @@ export class GameManager {
     this.currentShowdownEntries = [];
     this.currentSecondBoard = [];
     this.currentHandPlayers.clear();
-    this.lastTurnEvent = null;
     this.eventQueue = [];
     this.isProcessingQueue = false;
     this.lastProcessedEventType = '';
@@ -265,7 +264,6 @@ export class GameManager {
       case 'player_turn':
         this.actionTimer.cancel();
         this.currentActorSeatIndex = event.seatIndex;
-        this.lastTurnEvent = event;
         {
           const socketId = this.playerIdToSocketId.get(event.playerId);
           if (socketId) { const socket = this.socketMap.get(socketId); socket?.emit(S2C_PLAYER.YOUR_TURN, { availableActions: event.availableActions, callAmount: event.callAmount, minRaise: event.minRaise, maxRaise: event.maxRaise, timeLimit: this.config.actionTimeSeconds }); }
@@ -683,32 +681,27 @@ export class GameManager {
     this.pendingRemovals.clear();
   }
 
-  private lastTurnEvent: HandEngineEvent | null = null;
-
   private sendPrivateStateToAll() {
     if (!this.handEngine) return;
     const handPlayers = this.handEngine.getPlayers();
     const pots = this.handEngine.getPots();
-    const currentActorId = this.handEngine.getCurrentActorId();
+    const turnInfo = this.handEngine.getCurrentTurnInfo();
     const totalPot = pots.reduce((sum, p) => sum + p.amount, 0) + handPlayers.reduce((sum, p) => sum + p.currentBet, 0);
-    const turnEvent = this.lastTurnEvent as
-      | { type: 'player_turn'; playerId: string; seatIndex: number; availableActions: ActionType[]; callAmount: number; minRaise: number; maxRaise: number }
-      | null;
     for (const hp of handPlayers) {
       const socketId = this.playerIdToSocketId.get(hp.playerId);
       if (!socketId) continue;
       const socket = this.socketMap.get(socketId);
       if (!socket) continue;
-      const isMyTurn = hp.playerId === currentActorId;
-      const callAmount = isMyTurn && turnEvent ? turnEvent.callAmount : 0;
+      const isMyTurn = turnInfo !== null && hp.playerId === turnInfo.playerId;
       const state: PrivatePlayerState = {
         id: hp.playerId, name: hp.name, seatIndex: hp.seatIndex, stack: hp.currentStack,
         status: hp.isFolded ? 'folded' : hp.isAllIn ? 'all_in' : 'active',
         holeCards: hp.holeCards, currentBet: hp.currentBet,
-        availableActions: isMyTurn && turnEvent ? turnEvent.availableActions : [],
-        minRaise: isMyTurn && turnEvent ? turnEvent.minRaise : 0,
-        maxRaise: isMyTurn && turnEvent ? turnEvent.maxRaise : hp.currentStack + hp.currentBet,
-        callAmount, potTotal: totalPot, isMyTurn,
+        availableActions: isMyTurn ? turnInfo!.availableActions : [],
+        minRaise: isMyTurn ? turnInfo!.minRaise : 0,
+        maxRaise: isMyTurn ? turnInfo!.maxRaise : hp.currentStack + hp.currentBet,
+        callAmount: isMyTurn ? turnInfo!.callAmount : 0,
+        potTotal: totalPot, isMyTurn,
         showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
       };
       socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
