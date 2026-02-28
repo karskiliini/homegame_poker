@@ -76,6 +76,12 @@
   /* LOBBY */
   --ftp-bg-lobby: #1E3A5F;
   --ftp-bg-lobby-dark: #0F1E33;
+  --ftp-lobby-header-bg: #1E3A5F;
+  --ftp-lobby-row-even: #F0F4F8;
+  --ftp-lobby-row-odd: #D6E4F0;
+  --ftp-lobby-row-selected: #B8D4F0;
+  --ftp-lobby-text: #1A1A2E;
+  --ftp-lobby-border: #A0B8D0;
 
   /* ANIMATION TIMINGS */
   --ftp-anim-card-deal: 350ms;
