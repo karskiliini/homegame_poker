@@ -93,6 +93,10 @@ interface PokerTableProps {
   myHoleCards?: CardString[];
   /** Highlight own seat with accent border */
   highlightMySeat?: boolean;
+  /** Equity percentages per seat index (from all-in showdown) */
+  equities?: Record<number, number> | null;
+  /** Whether the river card should use dramatic peel animation */
+  dramaticRiver?: boolean;
 }
 
 // Table center in percentage coordinates
@@ -105,6 +109,7 @@ export function PokerTable({
   timerData, collectingBets, potGrow,
   betChipAnimations = [], dealCardAnimations = [],
   mySeatIndex, myPlayerId, myHoleCards, highlightMySeat,
+  equities, dramaticRiver,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
@@ -297,6 +302,7 @@ export function PokerTable({
               <CommunityCards
                 cards={communityCards}
                 winningCards={winnerSeats.length > 0 ? communityCards : undefined}
+                dramaticRiver={dramaticRiver}
               />
             </div>
           );
@@ -570,6 +576,7 @@ export function PokerTable({
                 timerSeconds={timerData?.seatIndex === seatIndex ? timerData.secondsRemaining : undefined}
                 timerMax={config.actionTimeSeconds}
                 foldDirection={getFoldDirection(seatIndex)}
+                equity={equities?.[seatIndex]}
               />
             ) : (
               <div

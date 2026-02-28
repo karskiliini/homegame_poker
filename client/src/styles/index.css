@@ -95,6 +95,7 @@
   --ftp-anim-flop-stagger: 80ms;
   --ftp-anim-winner-glow: 800ms;
   --ftp-anim-winner-flash: 600ms;
+  --ftp-anim-river-peel: 2500ms;
   --ftp-anim-seat-join: 400ms;
   --ftp-anim-seat-leave: 300ms;
   --ftp-anim-allin-pulse: 2000ms;
@@ -352,6 +353,18 @@ input[type="range"].ftp-slider::-webkit-slider-thumb:hover {
 
 .animate-allin-label {
   animation: allin-label-appear 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Dramatic river peel — card back slides right to reveal card underneath */
+@keyframes river-peel {
+  0% { transform: translateX(0); opacity: 1; }
+  70% { transform: translateX(45%); opacity: 1; }
+  85% { transform: translateX(100%); opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+.animate-river-peel {
+  animation: river-peel var(--ftp-anim-river-peel, 2500ms) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 /* Timer bar */
