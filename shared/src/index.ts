@@ -1,4 +1,5 @@
 export * from './types/card.js';
+export * from './types/chat.js';
 export * from './types/player.js';
 export * from './types/hand.js';
 export * from './types/game.js';

@@ -131,6 +131,10 @@ const en = {
   table_sit_in: 'Sit In',
   table_total_pot: 'Total Pot',
   table_side_pot: 'Side Pot',
+
+  // Chat
+  chat_placeholder: 'Type a message...',
+  chat_send: 'Send',
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -269,6 +273,10 @@ export const translations: Record<Language, Translations> = {
     table_sit_in: 'Istu',
     table_total_pot: 'Kokonaispotti',
     table_side_pot: 'Sivupotti',
+
+    // Chat
+    chat_placeholder: 'Kirjoita viesti...',
+    chat_send: 'Laheta',
   },
 };
 

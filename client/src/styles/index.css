@@ -386,6 +386,37 @@ input[type="range"].ftp-slider::-webkit-slider-thumb:hover {
   animation: sit-in-pulse 1.2s ease-in-out infinite;
 }
 
+/* Chat message slide in */
+@keyframes chat-slide-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-chat-slide-in {
+  animation: chat-slide-in 200ms ease-out;
+}
+
+/* Speech bubble pop in */
+@keyframes speech-pop-in {
+  0% { opacity: 0; transform: scale(0); }
+  60% { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-speech-pop-in {
+  animation: speech-pop-in 300ms var(--ftp-ease-overshoot) forwards;
+}
+
+/* Speech bubble fade out */
+@keyframes speech-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.95) translateY(-4px); }
+}
+
+.animate-speech-fade-out {
+  animation: speech-fade-out 500ms ease-in forwards;
+}
+
 /* Timer bar */
 @keyframes timer-shrink {
   from { width: 100%; }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { S2C_PLAYER, S2C_LOBBY, C2S_LOBBY, C2S } from '@poker/shared';
-import type { PrivatePlayerState, HandRecord, SoundType, TableInfo, StakeLevel } from '@poker/shared';
+import type { PrivatePlayerState, HandRecord, SoundType, TableInfo, StakeLevel, ChatMessage } from '@poker/shared';
 import { createPlayerSocket } from '../../socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { LoginScreen } from './LoginScreen.js';
@@ -68,6 +68,7 @@ export function PlayerView() {
     setTables, setPlayerId, setCurrentTableId, setStakeLevels,
     setWatchingTableId,
     reconnecting, setReconnecting,
+    addChatMessage,
   } = useGameStore();
 
   const [showRit, setShowRit] = useState(false);
@@ -207,6 +208,10 @@ export function PlayerView() {
 
     socket.on(S2C_LOBBY.ERROR, (data: { message: string }) => {
       alert(data.message);
+    });
+
+    socket.on(S2C_PLAYER.CHAT_MESSAGE, (msg: ChatMessage) => {
+      addChatMessage(msg);
     });
 
     socket.on(S2C_PLAYER.SOUND, (data: { sound: SoundType }) => {

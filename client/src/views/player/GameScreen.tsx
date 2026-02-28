@@ -11,6 +11,7 @@ import { CardComponent } from '../../components/Card.js';
 import { ActionButtons } from './ActionButtons.js';
 import { PreActionButtons } from './PreActionButtons.js';
 import { useTheme } from '../../themes/useTheme.js';
+import { ChatInput } from '../../components/ChatInput.js';
 
 // Use canonical virtual table dimensions from PokerTable
 const TABLE_W = TABLE_VIRTUAL_W;
@@ -401,6 +402,9 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
             </button>
           </div>
         )}
+
+        {/* Chat input */}
+        <ChatInput socket={socket} />
       </div>
     </div>
   );

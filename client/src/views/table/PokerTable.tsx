@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { GameState, CardString } from '@poker/shared';
+import type { GameState, CardString, ChatMessage } from '@poker/shared';
 import { breakdownChips } from '@poker/shared';
 import { PlayerSeat } from './PlayerSeat.js';
 import { CommunityCards } from './CommunityCards.js';
@@ -8,6 +8,7 @@ import { BetChip } from './BetChip.js';
 import { CardBack } from '../../components/CardBack.js';
 import { CardComponent } from '../../components/Card.js';
 import { ChipStack } from '../../components/ChipStack.js';
+import { SpeechBubble } from './SpeechBubble.js';
 import { useT } from '../../hooks/useT.js';
 import { useTheme } from '../../themes/useTheme.js';
 
@@ -105,6 +106,10 @@ interface PokerTableProps {
   dramaticRiver?: boolean;
   /** Called when an empty seat is clicked (for seat selection) */
   onSeatClick?: (seatIndex: number) => void;
+  /** Active speech bubble to render above a seat */
+  speechBubble?: ChatMessage | null;
+  /** Called when the speech bubble timer expires */
+  onSpeechBubbleDone?: () => void;
 }
 
 // Table center in percentage coordinates
@@ -161,6 +166,7 @@ export function PokerTable({
   betChipAnimations = [], dealCardAnimations = [],
   mySeatIndex, myPlayerId, myHoleCards, highlightMySeat,
   equities, dramaticRiver, onSeatClick,
+  speechBubble, onSpeechBubbleDone,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const numHoleCards = config.gameType === 'PLO' ? 4 : 2;
@@ -644,6 +650,25 @@ export function PokerTable({
           </div>
         );
       })}
+
+      {/* Speech bubble above active seat */}
+      {speechBubble && onSpeechBubbleDone && (() => {
+        const pos = getDisplaySeatPos(speechBubble.seatIndex);
+        const bubbleY = Math.max(2, pos.y - 12);
+        return (
+          <div
+            key={speechBubble.id}
+            className="absolute -translate-x-1/2 pointer-events-none"
+            style={{
+              left: `${pos.x}%`,
+              top: `${bubbleY}%`,
+              zIndex: 55,
+            }}
+          >
+            <SpeechBubble message={speechBubble} onDone={onSpeechBubbleDone} />
+          </div>
+        );
+      })()}
     </div>
   );
 }

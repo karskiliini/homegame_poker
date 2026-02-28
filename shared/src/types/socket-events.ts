@@ -12,6 +12,7 @@ export const C2S = {
   REPORT_BUG: 'player:report_bug',
   SIT_OUT_NEXT_HAND: 'player:sit_out_next_hand',
   AUTO_MUCK: 'player:auto_muck',
+  CHAT: 'player:chat',
 } as const;
 
 export const S2C_PLAYER = {
@@ -34,6 +35,7 @@ export const S2C_PLAYER = {
   BUG_REPORTED: 'player:bug_reported',
   RECONNECTED: 'player:reconnected',
   RECONNECT_FAILED: 'player:reconnect_failed',
+  CHAT_MESSAGE: 'player:chat_message',
 } as const;
 
 export const C2S_LOBBY = {
@@ -78,4 +80,5 @@ export const S2C_TABLE = {
   SOUND: 'table:sound',
   ALLIN_SHOWDOWN: 'table:allin_showdown',
   EQUITY_UPDATE: 'table:equity_update',
+  CHAT_MESSAGE: 'table:chat_message',
 } as const;

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, PrivatePlayerState, TableInfo, StakeLevel } from '@poker/shared';
+import type { GameState, PrivatePlayerState, TableInfo, StakeLevel, ChatMessage } from '@poker/shared';
 import type { AvatarId } from '@poker/shared';
 import type { Language } from '../i18n/translations.js';
 import { detectLanguage } from '../i18n/translations.js';
@@ -79,6 +79,11 @@ interface GameStore {
   reconnecting: boolean;
   setReconnecting: (reconnecting: boolean) => void;
 
+  // Chat
+  chatMessages: ChatMessage[];
+  addChatMessage: (msg: ChatMessage) => void;
+  clearChat: () => void;
+
   // Language
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -125,6 +130,12 @@ export const useGameStore = create<GameStore>((set) => ({
   setScreen: (screen) => set({ screen }),
   reconnecting: hasStoredSession(),
   setReconnecting: (reconnecting) => set({ reconnecting }),
+
+  chatMessages: [],
+  addChatMessage: (msg) => set((state) => ({
+    chatMessages: [...state.chatMessages.slice(-49), msg],
+  })),
+  clearChat: () => set({ chatMessages: [] }),
 
   language: detectLanguage(),
   setLanguage: (language) => {

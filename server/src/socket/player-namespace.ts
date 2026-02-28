@@ -186,6 +186,13 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       gm.checkStartGame();
     });
 
+    socket.on(C2S.CHAT, (data: { message: string }) => {
+      if (!currentTableId) return;
+      const gm = tableManager.getTable(currentTableId);
+      if (!gm) return;
+      gm.handleChatMessage(socket.id, data.message);
+    });
+
     socket.on(C2S.REPORT_BUG, (data: { description: string }) => {
       if (!data.description || typeof data.description !== 'string') return;
       let name = 'Anonymous';

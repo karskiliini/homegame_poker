@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
-import { C2S_TABLE, C2S_LOBBY } from '@poker/shared';
+import { C2S_TABLE, C2S_LOBBY, S2C_TABLE } from '@poker/shared';
+import type { ChatMessage } from '@poker/shared';
 import { createTableSocket } from '../../socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { useTableAnimations } from '../../hooks/useTableAnimations.js';
+import { useSpeechBubbleQueue } from '../../hooks/useSpeechBubbleQueue.js';
 import { useT } from '../../hooks/useT.js';
 import { PokerTable, TABLE_VIRTUAL_W, TABLE_VIRTUAL_H } from '../table/PokerTable.js';
+import { ChatWindow } from '../../components/ChatWindow.js';
 import { tableSoundManager } from '../../audio/SoundManager.js';
 import { SoundToggle } from '../../components/SoundToggle.js';
 import { BugReportButton } from '../../components/BugReportButton.js';
@@ -22,9 +25,11 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     watchingTableId, setScreen, setWatchingTableId,
     gameState, setGameState, tables,
     playerName, playerAvatar,
+    chatMessages, addChatMessage, clearChat,
   } = useGameStore();
   const t = useT();
   const { gradients } = useTheme();
+  const { activeBubble, enqueue, onBubbleDone } = useSpeechBubbleQueue();
 
   const tableSocketRef = useRef(createTableSocket());
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -54,13 +59,21 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
       ts.emit(C2S_TABLE.WATCH, { tableId: watchingTableId });
     }
 
+    const handleChat = (msg: ChatMessage) => {
+      addChatMessage(msg);
+      enqueue(msg);
+    };
+    ts.on(S2C_TABLE.CHAT_MESSAGE, handleChat);
+
     return () => {
+      ts.off(S2C_TABLE.CHAT_MESSAGE, handleChat);
       ts.emit(C2S_TABLE.UNWATCH);
       ts.off('connect', handleConnect);
       ts.disconnect();
       setGameState(null);
+      clearChat();
     };
-  }, [watchingTableId, setGameState]);
+  }, [watchingTableId, setGameState, addChatMessage, enqueue, clearChat]);
 
   const {
     potAwards, winnerSeats, awardingPotIndex,
@@ -184,11 +197,18 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
             equities={equities}
             dramaticRiver={dramaticRiver}
             onSeatClick={handleSeatClick}
+            speechBubble={activeBubble}
+            onSpeechBubbleDone={onBubbleDone}
           />
         </div>
       ) : (
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22 }}>{t('watching_connecting')}</div>
       )}
+
+      {/* Chat window — bottom left */}
+      <div className="fixed bottom-20 left-4" style={{ zIndex: 30 }}>
+        <ChatWindow messages={chatMessages} />
+      </div>
 
       {/* Bottom: Sit Down button */}
       <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">

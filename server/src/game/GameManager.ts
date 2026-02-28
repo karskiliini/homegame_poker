@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type {
   GameConfig, GameState, Player, PublicPlayerState, PrivatePlayerState,
   ActionType, CardString, HandPlayer, SoundType, TablePlayerInfo,
+  ChatMessage,
 } from '@poker/shared';
 import {
   S2C_PLAYER, S2C_TABLE, HAND_COMPLETE_PAUSE_MS, RIT_TIMEOUT_MS,
@@ -65,6 +66,9 @@ export class GameManager {
   private pendingRemovals: Set<string> = new Set();
   private pendingSitOutNextHand: Set<string> = new Set();
   private playerIdToToken: Map<string, string> = new Map();
+
+  private chatRateLimit: Map<string, number> = new Map();
+  private chatMessageCounter = 0;
 
   constructor(config: GameConfig, io: Server, tableId: string, onEmpty?: () => void) {
     this.config = config;
@@ -712,6 +716,30 @@ export class GameManager {
     this.sendPrivateStateForPlayer(socketId);
   }
 
+  handleChatMessage(socketId: string, message: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+
+    const trimmed = message.trim().slice(0, 200);
+    if (!trimmed) return;
+
+    const now = Date.now();
+    const lastSent = this.chatRateLimit.get(socketId) ?? 0;
+    if (now - lastSent < 2000) return;
+    this.chatRateLimit.set(socketId, now);
+
+    const chatMsg: ChatMessage = {
+      id: `chat-${++this.chatMessageCounter}`,
+      senderName: player.name,
+      seatIndex: player.seatIndex,
+      message: trimmed,
+      timestamp: now,
+    };
+
+    this.emitToTableRoom(S2C_TABLE.CHAT_MESSAGE, chatMsg);
+    this.emitToPlayerRoom(S2C_PLAYER.CHAT_MESSAGE, chatMsg);
+  }
+
   handleSitOut(socketId: string) {
     const player = this.players.get(socketId);
     if (!player) return;
@@ -844,6 +872,7 @@ export class GameManager {
     this.players.delete(socketId);
     this.pendingRemovals.delete(socketId);
     this.pendingSitOutNextHand.delete(socketId);
+    this.chatRateLimit.delete(socketId);
     this.emitToTableRoom(S2C_TABLE.PLAYER_LEFT, { playerId: player.id, seatIndex: player.seatIndex, playerName: player.name });
     this.broadcastLobbyState();
     this.broadcastTableState();
