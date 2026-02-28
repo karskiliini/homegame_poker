@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import { C2S_LOBBY, STAKE_LEVELS, AVATAR_OPTIONS } from '@poker/shared';
-import type { TableInfo, StakeLevel } from '@poker/shared';
+import { C2S_LOBBY, STAKE_LEVELS } from '@poker/shared';
+import type { StakeLevel } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 
 interface TableLobbyScreenProps {
@@ -9,31 +9,17 @@ interface TableLobbyScreenProps {
 }
 
 export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
-  const { tables, playerName, playerAvatar } = useGameStore();
-  const [expandedTableId, setExpandedTableId] = useState<string | null>(null);
+  const { tables, playerName, setWatchingTableId, setScreen } = useGameStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [buyInAmount, setBuyInAmount] = useState<number>(0);
-  const [joiningTableId, setJoiningTableId] = useState<string | null>(null);
 
   const handleCreateTable = (stakeLevel: StakeLevel) => {
     socket.emit(C2S_LOBBY.CREATE_TABLE, { stakeLevelId: stakeLevel.id });
     setShowCreateModal(false);
   };
 
-  const handleSitDown = (tableId: string, maxBuyIn: number) => {
-    if (joiningTableId === tableId) {
-      const amount = buyInAmount || maxBuyIn;
-      socket.emit(C2S_LOBBY.JOIN_TABLE, {
-        tableId,
-        name: playerName,
-        buyIn: amount,
-        avatarId: playerAvatar,
-      });
-      setJoiningTableId(null);
-    } else {
-      setJoiningTableId(tableId);
-      setBuyInAmount(maxBuyIn);
-    }
+  const handleWatchTable = (tableId: string) => {
+    setWatchingTableId(tableId);
+    setScreen('watching');
   };
 
   return (
@@ -128,21 +114,34 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
 
           {/* Table rows */}
           {tables.map((table, i) => {
-            const isExpanded = expandedTableId === table.tableId;
             const isEven = i % 2 === 0;
-
             return (
-              <TableRow
+              <button
                 key={table.tableId}
-                table={table}
-                isEven={isEven}
-                isExpanded={isExpanded}
-                isJoining={joiningTableId === table.tableId}
-                buyInAmount={buyInAmount}
-                onToggle={() => setExpandedTableId(isExpanded ? null : table.tableId)}
-                onSitDown={() => handleSitDown(table.tableId, table.stakeLevel.maxBuyIn)}
-                onBuyInChange={setBuyInAmount}
-              />
+                onClick={() => handleWatchTable(table.tableId)}
+                className="w-full flex items-center px-4 py-3"
+                style={{
+                  background: isEven
+                    ? 'var(--ftp-lobby-row-even)'
+                    : 'var(--ftp-lobby-row-odd)',
+                  border: 'none',
+                  borderBottom: '1px solid var(--ftp-lobby-border)',
+                  borderLeft: '4px solid transparent',
+                  color: 'var(--ftp-lobby-text)',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                }}
+              >
+                <div style={{ flex: 3, textAlign: 'left', fontWeight: 500 }}>
+                  {table.name}
+                </div>
+                <div className="font-mono" style={{ flex: 2, textAlign: 'center' }}>
+                  {table.stakeLevel.label}
+                </div>
+                <div className="font-mono tabular-nums" style={{ flex: 1, textAlign: 'center' }}>
+                  {table.playerCount}/{table.maxPlayers}
+                </div>
+              </button>
             );
           })}
         </div>
@@ -220,176 +219,6 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
               </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TableRow({
-  table,
-  isEven,
-  isExpanded,
-  isJoining,
-  buyInAmount,
-  onToggle,
-  onSitDown,
-  onBuyInChange,
-}: {
-  table: TableInfo;
-  isEven: boolean;
-  isExpanded: boolean;
-  isJoining: boolean;
-  buyInAmount: number;
-  onToggle: () => void;
-  onSitDown: () => void;
-  onBuyInChange: (amount: number) => void;
-}) {
-  return (
-    <div
-      style={{
-        borderBottom: '1px solid var(--ftp-lobby-border)',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Table row */}
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center px-4 py-3"
-        style={{
-          background: isExpanded
-            ? 'var(--ftp-lobby-row-selected)'
-            : isEven
-              ? 'var(--ftp-lobby-row-even)'
-              : 'var(--ftp-lobby-row-odd)',
-          border: 'none',
-          borderLeft: isExpanded ? '4px solid var(--ftp-red)' : '4px solid transparent',
-          color: 'var(--ftp-lobby-text)',
-          cursor: 'pointer',
-          fontSize: 14,
-        }}
-      >
-        <div style={{ flex: 3, textAlign: 'left', fontWeight: isExpanded ? 700 : 500 }}>
-          {table.name}
-        </div>
-        <div className="font-mono" style={{ flex: 2, textAlign: 'center' }}>
-          {table.stakeLevel.label}
-        </div>
-        <div className="font-mono tabular-nums" style={{ flex: 1, textAlign: 'center' }}>
-          {table.playerCount}/{table.maxPlayers}
-        </div>
-      </button>
-
-      {/* Expanded: players + sit down */}
-      {isExpanded && (
-        <div
-          className="px-4 py-3"
-          style={{ background: 'var(--ftp-lobby-row-selected)' }}
-        >
-          {/* Player list */}
-          {table.players.length > 0 ? (
-            <div className="mb-3" style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--ftp-lobby-border)' }}>
-              {table.players.map((p, i) => {
-                const playerEven = i % 2 === 0;
-                const img = AVATAR_OPTIONS.find(a => a.id === p.avatarId)?.image ?? null;
-                return (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 px-3 py-2"
-                    style={{
-                      background: playerEven ? 'var(--ftp-lobby-row-even)' : 'var(--ftp-lobby-row-odd)',
-                      color: 'var(--ftp-lobby-text)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        overflow: 'hidden',
-                        background: '#2C3E50',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {img && (
-                        <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      )}
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 500 }}>{p.name}</span>
-                    <span className="ml-auto font-mono tabular-nums" style={{ fontSize: 12, fontWeight: 600 }}>
-                      {p.stack}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="mb-3" style={{ color: 'rgba(26,26,46,0.5)', fontSize: 12 }}>
-              No players yet
-            </div>
-          )}
-
-          {/* Buy-in + Sit Down */}
-          {isJoining ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                value={buyInAmount}
-                onChange={(e) => onBuyInChange(Number(e.target.value))}
-                min={1}
-                max={table.stakeLevel.maxBuyIn}
-                className="flex-1"
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 6,
-                  background: '#FFFFFF',
-                  color: 'var(--ftp-lobby-text)',
-                  border: '1px solid var(--ftp-lobby-border)',
-                  fontSize: 14,
-                  outline: 'none',
-                }}
-                autoFocus
-              />
-              <button
-                onClick={onSitDown}
-                disabled={buyInAmount <= 0 || buyInAmount > table.stakeLevel.maxBuyIn}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 6,
-                  background: buyInAmount <= 0 || buyInAmount > table.stakeLevel.maxBuyIn
-                    ? '#CCC'
-                    : 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))',
-                  color: 'white',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  border: 'none',
-                  cursor: buyInAmount <= 0 || buyInAmount > table.stakeLevel.maxBuyIn ? 'not-allowed' : 'pointer',
-                  textTransform: 'uppercase',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Sit Down
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onSitDown}
-              className="w-full py-2 rounded-lg"
-              style={{
-                background: 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))',
-                color: 'white',
-                fontWeight: 700,
-                fontSize: 13,
-                border: 'none',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-                letterSpacing: 1,
-                boxShadow: '0 2px 0 var(--ftp-red-dark)',
-              }}
-            >
-              Sit Down
-            </button>
-          )}
         </div>
       )}
     </div>
