@@ -277,11 +277,19 @@ export class HandEngine {
       }
 
       case 'all_in': {
-        const toAdd = player.currentStack;
+        let toAdd = player.currentStack;
+        // In PLO, cap all-in to pot-limit max
+        if (this.gameType === 'PLO') {
+          const maxPL = this.getPotLimitMax(player);
+          const maxAdd = maxPL - player.currentBet;
+          toAdd = Math.min(toAdd, Math.max(0, maxAdd));
+        }
         player.currentBet += toAdd;
-        player.currentStack = 0;
-        player.isAllIn = true;
-        isAllIn = true;
+        player.currentStack -= toAdd;
+        if (player.currentStack === 0) {
+          player.isAllIn = true;
+          isAllIn = true;
+        }
         actualAmount = player.currentBet;
 
         if (player.currentBet > this.currentBet) {

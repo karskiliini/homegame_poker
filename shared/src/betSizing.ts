@@ -3,25 +3,24 @@
  *
  * For a BET (callAmount=0): pot-sized bet = potTotal
  * For a RAISE: pot-sized raise = call + (pot after call) = callAmount + (potTotal + callAmount)
- *   As a target total bet = myCurrentBet + callAmount + (potTotal + callAmount)
+ *   As a target total bet = currentBet + callAmount + (potTotal + callAmount)
  *
- * @param potTotal   Total pot including all current street bets
- * @param callAmount Amount player needs to call (0 if first to act)
- * @param maxRaise   Player's all-in amount (stack + currentBet)
- * @param stack      Player's remaining stack
- * @param minRaise   Minimum legal raise amount
+ * @param potTotal    Total pot including all current street bets
+ * @param callAmount  Amount player needs to call (0 if first to act)
+ * @param currentBet  Player's current bet on this street
+ * @param minRaise    Minimum legal raise amount
+ * @param maxRaise    Maximum legal raise amount (pot-limited in PLO, all-in in NLHE)
  * @returns Pot-sized bet/raise amount, clamped between minRaise and maxRaise
  */
 export function calcPotSizedBet(
   potTotal: number,
   callAmount: number,
-  maxRaise: number,
-  stack: number,
+  currentBet: number,
   minRaise: number,
+  maxRaise: number,
 ): number {
-  const myCurrentBet = maxRaise - stack;
   const potAfterCall = potTotal + callAmount;
-  const potSized = myCurrentBet + callAmount + potAfterCall;
+  const potSized = currentBet + callAmount + potAfterCall;
   return Math.min(Math.max(Math.round(potSized), minRaise), maxRaise);
 }
 
@@ -31,12 +30,11 @@ export function calcPotSizedBet(
 export function calcHalfPotBet(
   potTotal: number,
   callAmount: number,
-  maxRaise: number,
-  stack: number,
+  currentBet: number,
   minRaise: number,
+  maxRaise: number,
 ): number {
-  const myCurrentBet = maxRaise - stack;
   const potAfterCall = potTotal + callAmount;
-  const halfPotSized = myCurrentBet + callAmount + potAfterCall * 0.5;
+  const halfPotSized = currentBet + callAmount + potAfterCall * 0.5;
   return Math.min(Math.max(Math.round(halfPotSized), minRaise), maxRaise);
 }

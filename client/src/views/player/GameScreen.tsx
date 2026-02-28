@@ -300,9 +300,11 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
               minRaise={privateState.minRaise}
               maxRaise={privateState.maxRaise}
               stack={privateState.stack}
+              currentBet={privateState.currentBet}
               potTotal={privateState.potTotal}
               bigBlind={config?.bigBlind ?? 2}
               maxBuyIn={config?.maxBuyIn ?? 200}
+              gameType={config?.gameType ?? 'NLHE'}
             />
           ) : showPreActions ? (
             <PreActionButtons preAction={preAction} setPreAction={setPreAction} />

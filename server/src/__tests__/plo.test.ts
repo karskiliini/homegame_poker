@@ -655,13 +655,9 @@ describe('PLO - Complete hand flow', () => {
   });
 
   it('should handle PLO all-in showdown', () => {
-    const players = makePlayers(2, 50);
-    // Player 0: Ah Ad Kh Kd → can make AA trip or KK pair
-    // Player 1: 7d 7c 2s 3h → can make 77 pair
-    // Board: Qs Jc 5h 9d 4c (no help for either)
-    // Player 0 best: Ah Ad + Qs Jc 5h = AA Q J 5 (pair of aces)
-    // Player 1 best: 7d 7c + Qs Jc 9d = 77 Q J 9 (pair of sevens)
-    // Player 0 wins with higher pair
+    // Use stacks of 6 so SB all-in (6) is within pot-limit preflop
+    // Pot-limit preflop for SB: call(1) + pot_after_call(3+1=4) + currentBet(1) = 6
+    const players = makePlayers(2, 6);
 
     const deck = buildDeck(
       [['Ah', 'Ad', 'Kh', 'Kd'], ['7d', '7c', '2s', '3h']],
@@ -669,12 +665,12 @@ describe('PLO - Complete hand flow', () => {
     );
     h.start(config, players, 0, deck);
 
-    h.actCurrent('all_in');
-    h.actCurrent('call');
+    h.actCurrent('all_in'); // SB raises to 6 (pot-limit = all-in)
+    h.actCurrent('call');   // BB calls remaining 4
 
     expect(h.isComplete()).toBe(true);
     const p0 = h.result!.players.find(p => p.playerId === 'player-0')!;
-    expect(p0.currentStack).toBe(100); // Wins 50*2
+    expect(p0.currentStack).toBe(12); // Wins 6*2
     h.assertTotalChipsConserved(players);
   });
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
-import type { ActionType } from '@poker/shared';
+import type { ActionType, GameType } from '@poker/shared';
 import { C2S, calcPotSizedBet, calcHalfPotBet } from '@poker/shared';
 import { useT } from '../../hooks/useT.js';
 import { useTheme } from '../../themes/useTheme.js';
@@ -12,14 +12,16 @@ interface ActionButtonsProps {
   minRaise: number;
   maxRaise: number;
   stack: number;
+  currentBet: number;
   potTotal: number;
   bigBlind: number;
   maxBuyIn: number;
+  gameType: GameType;
 }
 
 export function ActionButtons({
-  socket, availableActions, callAmount, minRaise, maxRaise, stack, potTotal,
-  bigBlind, maxBuyIn,
+  socket, availableActions, callAmount, minRaise, maxRaise, stack, currentBet,
+  potTotal, bigBlind, maxBuyIn, gameType,
 }: ActionButtonsProps) {
   const [raiseAmount, setRaiseAmount] = useState(minRaise);
   const t = useT();
@@ -44,8 +46,13 @@ export function ActionButtons({
   const canRaise = availableActions.includes('raise');
 
   // Calculate pot-based presets (proper pot-sized raise = call + pot after call)
-  const halfPot = calcHalfPotBet(potTotal, callAmount, maxRaise, stack, minRaise);
-  const fullPot = calcPotSizedBet(potTotal, callAmount, maxRaise, stack, minRaise);
+  const halfPot = calcHalfPotBet(potTotal, callAmount, currentBet, minRaise, maxRaise);
+  const fullPot = calcPotSizedBet(potTotal, callAmount, currentBet, minRaise, maxRaise);
+
+  const isPotLimit = gameType === 'PLO';
+  // In PLO, maxRaise may be pot-limit (not all-in). True all-in = stack + currentBet
+  const allInAmount = stack + currentBet;
+  const isMaxAllIn = maxRaise >= allInAmount;
 
   // Slider step: 5% of max buy-in
   const sliderStep = Math.max(1, Math.round(maxBuyIn * 0.05));
@@ -83,11 +90,15 @@ export function ActionButtons({
           <FTPButton
             color="raise"
             onClick={() => {
-              sendAction(raiseAmount === maxRaise ? 'all_in' : (canBet ? 'bet' : 'raise'), raiseAmount);
+              // In PLO, only send all_in if raiseAmount truly covers entire stack
+              const shouldAllIn = raiseAmount === maxRaise && isMaxAllIn;
+              sendAction(shouldAllIn ? 'all_in' : (canBet ? 'bet' : 'raise'), raiseAmount);
             }}
             className="flex-1"
           >
-            {raiseAmount === maxRaise ? t('action_all_in') : `${canBet ? t('action_bet') : t('action_raise')} ${raiseAmount.toLocaleString()}`}
+            {raiseAmount === maxRaise && isMaxAllIn
+              ? t('action_all_in')
+              : `${canBet ? t('action_bet') : t('action_raise')} ${raiseAmount.toLocaleString()}`}
           </FTPButton>
         )}
       </div>
@@ -99,8 +110,10 @@ export function ActionButtons({
           <div className="flex gap-2 justify-center">
             <PresetButton label={t('action_min')} onClick={() => setRaiseAmount(minRaise)} />
             <PresetButton label={t('action_half_pot')} onClick={() => setRaiseAmount(Math.min(halfPot, maxRaise))} />
-            <PresetButton label={t('action_pot')} onClick={() => setRaiseAmount(Math.min(fullPot, maxRaise))} />
-            <PresetButton label={t('action_all_in_preset')} onClick={() => setRaiseAmount(maxRaise)} active={raiseAmount === maxRaise} />
+            <PresetButton label={t('action_pot')} onClick={() => setRaiseAmount(Math.min(fullPot, maxRaise))} active={isPotLimit && raiseAmount === maxRaise} />
+            {!isPotLimit && (
+              <PresetButton label={t('action_all_in_preset')} onClick={() => setRaiseAmount(maxRaise)} active={raiseAmount === maxRaise} />
+            )}
           </div>
 
           {/* Slider */}
@@ -123,7 +136,9 @@ export function ActionButtons({
               >
                 {raiseAmount.toLocaleString()}
               </span>
-              <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>{t('action_all_in_preset')} ({maxRaise})</span>
+              <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>
+                {isPotLimit && !isMaxAllIn ? t('action_pot') : t('action_all_in_preset')} ({maxRaise})
+              </span>
             </div>
           </div>
         </>
