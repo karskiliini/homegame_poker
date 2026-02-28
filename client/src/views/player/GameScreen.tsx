@@ -118,7 +118,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: 'linear-gradient(180deg, #0A0A0F 0%, #0F1520 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #0D1526 0%, #0F1828 100%)' }}
     >
       {/* Top: Mini poker table (~60vh) */}
       <div
@@ -126,7 +126,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
         className="relative w-full overflow-hidden"
         style={{
           height: '58vh',
-          background: 'radial-gradient(ellipse at 50% 80%, #1A1208, #12100C, #0A0A0F)',
+          background: 'radial-gradient(ellipse at 50% 80%, #1A2744, #141E33, #0D1526)',
         }}
       >
         {/* Leave Table button */}

@@ -179,8 +179,8 @@ export function PokerTable({
         style={{
           inset: '5.5%',
           borderRadius: '50%',
-          background: 'linear-gradient(180deg, #C41E2A 0%, #A01525 25%, #8B1520 60%, #6B0F18 100%)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 3px 6px rgba(255,255,255,0.15), inset 0 -3px 6px rgba(0,0,0,0.4), inset 0 0 20px rgba(0,0,0,0.2)',
+          background: 'linear-gradient(180deg, #7A4F2B 0%, #5C3A1E 20%, #4A2E16 60%, #3D2510 100%)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.6), inset 0 3px 8px rgba(255,220,160,0.15), inset 0 -3px 6px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.25)',
         }}
       />
 
@@ -190,7 +190,7 @@ export function PokerTable({
         style={{
           inset: '5.5%',
           borderRadius: '50%',
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 8%, transparent 100%)',
+          background: 'linear-gradient(180deg, rgba(255,220,160,0.10) 0%, transparent 10%, transparent 100%)',
         }}
       />
 
@@ -203,7 +203,7 @@ export function PokerTable({
           width: 6,
           height: 40,
           borderRadius: 3,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))',
+          background: 'linear-gradient(180deg, rgba(255,220,160,0.15), rgba(255,220,160,0.03))',
         }}
       />
 
@@ -216,7 +216,7 @@ export function PokerTable({
           width: 6,
           height: 40,
           borderRadius: 3,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))',
+          background: 'linear-gradient(180deg, rgba(255,220,160,0.15), rgba(255,220,160,0.03))',
         }}
       />
 
@@ -226,8 +226,8 @@ export function PokerTable({
         style={{
           inset: '7%',
           borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 50% 45%, #4A9A62 0%, #358A4E 40%, #1F7038 100%)',
-          boxShadow: 'inset 0 2px 20px rgba(0,0,0,0.3)',
+          background: 'radial-gradient(ellipse at 50% 45%, #52B86E 0%, #3A9D56 40%, #267A3C 100%)',
+          boxShadow: 'inset 0 2px 25px rgba(0,0,0,0.35)',
         }}
       />
 
@@ -241,7 +241,7 @@ export function PokerTable({
       >
         <span
           style={{
-            color: 'rgba(255,255,255,0.04)',
+            color: 'rgba(255,255,255,0.03)',
             fontSize: 36,
             fontWeight: 800,
             letterSpacing: 12,
@@ -259,7 +259,7 @@ export function PokerTable({
         style={{
           inset: '10%',
           borderRadius: '50%',
-          border: '1px solid rgba(200,180,100,0.12)',
+          border: '1px solid rgba(220,200,120,0.15)',
         }}
       />
 
@@ -531,9 +531,9 @@ export function PokerTable({
                   width: 140,
                   height: 56,
                   borderRadius: 6,
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  background: 'linear-gradient(180deg, rgba(42,42,48,0.4), rgba(26,26,30,0.4))',
-                  color: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'linear-gradient(180deg, rgba(30,58,95,0.3), rgba(15,30,51,0.3))',
+                  color: 'rgba(255,255,255,0.2)',
                   fontSize: 11,
                 }}
               >
