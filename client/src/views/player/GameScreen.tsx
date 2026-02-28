@@ -130,7 +130,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
         ref={wrapperRef}
         className="relative w-full overflow-hidden"
         style={{
-          height: '68vh',
+          height: '79vh',
           background: 'radial-gradient(ellipse at 50% 80%, #1A2744, #141E33, #0D1526)',
         }}
       >
@@ -213,6 +213,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
       <div
         className="flex-1 flex flex-col px-4 pt-1 pb-1"
         style={{
+          background: 'rgba(0,0,0,0.5)',
           opacity: isFolded ? 0.6 : 1,
           transition: 'opacity 0.3s ease',
         }}
