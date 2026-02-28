@@ -13,8 +13,10 @@ interface TableLobbyScreenProps {
 }
 
 export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
-  const { tables, playerName, isConnected, setWatchingTableId, setScreen } = useGameStore();
+  const { tables, playerName, isConnected, setWatchingTableId, setScreen, accountBalance } = useGameStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [depositAmount, setDepositAmount] = useState(1000);
   const [creating, setCreating] = useState(false);
   const t = useT();
 
@@ -34,6 +36,12 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
   const handleWatchTable = (tableId: string) => {
     setWatchingTableId(tableId);
     setScreen('watching');
+  };
+
+  const handleDeposit = () => {
+    if (depositAmount <= 0) return;
+    socket.emit(C2S_LOBBY.DEPOSIT, { amount: depositAmount });
+    setShowDepositModal(false);
   };
 
   return (
@@ -71,6 +79,40 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Balance display */}
+          <div
+            className="flex items-center gap-2"
+            style={{
+              padding: '6px 12px',
+              borderRadius: 8,
+              background: 'rgba(0,0,0,0.3)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+          >
+            <span style={{ color: 'var(--ftp-gold)', fontSize: 12, fontWeight: 600 }}>
+              {t('balance_label')}
+            </span>
+            <span className="font-mono" style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>
+              {accountBalance.toLocaleString()}
+            </span>
+            <button
+              onClick={() => setShowDepositModal(true)}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 6,
+                background: 'linear-gradient(180deg, #16A34A, #15803D)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: 11,
+                border: 'none',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              +
+            </button>
+          </div>
           <ThemeToggle />
           <LanguageToggle />
           {tables.length > 0 && (
@@ -264,6 +306,91 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
                 }}
               >
                 {t('table_lobby_cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deposit Modal */}
+      {showDepositModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setShowDepositModal(false)}
+        >
+          <div
+            className="w-full max-w-xs p-6"
+            style={{
+              background: 'var(--ftp-bg-lobby)',
+              borderRadius: 12,
+              border: '1px solid var(--ftp-lobby-border)',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-bold mb-1" style={{ color: '#FFFFFF', fontSize: 18 }}>
+              {t('balance_deposit_title')}
+            </h2>
+            <p className="mb-4" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
+              {t('balance_label')}: <span className="font-mono font-bold">{accountBalance.toLocaleString()}</span>
+            </p>
+            <label className="block mb-1" style={{ color: 'var(--ftp-text-muted)', fontSize: 12, fontWeight: 600 }}>
+              {t('balance_deposit_amount')}
+            </label>
+            <input
+              type="number"
+              value={depositAmount}
+              onChange={(e) => setDepositAmount(Number(e.target.value))}
+              onKeyDown={(e) => e.key === 'Enter' && handleDeposit()}
+              min={1}
+              className="w-full mb-4"
+              style={{
+                padding: '10px 14px',
+                borderRadius: 6,
+                background: 'rgba(0,0,0,0.4)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255,255,255,0.15)',
+                fontSize: 16,
+                outline: 'none',
+              }}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDepositModal(false)}
+                className="flex-1 py-3 rounded-lg"
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  color: 'var(--ftp-text-secondary)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}
+              >
+                {t('balance_deposit_cancel')}
+              </button>
+              <button
+                onClick={handleDeposit}
+                disabled={depositAmount <= 0}
+                className="flex-1 py-3 rounded-lg"
+                style={{
+                  background: depositAmount <= 0
+                    ? '#555'
+                    : 'linear-gradient(180deg, #16A34A, #15803D)',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  border: 'none',
+                  cursor: depositAmount <= 0 ? 'not-allowed' : 'pointer',
+                  textTransform: 'uppercase',
+                  boxShadow: depositAmount > 0
+                    ? '0 2px 0 #14532D'
+                    : 'none',
+                }}
+              >
+                {t('balance_deposit_confirm')}
               </button>
             </div>
           </div>

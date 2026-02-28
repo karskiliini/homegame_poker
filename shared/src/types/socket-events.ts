@@ -45,6 +45,10 @@ export const C2S_LOBBY = {
   CREATE_TABLE: 'lobby:create_table',
   JOIN_TABLE: 'lobby:join_table',
   LEAVE_TABLE: 'lobby:leave_table',
+  CHECK_NAME: 'lobby:check_name',
+  REGISTER: 'lobby:register',
+  LOGIN: 'lobby:login',
+  DEPOSIT: 'lobby:deposit',
 } as const;
 
 export const S2C_LOBBY = {
@@ -53,6 +57,10 @@ export const S2C_LOBBY = {
   TABLE_UPDATED: 'lobby:table_updated',
   TABLE_REMOVED: 'lobby:table_removed',
   ERROR: 'lobby:error',
+  NAME_STATUS: 'lobby:name_status',
+  AUTH_SUCCESS: 'lobby:auth_success',
+  AUTH_ERROR: 'lobby:auth_error',
+  BALANCE_UPDATE: 'lobby:balance_update',
 } as const;
 
 export const C2S_TABLE = {

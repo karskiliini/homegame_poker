@@ -140,6 +140,32 @@ const en = {
   // Chat
   chat_placeholder: 'Type a message...',
   chat_send: 'Send',
+
+  // Auth
+  auth_continue: 'Continue',
+  auth_checking: 'Checking...',
+  auth_back: 'Back',
+  auth_password: 'PASSWORD',
+  auth_choose_password: 'Choose a password',
+  auth_confirm_password: 'Confirm password',
+  auth_enter_password: 'Enter your password',
+  auth_create_account: 'Create Account',
+  auth_login: 'Log In',
+  auth_new_player: 'New player! Create your account.',
+  auth_welcome_back: 'Welcome back! Enter your password.',
+  auth_password_required: 'Password is required',
+  auth_passwords_mismatch: 'Passwords do not match',
+  auth_wrong_password: 'Wrong password',
+
+  // Balance
+  balance_label: 'Balance',
+  balance_deposit: 'Deposit',
+  balance_deposit_title: 'Deposit Chips',
+  balance_deposit_amount: 'Amount',
+  balance_deposit_confirm: 'Deposit',
+  balance_deposit_cancel: 'Cancel',
+  balance_insufficient: 'Insufficient balance',
+  balance_deposit_success: 'Deposit successful.',
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -287,6 +313,32 @@ export const translations: Record<Language, Translations> = {
     // Chat
     chat_placeholder: 'Kirjoita viesti...',
     chat_send: 'Laheta',
+
+    // Auth
+    auth_continue: 'Jatka',
+    auth_checking: 'Tarkistetaan...',
+    auth_back: 'Takaisin',
+    auth_password: 'SALASANA',
+    auth_choose_password: 'Valitse salasana',
+    auth_confirm_password: 'Vahvista salasana',
+    auth_enter_password: 'Syota salasanasi',
+    auth_create_account: 'Luo tili',
+    auth_login: 'Kirjaudu',
+    auth_new_player: 'Uusi pelaaja! Luo tilisi.',
+    auth_welcome_back: 'Tervetuloa takaisin! Syota salasanasi.',
+    auth_password_required: 'Salasana vaaditaan',
+    auth_passwords_mismatch: 'Salasanat eivat tasmaa',
+    auth_wrong_password: 'Vaara salasana',
+
+    // Balance
+    balance_label: 'Saldo',
+    balance_deposit: 'Talletus',
+    balance_deposit_title: 'Talleta pelimerkkeja',
+    balance_deposit_amount: 'Maara',
+    balance_deposit_confirm: 'Talleta',
+    balance_deposit_cancel: 'Peruuta',
+    balance_insufficient: 'Saldo ei riita',
+    balance_deposit_success: 'Talletus suoritettu.',
   },
 };
 

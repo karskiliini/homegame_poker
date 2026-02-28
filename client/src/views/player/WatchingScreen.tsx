@@ -26,6 +26,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     gameState, setGameState, tables,
     playerName, playerAvatar,
     chatMessages, addChatMessage, clearChat,
+    accountBalance,
   } = useGameStore();
   const t = useT();
   const { gradients } = useTheme();
@@ -40,7 +41,9 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
 
   const table = tables.find(t => t.tableId === watchingTableId);
-  const maxBuyIn = table?.stakeLevel.maxBuyIn ?? 200;
+  const tableMaxBuyIn = table?.stakeLevel.maxBuyIn ?? 200;
+  const maxBuyIn = Math.min(tableMaxBuyIn, accountBalance);
+  const canBuyIn = accountBalance > 0;
 
   // Connect table socket and watch
   useEffect(() => {
@@ -206,21 +209,32 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
       </div>
 
       {/* Bottom: Sit Down button */}
-      <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
+      <div className="fixed bottom-6 left-0 right-0 z-50 flex flex-col items-center gap-2">
+        {!canBuyIn && (
+          <span style={{ color: '#EF4444', fontSize: 13, fontWeight: 600 }}>
+            {t('balance_insufficient')}
+          </span>
+        )}
         <button
-          onClick={handleSitDown}
+          onClick={canBuyIn ? handleSitDown : undefined}
+          disabled={!canBuyIn}
           style={{
             padding: '14px 40px',
             borderRadius: 8,
-            background: 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))',
+            background: canBuyIn
+              ? 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))'
+              : '#555',
             color: 'white',
             fontWeight: 700,
             fontSize: 16,
             border: 'none',
-            cursor: 'pointer',
+            cursor: canBuyIn ? 'pointer' : 'not-allowed',
             textTransform: 'uppercase',
             letterSpacing: 1,
-            boxShadow: '0 4px 0 var(--ftp-red-dark), 0 6px 12px rgba(0,0,0,0.4)',
+            boxShadow: canBuyIn
+              ? '0 4px 0 var(--ftp-red-dark), 0 6px 12px rgba(0,0,0,0.4)'
+              : 'none',
+            opacity: canBuyIn ? 1 : 0.5,
           }}
         >
           {t('watching_sit_down')}

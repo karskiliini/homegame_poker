@@ -50,6 +50,16 @@ interface GameStore {
   playerAvatar: string;
   setPlayerAvatar: (avatar: string) => void;
 
+  // Auth
+  authState: 'idle' | 'checking' | 'needs_password' | 'needs_register' | 'authenticated';
+  setAuthState: (state: 'idle' | 'checking' | 'needs_password' | 'needs_register' | 'authenticated') => void;
+  authError: string | null;
+  setAuthError: (error: string | null) => void;
+  accountBalance: number;
+  setAccountBalance: (balance: number) => void;
+  persistentPlayerId: string | null;
+  setPersistentPlayerId: (id: string | null) => void;
+
   // Table lobby
   tables: TableInfo[];
   setTables: (tables: TableInfo[]) => void;
@@ -107,6 +117,15 @@ export const useGameStore = create<GameStore>((set) => ({
   setPlayerName: (playerName) => set({ playerName }),
   playerAvatar: '1',
   setPlayerAvatar: (playerAvatar) => set({ playerAvatar }),
+
+  authState: 'idle',
+  setAuthState: (authState) => set({ authState }),
+  authError: null,
+  setAuthError: (authError) => set({ authError }),
+  accountBalance: 0,
+  setAccountBalance: (accountBalance) => set({ accountBalance }),
+  persistentPlayerId: null,
+  setPersistentPlayerId: (persistentPlayerId) => set({ persistentPlayerId }),
 
   tables: [],
   setTables: (tables) => set({ tables }),

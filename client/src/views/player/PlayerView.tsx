@@ -70,6 +70,8 @@ export function PlayerView() {
     setWatchingTableId,
     reconnecting, setReconnecting,
     addChatMessage,
+    setAuthState, setAuthError, setAccountBalance, setPersistentPlayerId,
+    setPlayerAvatar,
   } = useGameStore();
 
   const [showRit, setShowRit] = useState(false);
@@ -104,6 +106,33 @@ export function PlayerView() {
     socket.on(S2C_PLAYER.CONNECTED, (data: { stakeLevels: StakeLevel[]; serverVersion?: string }) => {
       setStakeLevels(data.stakeLevels);
       if (data.serverVersion) setServerVersion(data.serverVersion);
+    });
+
+    // === Auth events ===
+    socket.on(S2C_LOBBY.NAME_STATUS, (data: { exists: boolean }) => {
+      if (data.exists) {
+        setAuthState('needs_password');
+      } else {
+        setAuthState('needs_register');
+      }
+    });
+
+    socket.on(S2C_LOBBY.AUTH_SUCCESS, (data: { playerId: string; name: string; avatarId: string; balance: number }) => {
+      setAuthState('authenticated');
+      setAuthError(null);
+      setPersistentPlayerId(data.playerId);
+      setAccountBalance(data.balance);
+      useGameStore.getState().setPlayerName(data.name);
+      setPlayerAvatar(data.avatarId);
+      setScreen('table_lobby');
+    });
+
+    socket.on(S2C_LOBBY.AUTH_ERROR, (data: { message: string }) => {
+      setAuthError(data.message);
+    });
+
+    socket.on(S2C_LOBBY.BALANCE_UPDATE, (data: { balance: number }) => {
+      setAccountBalance(data.balance);
     });
 
     // Lobby events
@@ -171,9 +200,13 @@ export function PlayerView() {
     });
 
     socket.on(S2C_PLAYER.REBUY_PROMPT, (data: { maxBuyIn: number; deadline: number }) => {
-      setRebuyMaxBuyIn(data.maxBuyIn);
+      const balance = useGameStore.getState().accountBalance;
+      setRebuyMaxBuyIn(Math.min(data.maxBuyIn, balance));
       setRebuyDeadline(data.deadline);
-      setShowRebuyPrompt(true);
+      // Only show rebuy prompt if player has balance
+      if (balance > 0) {
+        setShowRebuyPrompt(true);
+      }
     });
 
     socket.on(S2C_PLAYER.RIT_OFFER, (data: { deadline: number }) => {
@@ -272,7 +305,7 @@ export function PlayerView() {
 
     switch (screen) {
       case 'login':
-        return <LoginScreen />;
+        return <LoginScreen socket={socketRef.current} />;
       case 'table_lobby':
         return <TableLobbyScreen socket={socketRef.current} />;
       case 'watching':
@@ -282,7 +315,7 @@ export function PlayerView() {
       case 'game':
         return <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} speechBubble={activeBubble} onSpeechBubbleDone={onBubbleDone} />;
       default:
-        return <LoginScreen />;
+        return <LoginScreen socket={socketRef.current} />;
     }
   };
 

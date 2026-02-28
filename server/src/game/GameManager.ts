@@ -74,6 +74,7 @@ export class GameManager {
 
   private lastChipTrickTime = 0;
   private chipTrickActive = false;
+  private playerRemovedCallbacks: Map<string, (playerId: string, remainingStack: number) => void> = new Map();
 
   constructor(config: GameConfig, io: Server, tableId: string, onEmpty?: () => void) {
     this.config = config;
@@ -81,6 +82,10 @@ export class GameManager {
     this.tableId = tableId;
     this.roomId = `table:${tableId}`;
     this.onEmpty = onEmpty;
+  }
+
+  setOnPlayerRemoved(playerId: string, callback: (playerId: string, remainingStack: number) => void) {
+    this.playerRemovedCallbacks.set(playerId, callback);
   }
 
   getConfig(): GameConfig { return this.config; }
@@ -110,7 +115,7 @@ export class GameManager {
     this.io.of('/player').to(this.roomId).emit(event, data);
   }
 
-  addPlayer(socket: Socket, name: string, buyIn: number, avatarId?: string, preferredSeat?: number): { playerId?: string; playerToken?: string; error?: string } {
+  addPlayer(socket: Socket, name: string, buyIn: number, avatarId?: string, preferredSeat?: number, persistentId?: string): { playerId?: string; playerToken?: string; error?: string } {
     if (buyIn > this.config.maxBuyIn) return { error: `Maximum buy-in is ${this.config.maxBuyIn}` };
     if (buyIn <= 0) return { error: 'Buy-in must be positive' };
     if (!name.trim()) return { error: 'Name is required' };
@@ -130,7 +135,7 @@ export class GameManager {
     // First player at the table auto-sits-in, others sit out
     const isFirstPlayer = this.players.size === 0;
     const player: Player = {
-      id: uuidv4(), name: name.trim(), seatIndex, stack: buyIn,
+      id: persistentId || uuidv4(), name: name.trim(), seatIndex, stack: buyIn,
       status: isFirstPlayer ? 'waiting' : 'sitting_out',
       isConnected: true, isReady: isFirstPlayer,
       runItTwicePreference: 'ask', autoMuck: false, disconnectedAt: null,
@@ -993,6 +998,8 @@ export class GameManager {
     const player = this.players.get(socketId);
     if (!player) return;
     console.log(`${player.name} removed from table [${this.tableId}]`);
+    const remainingStack = player.stack;
+    const playerId = player.id;
     this.seatMap.delete(player.seatIndex);
     this.playerIdToSocketId.delete(player.id);
     this.playerIdToToken.delete(player.id);
@@ -1004,6 +1011,11 @@ export class GameManager {
     this.emitToTableRoom(S2C_TABLE.PLAYER_LEFT, { playerId: player.id, seatIndex: player.seatIndex, playerName: player.name });
     this.broadcastLobbyState();
     this.broadcastTableState();
+    const removedCallback = this.playerRemovedCallbacks.get(playerId);
+    if (removedCallback) {
+      removedCallback(playerId, remainingStack);
+      this.playerRemovedCallbacks.delete(playerId);
+    }
     if (this.players.size === 0 && this.onEmpty) this.onEmpty();
   }
 
