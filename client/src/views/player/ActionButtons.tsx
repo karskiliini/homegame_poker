@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
 import type { ActionType } from '@poker/shared';
-import { C2S } from '@poker/shared';
+import { C2S, calcPotSizedBet, calcHalfPotBet } from '@poker/shared';
 
 interface ActionButtonsProps {
   socket: Socket;
@@ -11,10 +11,13 @@ interface ActionButtonsProps {
   maxRaise: number;
   stack: number;
   potTotal: number;
+  bigBlind: number;
+  maxBuyIn: number;
 }
 
 export function ActionButtons({
   socket, availableActions, callAmount, minRaise, maxRaise, stack, potTotal,
+  bigBlind, maxBuyIn,
 }: ActionButtonsProps) {
   const [raiseAmount, setRaiseAmount] = useState(minRaise);
 
@@ -22,6 +25,10 @@ export function ActionButtons({
   useEffect(() => {
     setRaiseAmount(minRaise);
   }, [minRaise, availableActions]);
+
+  const clampRaise = useCallback((v: number) => {
+    return Math.min(Math.max(Math.round(v), minRaise), maxRaise);
+  }, [minRaise, maxRaise]);
 
   const sendAction = (action: ActionType, amount?: number) => {
     socket.emit(C2S.ACTION, { action, amount });
@@ -33,9 +40,19 @@ export function ActionButtons({
   const canBet = availableActions.includes('bet');
   const canRaise = availableActions.includes('raise');
 
-  // Calculate pot-based presets
-  const halfPot = Math.max(Math.round(potTotal * 0.5), minRaise);
-  const fullPot = Math.max(Math.round(potTotal), minRaise);
+  // Calculate pot-based presets (proper pot-sized raise = call + pot after call)
+  const halfPot = calcHalfPotBet(potTotal, callAmount, maxRaise, stack, minRaise);
+  const fullPot = calcPotSizedBet(potTotal, callAmount, maxRaise, stack, minRaise);
+
+  // Slider step: 5% of max buy-in
+  const sliderStep = Math.max(1, Math.round(maxBuyIn * 0.05));
+
+  // Mouse wheel handler: 1 big blind per scroll tick
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? bigBlind : -bigBlind;
+    setRaiseAmount(prev => clampRaise(prev + delta));
+  }, [bigBlind, clampRaise]);
 
   return (
     <div className="space-y-3 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
@@ -89,8 +106,10 @@ export function ActionButtons({
               type="range"
               min={minRaise}
               max={maxRaise}
+              step={sliderStep}
               value={raiseAmount}
               onChange={(e) => setRaiseAmount(Number(e.target.value))}
+              onWheel={handleWheel}
               className="w-full ftp-slider"
             />
             <div className="flex justify-between items-center mt-1">

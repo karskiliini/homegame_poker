@@ -271,6 +271,8 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
               maxRaise={privateState.maxRaise}
               stack={privateState.stack}
               potTotal={privateState.potTotal}
+              bigBlind={config?.bigBlind ?? 2}
+              maxBuyIn={config?.maxBuyIn ?? 200}
             />
           ) : showPreActions ? (
             <PreActionButtons preAction={preAction} setPreAction={setPreAction} />
