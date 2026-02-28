@@ -384,19 +384,18 @@ export function PokerTable({
                     <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 600, marginBottom: 1 }}>
                       Board 1
                     </div>
-                    <div className="flex gap-2">
-                      {board1Extra.map((card) => (
-                        <CardComponent key={`b1-${card}`} card={card} size="md" isWinner={isWinner} />
-                      ))}
-                    </div>
+                    <CommunityCards
+                      cards={board1Extra}
+                      winningCards={isWinner ? board1Extra : undefined}
+                      initialCount={board1Extra.length}
+                    />
                   </div>
-                  {/* Board 2 — half card height below, 3px gap */}
+                  {/* Board 2 — half card height below, animated deal */}
                   <div style={{ position: 'absolute', left: 0, top: 39 }}>
-                    <div className="flex gap-2">
-                      {board2Extra.map((card) => (
-                        <CardComponent key={`b2-${card}`} card={card} size="md" isWinner={isWinner} />
-                      ))}
-                    </div>
+                    <CommunityCards
+                      cards={board2Extra}
+                      winningCards={isWinner ? board2Extra : undefined}
+                    />
                     <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 600, marginTop: 1 }}>
                       Board 2
                     </div>
