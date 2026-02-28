@@ -49,15 +49,19 @@ export function HandHistoryDetail({ hand, onBack, onNext, onPrev }: HandHistoryD
             &larr; Back
           </button>
           <div className="flex gap-2">
-            {onPrev && (
+            {onPrev ? (
               <button onClick={onPrev} className="text-gray-400 hover:text-white px-2">
                 &larr; Prev
               </button>
+            ) : (
+              <span className="text-black px-2">&larr; Prev</span>
             )}
-            {onNext && (
+            {onNext ? (
               <button onClick={onNext} className="text-gray-400 hover:text-white px-2">
                 Next &rarr;
               </button>
+            ) : (
+              <span className="text-black px-2">Next &rarr;</span>
             )}
           </div>
         </div>
