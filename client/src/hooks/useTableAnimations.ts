@@ -11,6 +11,7 @@ interface PotAward {
   winnerSeatIndex: number;
   winnerName: string;
   winningHand?: string;
+  winningCards?: CardString[];
 }
 
 interface CollectingBet {
@@ -44,6 +45,7 @@ export interface ChipTrickData {
 interface UseTableAnimationsResult {
   potAwards: PotAward[] | undefined;
   winnerSeats: number[];
+  winningCards: CardString[];
   awardingPotIndex: number | null;
   timerData: { seatIndex: number; secondsRemaining: number } | null;
   collectingBets: CollectingBet[] | null;
@@ -68,6 +70,7 @@ export function useTableAnimations({
   const gameStateRef = useRef<GameState | null>(null);
   const [potAwards, setPotAwards] = useState<PotAward[] | undefined>(undefined);
   const [winnerSeats, setWinnerSeats] = useState<number[]>([]);
+  const [winningCards, setWinningCards] = useState<CardString[]>([]);
   const [awardingPotIndex, setAwardingPotIndex] = useState<number | null>(null);
   const [timerData, setTimerData] = useState<{ seatIndex: number; secondsRemaining: number } | null>(null);
   const [collectingBets, setCollectingBets] = useState<CollectingBet[] | null>(null);
@@ -203,11 +206,15 @@ export function useTableAnimations({
       potIndex: number;
       isLastPot: boolean;
       totalPots: number;
+      winningCards?: CardString[];
     }) => {
       const seats = [...new Set(data.awards.map(a => a.winnerSeatIndex))];
       setWinnerSeats(prev => [...new Set([...prev, ...seats])]);
       setPotAwards(data.awards);
       setAwardingPotIndex(data.potIndex);
+      if (data.winningCards) {
+        setWinningCards(data.winningCards);
+      }
 
       setTimeout(() => {
         setPotAwards(undefined);
@@ -271,7 +278,10 @@ export function useTableAnimations({
       setEquities(null);
       setDramaticRiver(false);
       // Keep winner glow visible for 2s after hand result so players can see who won
-      setTimeout(() => setWinnerSeats([]), 2000);
+      setTimeout(() => {
+        setWinnerSeats([]);
+        setWinningCards([]);
+      }, 2000);
     };
 
     socket.on(S2C_TABLE.GAME_STATE, onGameState);
@@ -310,6 +320,7 @@ export function useTableAnimations({
   return {
     potAwards,
     winnerSeats,
+    winningCards,
     awardingPotIndex,
     timerData,
     collectingBets,

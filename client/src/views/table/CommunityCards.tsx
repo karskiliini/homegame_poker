@@ -12,11 +12,12 @@ interface CommunityCardsProps {
 }
 
 /** Single community card with slide-in + 3D flip animation */
-function FlippingCard({ card, isNew, staggerIndex, isWinner }: {
+function FlippingCard({ card, isNew, staggerIndex, isWinner, isDimmed }: {
   card: CardString;
   isNew: boolean;
   staggerIndex: number;
   isWinner: boolean;
+  isDimmed: boolean;
 }) {
   const [flipped, setFlipped] = useState(!isNew);
 
@@ -32,7 +33,7 @@ function FlippingCard({ card, isNew, staggerIndex, isWinner }: {
   // Cards already on the board: just render normally
   if (!isNew) {
     return (
-      <CardComponent card={card} size="md" isWinner={isWinner} />
+      <CardComponent card={card} size="md" isWinner={isWinner} isDimmed={isDimmed} />
     );
   }
 
@@ -53,7 +54,7 @@ function FlippingCard({ card, isNew, staggerIndex, isWinner }: {
         >
           {/* Front face (actual card) */}
           <div style={{ backfaceVisibility: 'hidden' }}>
-            <CardComponent card={card} size="md" isWinner={isWinner} />
+            <CardComponent card={card} size="md" isWinner={isWinner} isDimmed={isDimmed} />
           </div>
           {/* Back face (card back) */}
           <div
@@ -74,9 +75,10 @@ function FlippingCard({ card, isNew, staggerIndex, isWinner }: {
 }
 
 /** Dramatic river card: slow peel from left to right revealing the card underneath */
-function DramaticRiverCard({ card, isWinner }: {
+function DramaticRiverCard({ card, isWinner, isDimmed }: {
   card: CardString;
   isWinner: boolean;
+  isDimmed: boolean;
 }) {
   const [phase, setPhase] = useState<'peel' | 'done'>('peel');
 
@@ -87,13 +89,13 @@ function DramaticRiverCard({ card, isWinner }: {
   }, []);
 
   if (phase === 'done') {
-    return <CardComponent card={card} size="md" isWinner={isWinner} />;
+    return <CardComponent card={card} size="md" isWinner={isWinner} isDimmed={isDimmed} />;
   }
 
   return (
     <div className="animate-community-deal" style={{ position: 'relative' }}>
       {/* The actual card underneath */}
-      <CardComponent card={card} size="md" isWinner={isWinner} />
+      <CardComponent card={card} size="md" isWinner={isWinner} isDimmed={isDimmed} />
 
       {/* Card back overlay that peels away */}
       <div
@@ -126,11 +128,15 @@ export function CommunityCards({ cards, winningCards = [], initialCount = 0, dra
 
   const animateFrom = animatedFromRef.current;
 
+  const hasWinners = winningCards.length > 0;
+
   return (
     <div className="flex gap-2">
       {cards.map((card, i) => {
         const isNew = i >= animateFrom;
         const staggerIndex = isNew ? i - animateFrom : 0;
+        const isWinning = winningCards.includes(card);
+        const isDimmed = hasWinners && !isWinning;
 
         // Use dramatic river animation for the 5th card (index 4) when dramatic
         if (dramaticRiver && i === 4 && isNew) {
@@ -138,7 +144,8 @@ export function CommunityCards({ cards, winningCards = [], initialCount = 0, dra
             <DramaticRiverCard
               key={`${card}-${i}`}
               card={card}
-              isWinner={winningCards.includes(card)}
+              isWinner={isWinning}
+              isDimmed={isDimmed}
             />
           );
         }
@@ -149,7 +156,8 @@ export function CommunityCards({ cards, winningCards = [], initialCount = 0, dra
             card={card}
             isNew={isNew}
             staggerIndex={staggerIndex}
-            isWinner={winningCards.includes(card)}
+            isWinner={isWinning}
+            isDimmed={isDimmed}
           />
         );
       })}

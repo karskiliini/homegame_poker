@@ -78,7 +78,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   }, [watchingTableId, setGameState, addChatMessage, enqueue, clearChat]);
 
   const {
-    potAwards, winnerSeats, awardingPotIndex,
+    potAwards, winnerSeats, winningCards, awardingPotIndex,
     timerData, collectingBets, potGrow,
     betChipAnimations, dealCardAnimations,
     equities, dramaticRiver, badBeat, chipTrick,
@@ -184,6 +184,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
             gameState={gameState}
             potAwards={potAwards}
             winnerSeats={winnerSeats}
+            winningCards={winningCards}
             awardingPotIndex={awardingPotIndex}
             timerData={timerData}
             collectingBets={collectingBets}

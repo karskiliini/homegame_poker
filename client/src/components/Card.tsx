@@ -6,6 +6,7 @@ interface CardComponentProps {
   card: CardString;
   size?: 'sm' | 'md' | 'lg';
   isWinner?: boolean;
+  isDimmed?: boolean;
 }
 
 const SIZE_STYLES = {
@@ -14,7 +15,7 @@ const SIZE_STYLES = {
   lg: { width: 68, height: 96, fontSize: 18, suitSize: 16, centerSuit: 32 },
 };
 
-export function CardComponent({ card, size = 'md', isWinner }: CardComponentProps) {
+export function CardComponent({ card, size = 'md', isWinner, isDimmed }: CardComponentProps) {
   const theme = useTheme();
   const rank = card[0] as Rank;
   const suit = card[1] as Suit;
@@ -24,7 +25,7 @@ export function CardComponent({ card, size = 'md', isWinner }: CardComponentProp
 
   return (
     <div
-      className={`relative select-none ${isWinner ? 'animate-winner-flash' : ''}`}
+      className={`relative select-none ${isWinner ? 'animate-winner-card-glow' : ''} ${isDimmed ? 'winner-scene-dim' : ''}`}
       style={{
         width: s.width,
         height: s.height,

@@ -541,7 +541,7 @@ export class GameManager {
     this.storeHandHistory(result);
 
     // Build per-pot award groups for sequential emission
-    const potGroups: { potIndex: number; awards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string; winningHand?: string }[] }[] = [];
+    const potGroups: { potIndex: number; winningCards?: CardString[]; awards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string; winningHand?: string }[] }[] = [];
     for (let i = 0; i < result.pots.length; i++) {
       const pot = result.pots[i];
       const awards: typeof potGroups[0]['awards'] = [];
@@ -549,7 +549,7 @@ export class GameManager {
         const hp = result.players.find(p => p.playerId === winner.playerId);
         if (hp) awards.push({ potIndex: i, amount: winner.amount, winnerSeatIndex: hp.seatIndex, winnerName: winner.playerName, winningHand: pot.winningHand });
       }
-      if (awards.length > 0) potGroups.push({ potIndex: i, awards });
+      if (awards.length > 0) potGroups.push({ potIndex: i, winningCards: pot.winningCards, awards });
     }
 
     // Emit pot awards sequentially with delays between them
@@ -566,6 +566,7 @@ export class GameManager {
         potIndex: group.potIndex,
         isLastPot,
         totalPots: potGroups.length,
+        winningCards: group.winningCards,
       });
       this.emitSound('chip_win');
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { PublicPlayerState } from '@poker/shared';
+import type { PublicPlayerState, CardString } from '@poker/shared';
 import { DISCONNECT_TIMEOUT_MS } from '@poker/shared';
 import { avatarImageFile } from '../../utils/avatarImageFile.js';
 import { CardComponent } from '../../components/Card.js';
@@ -30,6 +30,10 @@ interface PlayerSeatProps {
   onAvatarClick?: () => void;
   /** Called when stack area is clicked (chip trick trigger) */
   onChipTrickClick?: () => void;
+  /** The 5 cards that make up the winning hand (for glow/dim logic) */
+  winningCards?: CardString[];
+  /** Whether a showdown is active (winners are being displayed) */
+  showdownActive?: boolean;
 }
 
 function useDcCountdown(disconnectedAt: number | null): string | null {
@@ -60,7 +64,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardsBelow, onAvatarClick, onChipTrickClick }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardsBelow, onAvatarClick, onChipTrickClick, winningCards, showdownActive }: PlayerSeatProps) {
   const { gradients, assets } = useTheme();
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
@@ -84,15 +88,19 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const cardsElement = (
     <div className={`flex ${cardsBelow ? 'mt-1' : 'mb-1'}`} style={{ minHeight: 52, gap: numHoleCards > 2 ? 0 : 2 }}>
       {player.holeCards ? (
-        player.holeCards.map((card, i) => (
-          <div
-            key={i}
-            className="animate-card-flip"
-            style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : undefined}
-          >
-            <CardComponent card={card} size="sm" isWinner={isWinner} />
-          </div>
-        ))
+        player.holeCards.map((card, i) => {
+          const cardIsWinning = isWinner && winningCards?.includes(card);
+          const cardIsDimmed = showdownActive && !isWinner;
+          return (
+            <div
+              key={i}
+              className="animate-card-flip"
+              style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : undefined}
+            >
+              <CardComponent card={card} size="sm" isWinner={cardIsWinning} isDimmed={cardIsDimmed} />
+            </div>
+          );
+        })
       ) : (
         <AnimatePresence>
           {showCardBacks && Array.from({ length: numHoleCards }, (_, i) => (

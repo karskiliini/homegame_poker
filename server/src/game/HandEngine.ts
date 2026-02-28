@@ -27,6 +27,7 @@ export interface PotResult {
   amount: number;
   winners: { playerId: string; playerName: string; amount: number }[];
   winningHand?: string;
+  winningCards?: CardString[];
 }
 
 export interface ShowdownEntry {
@@ -748,11 +749,17 @@ export class HandEngine {
           winnerResults.push({ playerId, playerName: player.name, amount });
         }
 
+        // Combine bestCards from both boards (deduplicated)
+        const ritWinningCards = [...new Set([
+          ...board1Winners[0].result.bestCards,
+          ...board2Winners[0].result.bestCards,
+        ])];
         potResults.push({
           name: potName,
           amount: pot.amount,
           winners: winnerResults,
           winningHand: `Board 1: ${board1Winners[0].result.description}, Board 2: ${board2Winners[0].result.description}`,
+          winningCards: ritWinningCards,
         });
 
         // Build showdown entries from both boards
@@ -792,6 +799,7 @@ export class HandEngine {
           amount: pot.amount,
           winners: winnerResults,
           winningHand: winners[0].result.description,
+          winningCards: winners[0].result.bestCards,
         });
 
         // Build showdown entries

@@ -94,6 +94,7 @@
   --ftp-anim-chip-win: 1200ms;
   --ftp-anim-flop-stagger: 80ms;
   --ftp-anim-winner-glow: 1500ms;
+  --ftp-anim-winner-card-glow: 1500ms;
   --ftp-anim-winner-flash: 600ms;
   --ftp-anim-river-peel: 2500ms;
   --ftp-anim-seat-join: 400ms;
@@ -180,6 +181,36 @@ html, body {
 
 .animate-winner-flash {
   animation: winner-card-flash 600ms ease-in-out 2;
+}
+
+/* Winner card golden glow — dramatic 3-layer box-shadow pulse (infinite) */
+@keyframes winner-card-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 6px 2px rgba(234, 179, 8, 0.4),
+      0 0 14px 6px rgba(234, 179, 8, 0.2),
+      0 0 24px 10px rgba(234, 179, 8, 0.1);
+    filter: brightness(1.1);
+  }
+  50% {
+    box-shadow:
+      0 0 10px 4px rgba(234, 179, 8, 0.7),
+      0 0 22px 10px rgba(234, 179, 8, 0.4),
+      0 0 40px 16px rgba(234, 179, 8, 0.15);
+    filter: brightness(1.25);
+  }
+}
+
+.animate-winner-card-glow {
+  animation: winner-card-glow var(--ftp-anim-winner-card-glow) ease-in-out infinite;
+  border-color: rgba(234, 179, 8, 0.6) !important;
+}
+
+/* Dim non-winning cards during showdown */
+.winner-scene-dim {
+  opacity: 0.45;
+  filter: brightness(0.6) saturate(0.5);
+  transition: opacity 300ms ease, filter 300ms ease;
 }
 
 /* Chip fly to winner */

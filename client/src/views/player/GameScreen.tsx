@@ -65,7 +65,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   // Animation hook — sound disabled (PlayerView handles sound via /player namespace)
   const seatRotation = privateState?.seatIndex;
   const {
-    potAwards, winnerSeats, awardingPotIndex,
+    potAwards, winnerSeats, winningCards, awardingPotIndex,
     timerData, collectingBets, potGrow,
     betChipAnimations, dealCardAnimations,
     equities, dramaticRiver, badBeat, chipTrick,
@@ -187,6 +187,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               gameState={gameState}
               potAwards={potAwards}
               winnerSeats={winnerSeats}
+              winningCards={winningCards}
               awardingPotIndex={awardingPotIndex}
               timerData={timerData}
               collectingBets={collectingBets}

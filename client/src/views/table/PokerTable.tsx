@@ -121,6 +121,8 @@ interface PokerTableProps {
   chipTrick?: ChipTrickData | null;
   /** Called when own chip stack is clicked (triggers chip trick) */
   onChipTrickClick?: () => void;
+  /** The 5 cards that make up the winning hand (for glow/dim on individual cards) */
+  winningCards?: CardString[];
 }
 
 // Table center in percentage coordinates
@@ -179,6 +181,7 @@ export function PokerTable({
   equities, dramaticRiver, badBeat, onSeatClick, onMyAvatarClick,
   speechBubble, onSpeechBubbleDone,
   chipTrick, onChipTrickClick,
+  winningCards = [],
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const numHoleCards = config.gameType === 'PLO' ? 4 : 2;
@@ -399,7 +402,7 @@ export function PokerTable({
             <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
               <CommunityCards
                 cards={communityCards}
-                winningCards={winnerSeats.length > 0 ? communityCards : undefined}
+                winningCards={winningCards}
                 dramaticRiver={dramaticRiver}
               />
             </div>
@@ -416,14 +419,20 @@ export function PokerTable({
         const sharedCards = communityCards.slice(0, sharedCount);
         const board1Extra = communityCards.slice(sharedCount);
         const board2Extra = secondBoard.slice(sharedCount);
-        const isWinner = winnerSeats.length > 0;
+        const hasWinners = winningCards.length > 0;
 
         return (
           <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
             <div className="flex gap-2 items-center">
               {/* Shared pre-all-in cards — centered */}
               {sharedCards.map((card) => (
-                <CardComponent key={`shared-${card}`} card={card} size="md" isWinner={isWinner} />
+                <CardComponent
+                  key={`shared-${card}`}
+                  card={card}
+                  size="md"
+                  isWinner={winningCards.includes(card)}
+                  isDimmed={hasWinners && !winningCards.includes(card)}
+                />
               ))}
 
               {/* Board 1 & 2 split: fork above/below the shared card row */}
@@ -440,7 +449,7 @@ export function PokerTable({
                     </div>
                     <CommunityCards
                       cards={board1Extra}
-                      winningCards={isWinner ? board1Extra : undefined}
+                      winningCards={winningCards}
                       initialCount={board1Extra.length}
                     />
                   </div>
@@ -448,7 +457,7 @@ export function PokerTable({
                   <div style={{ position: 'absolute', left: 0, top: 39 }}>
                     <CommunityCards
                       cards={board2Extra}
-                      winningCards={isWinner ? board2Extra : undefined}
+                      winningCards={winningCards}
                     />
                     <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 600, marginTop: 1 }}>
                       Board 2
@@ -791,6 +800,8 @@ export function PokerTable({
                   cardsBelow={pos.y < 50}
                   onAvatarClick={myPlayerId && player && player.id === myPlayerId ? onMyAvatarClick : undefined}
                   onChipTrickClick={myPlayerId && player?.id === myPlayerId ? onChipTrickClick : undefined}
+                  winningCards={winningCards}
+                  showdownActive={winnerSeats.length > 0}
                 />
                 {badBeat && badBeat.loserSeatIndex === seatIndex && (
                   <BadBeatBubble seatIndex={seatIndex} playerName={badBeat.playerName} />
