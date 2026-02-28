@@ -3,6 +3,8 @@ import { AVATAR_OPTIONS } from '@poker/shared';
 import type { AvatarId } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { VersionInfo } from '../../components/VersionInfo.js';
+import { useT } from '../../hooks/useT.js';
+import { LanguageToggle } from '../../components/LanguageToggle.js';
 
 function getRandomAvatar(): AvatarId {
   const idx = Math.floor(Math.random() * AVATAR_OPTIONS.length);
@@ -13,6 +15,7 @@ export function LoginScreen() {
   const { setScreen, setPlayerName, setPlayerAvatar } = useGameStore();
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>(getRandomAvatar);
+  const t = useT();
 
   const handleJoin = () => {
     if (!name.trim()) return;
@@ -35,27 +38,30 @@ export function LoginScreen() {
           boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
         }}
       >
+        <div className="flex justify-end mb-2">
+          <LanguageToggle />
+        </div>
         <h1
           className="text-center mb-1 font-bold"
           style={{ color: 'var(--ftp-red)', fontSize: 24, letterSpacing: 1 }}
         >
-          POKER NIGHT
+          {t('login_title')}
         </h1>
         <p className="text-center mb-6" style={{ color: 'var(--ftp-text-secondary)', fontSize: 13 }}>
-          Choose your name and avatar
+          {t('login_subtitle')}
         </p>
 
         <div className="space-y-4">
           <div>
             <label className="block mb-1" style={{ color: 'var(--ftp-text-muted)', fontSize: 12, fontWeight: 600 }}>
-              NAME
+              {t('login_name_label')}
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-              placeholder="Enter your name"
+              placeholder={t('login_name_placeholder')}
               className="w-full"
               style={{
                 padding: '12px 16px',
@@ -73,7 +79,7 @@ export function LoginScreen() {
           {/* Avatar picker */}
           <div>
             <label className="block mb-2" style={{ color: 'var(--ftp-text-muted)', fontSize: 12, fontWeight: 600 }}>
-              AVATAR
+              {t('login_avatar_label')}
             </label>
             <div
               className="grid grid-cols-4 gap-2"
@@ -133,7 +139,7 @@ export function LoginScreen() {
               textTransform: 'uppercase',
             }}
           >
-            Enter Lobby
+            {t('login_enter_lobby')}
           </button>
         </div>
       </div>

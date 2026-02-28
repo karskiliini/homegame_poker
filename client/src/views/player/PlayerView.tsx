@@ -17,6 +17,8 @@ import { HandHistoryDetail } from '../history/HandHistoryDetail.js';
 import { playerSoundManager } from '../../audio/SoundManager.js';
 import { SoundToggle } from '../../components/SoundToggle.js';
 import { BugReportButton } from '../../components/BugReportButton.js';
+import { LanguageToggle } from '../../components/LanguageToggle.js';
+import { useT } from '../../hooks/useT.js';
 
 export function PlayerView() {
   const socketRef = useRef(createPlayerSocket());
@@ -202,15 +204,7 @@ export function PlayerView() {
 
       {/* Top-right controls (visible during game) */}
       {screen === 'game' && handHistoryView === 'none' && (
-        <div className="fixed top-4 right-4 z-40 flex items-center gap-3">
-          <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
-          <button
-            onClick={openHistory}
-            className="text-blue-400 text-sm underline"
-          >
-            Hand History
-          </button>
-        </div>
+        <TopRightControls soundEnabled={soundEnabled} toggleSound={toggleSound} openHistory={openHistory} />
       )}
 
       {/* Overlays */}
@@ -257,5 +251,25 @@ export function PlayerView() {
 
       <BugReportButton socket={socketRef.current} />
     </>
+  );
+}
+
+function TopRightControls({ soundEnabled, toggleSound, openHistory }: {
+  soundEnabled: boolean;
+  toggleSound: () => void;
+  openHistory: () => void;
+}) {
+  const t = useT();
+  return (
+    <div className="fixed top-4 right-4 z-40 flex items-center gap-3">
+      <LanguageToggle />
+      <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
+      <button
+        onClick={openHistory}
+        className="text-blue-400 text-sm underline"
+      >
+        {t('game_hand_history')}
+      </button>
+    </div>
   );
 }

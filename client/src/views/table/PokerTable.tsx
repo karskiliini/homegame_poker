@@ -8,6 +8,7 @@ import { BetChip } from './BetChip.js';
 import { CardBack } from '../../components/CardBack.js';
 import { CardComponent } from '../../components/Card.js';
 import { ChipStack } from '../../components/ChipStack.js';
+import { useT } from '../../hooks/useT.js';
 
 // Seat positions around an oval table (percentage-based, for 10 seats)
 export const SEAT_POSITIONS: { x: number; y: number }[] = [
@@ -108,6 +109,7 @@ export function PokerTable({
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
+  const t = useT();
 
   // Position lookup that respects seat rotation
   const getDisplaySeatPos = useCallback((physicalSeatIndex: number) => {
@@ -535,7 +537,7 @@ export function PokerTable({
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center"
           style={{ color: 'rgba(255,255,255,0.5)', fontSize: 20 }}
         >
-          Waiting for players...
+          {t('table_waiting')}
         </div>
       )}
 
@@ -582,7 +584,7 @@ export function PokerTable({
                   fontSize: 11,
                 }}
               >
-                Seat {seatIndex + 1}
+                {t('table_seat')} {seatIndex + 1}
               </div>
             )}
           </div>

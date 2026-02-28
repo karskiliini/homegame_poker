@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Socket } from 'socket.io-client';
 import { C2S } from '@poker/shared';
+import { useT } from '../../hooks/useT.js';
 
 interface RebuyPromptProps {
   socket: Socket;
@@ -13,6 +14,7 @@ export function RebuyPrompt({ socket, maxBuyIn, deadline, onClose }: RebuyPrompt
   const [remaining, setRemaining] = useState(
     Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
   );
+  const t = useT();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,10 +44,10 @@ export function RebuyPrompt({ socket, maxBuyIn, deadline, onClose }: RebuyPrompt
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full">
         <h2 className="text-white text-xl font-bold text-center mb-2">
-          Chips finished!
+          {t('rebuy_title')}
         </h2>
         <p className="text-gray-400 text-center text-sm mb-4">
-          Rebuy or sit out?
+          {t('rebuy_subtitle')}
         </p>
 
         <div className="text-center text-yellow-400 text-2xl font-mono mb-6">
@@ -57,13 +59,13 @@ export function RebuyPrompt({ socket, maxBuyIn, deadline, onClose }: RebuyPrompt
             onClick={handleRebuy}
             className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-lg"
           >
-            Rebuy {maxBuyIn}
+            {t('rebuy_button')} {maxBuyIn}
           </button>
           <button
             onClick={handleSitOut}
             className="w-full py-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 font-bold text-lg"
           >
-            Sit Out
+            {t('rebuy_sit_out')}
           </button>
         </div>
       </div>

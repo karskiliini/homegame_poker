@@ -1,7 +1,9 @@
 import { useGameStore } from '../../hooks/useGameStore.js';
+import { useT } from '../../hooks/useT.js';
 
 export function LobbyScreen() {
   const { lobbyState, config } = useGameStore();
+  const t = useT();
 
   const playerCount = lobbyState?.players.length ?? 0;
   const minPlayers = config?.minPlayers ?? 2;
@@ -12,7 +14,7 @@ export function LobbyScreen() {
       style={{ background: 'linear-gradient(180deg, #0F1E33, #162D50)' }}
     >
       <h1 className="font-bold mb-1" style={{ color: '#FFFFFF', fontSize: 22 }}>
-        Lobby
+        {t('lobby_title')}
       </h1>
       <p className="mb-6" style={{ color: 'var(--ftp-text-secondary)', fontSize: 13 }}>
         {config ? `${config.gameType} - ${config.smallBlind}/${config.bigBlind}` : ''}
@@ -53,8 +55,8 @@ export function LobbyScreen() {
       {/* Status */}
       <div className="mb-4" style={{ color: 'var(--ftp-text-secondary)', fontSize: 13 }}>
         {playerCount < minPlayers
-          ? `Waiting for players... (${playerCount}/${minPlayers})`
-          : 'Starting...'}
+          ? `${t('lobby_waiting')} (${playerCount}/${minPlayers})`
+          : t('lobby_starting')}
       </div>
     </div>
   );

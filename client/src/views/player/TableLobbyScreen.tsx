@@ -4,6 +4,7 @@ import { C2S_LOBBY, STAKE_LEVELS } from '@poker/shared';
 import type { StakeLevel } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { VersionInfo } from '../../components/VersionInfo.js';
+import { useT } from '../../hooks/useT.js';
 
 interface TableLobbyScreenProps {
   socket: Socket;
@@ -13,6 +14,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
   const { tables, playerName, isConnected, setWatchingTableId, setScreen } = useGameStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const t = useT();
 
   const handleCreateTable = (stakeLevel: StakeLevel) => {
     if (!isConnected) return;
@@ -48,7 +50,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-bold" style={{ color: '#FFFFFF', fontSize: 20 }}>
-              Tables
+              {t('table_lobby_title')}
             </h1>
             <span
               style={{
@@ -62,7 +64,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
           </div>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
             {isConnected
-              ? `Playing as ${playerName}`
+              ? `${t('table_lobby_playing_as')} ${playerName}`
               : 'No server connection'}
           </p>
         </div>
@@ -89,7 +91,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
               opacity: !isConnected || creating ? 0.5 : 1,
             }}
           >
-            {creating ? 'Creating...' : '+ Create'}
+            {creating ? 'Creating...' : t('table_lobby_create')}
           </button>
         )}
       </div>
@@ -98,7 +100,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
       {tables.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-4">
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>
-            {isConnected ? 'No tables running' : 'Connecting to server...'}
+            {isConnected ? t('table_lobby_no_tables') : 'Connecting to server...'}
           </div>
           {!isConnected && (
             <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', maxWidth: 260 }}>
@@ -127,7 +129,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
               opacity: !isConnected || creating ? 0.5 : 1,
             }}
           >
-            {creating ? 'Creating...' : 'Create Table'}
+            {creating ? 'Creating...' : t('table_lobby_create_table')}
           </button>
         </div>
       ) : (
@@ -147,9 +149,9 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
               zIndex: 1,
             }}
           >
-            <div style={{ flex: 3 }}>Table</div>
-            <div style={{ flex: 2, textAlign: 'center' }}>Stakes</div>
-            <div style={{ flex: 1, textAlign: 'center' }}>Plrs</div>
+            <div style={{ flex: 3 }}>{t('table_lobby_col_table')}</div>
+            <div style={{ flex: 2, textAlign: 'center' }}>{t('table_lobby_col_stakes')}</div>
+            <div style={{ flex: 1, textAlign: 'center' }}>{t('table_lobby_col_players')}</div>
           </div>
 
           {/* Table rows */}
@@ -213,10 +215,10 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
               }}
             >
               <h2 className="font-bold" style={{ color: '#FFFFFF', fontSize: 18 }}>
-                Create Table
+                {t('table_lobby_create_table')}
               </h2>
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
-                Choose blind level
+                {t('table_lobby_choose_blind')}
               </p>
             </div>
             <div>
@@ -237,7 +239,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
                   >
                     <span className="font-semibold">{level.gameType} {level.label}</span>
                     <span style={{ color: '#666', fontSize: 12 }}>
-                      Max: {level.maxBuyIn}
+                      {t('table_lobby_max')} {level.maxBuyIn}
                     </span>
                   </button>
                 );
@@ -255,7 +257,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
                   fontSize: 14,
                 }}
               >
-                Cancel
+                {t('table_lobby_cancel')}
               </button>
             </div>
           </div>

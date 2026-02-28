@@ -1,4 +1,5 @@
 import type { PreActionType } from '@poker/shared';
+import { useT } from '../../hooks/useT.js';
 
 interface PreActionButtonsProps {
   preAction: PreActionType | null;
@@ -6,6 +7,8 @@ interface PreActionButtonsProps {
 }
 
 export function PreActionButtons({ preAction, setPreAction }: PreActionButtonsProps) {
+  const t = useT();
+
   const toggle = (type: PreActionType) => {
     setPreAction(preAction === type ? null : type);
   };
@@ -13,13 +16,13 @@ export function PreActionButtons({ preAction, setPreAction }: PreActionButtonsPr
   return (
     <div className="flex gap-3 justify-center py-4">
       <PreActionToggle
-        label="Fold to any bet"
+        label={t('preaction_fold_to_bet')}
         active={preAction === 'fold_to_bet'}
         color="fold"
         onClick={() => toggle('fold_to_bet')}
       />
       <PreActionToggle
-        label="Check"
+        label={t('preaction_check')}
         active={preAction === 'auto_check'}
         color="check"
         onClick={() => toggle('auto_check')}

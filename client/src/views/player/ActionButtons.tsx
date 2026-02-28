@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
 import type { ActionType } from '@poker/shared';
 import { C2S, calcPotSizedBet, calcHalfPotBet } from '@poker/shared';
+import { useT } from '../../hooks/useT.js';
 
 interface ActionButtonsProps {
   socket: Socket;
@@ -20,6 +21,7 @@ export function ActionButtons({
   bigBlind, maxBuyIn,
 }: ActionButtonsProps) {
   const [raiseAmount, setRaiseAmount] = useState(minRaise);
+  const t = useT();
 
   // Reset raiseAmount to minRaise when available actions change
   useEffect(() => {
@@ -60,19 +62,19 @@ export function ActionButtons({
       <div className="flex gap-3">
         {canFold && (
           <FTPButton color="fold" onClick={() => sendAction('fold')} className="flex-1">
-            FOLD
+            {t('action_fold')}
           </FTPButton>
         )}
 
         {canCheck && (
           <FTPButton color="check" onClick={() => sendAction('check')} className="flex-1">
-            CHECK
+            {t('action_check')}
           </FTPButton>
         )}
 
         {canCall && (
           <FTPButton color="call" onClick={() => sendAction('call', callAmount)} className="flex-1">
-            CALL {callAmount.toLocaleString()}
+            {t('action_call')} {callAmount.toLocaleString()}
           </FTPButton>
         )}
 
@@ -84,7 +86,7 @@ export function ActionButtons({
             }}
             className="flex-1"
           >
-            {raiseAmount === maxRaise ? 'ALL IN' : `${canBet ? 'BET' : 'RAISE'} ${raiseAmount.toLocaleString()}`}
+            {raiseAmount === maxRaise ? t('action_all_in') : `${canBet ? t('action_bet') : t('action_raise')} ${raiseAmount.toLocaleString()}`}
           </FTPButton>
         )}
       </div>
@@ -94,10 +96,10 @@ export function ActionButtons({
         <>
           {/* Preset buttons */}
           <div className="flex gap-2 justify-center">
-            <PresetButton label="Min" onClick={() => setRaiseAmount(minRaise)} />
-            <PresetButton label="1/2 Pot" onClick={() => setRaiseAmount(Math.min(halfPot, maxRaise))} />
-            <PresetButton label="Pot" onClick={() => setRaiseAmount(Math.min(fullPot, maxRaise))} />
-            <PresetButton label="All-in" onClick={() => setRaiseAmount(maxRaise)} active={raiseAmount === maxRaise} />
+            <PresetButton label={t('action_min')} onClick={() => setRaiseAmount(minRaise)} />
+            <PresetButton label={t('action_half_pot')} onClick={() => setRaiseAmount(Math.min(halfPot, maxRaise))} />
+            <PresetButton label={t('action_pot')} onClick={() => setRaiseAmount(Math.min(fullPot, maxRaise))} />
+            <PresetButton label={t('action_all_in_preset')} onClick={() => setRaiseAmount(maxRaise)} active={raiseAmount === maxRaise} />
           </div>
 
           {/* Slider */}
@@ -120,7 +122,7 @@ export function ActionButtons({
               >
                 {raiseAmount.toLocaleString()}
               </span>
-              <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>All-in ({maxRaise})</span>
+              <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>{t('action_all_in_preset')} ({maxRaise})</span>
             </div>
           </div>
         </>

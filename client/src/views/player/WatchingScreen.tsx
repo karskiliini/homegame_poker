@@ -4,10 +4,12 @@ import { C2S_TABLE, C2S_LOBBY } from '@poker/shared';
 import { createTableSocket } from '../../socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { useTableAnimations } from '../../hooks/useTableAnimations.js';
+import { useT } from '../../hooks/useT.js';
 import { PokerTable } from '../table/PokerTable.js';
 import { tableSoundManager } from '../../audio/SoundManager.js';
 import { SoundToggle } from '../../components/SoundToggle.js';
 import { BugReportButton } from '../../components/BugReportButton.js';
+import { LanguageToggle } from '../../components/LanguageToggle.js';
 
 interface WatchingScreenProps {
   playerSocket: Socket;
@@ -19,6 +21,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     gameState, setGameState, tables,
     playerName, playerAvatar,
   } = useGameStore();
+  const t = useT();
 
   const tableSocketRef = useRef(createTableSocket());
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -112,10 +115,11 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
             fontWeight: 600,
           }}
         >
-          Back
+          {t('watching_back')}
         </button>
       </div>
       <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+        <LanguageToggle />
         <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
       </div>
 
@@ -133,7 +137,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
           dealCardAnimations={dealCardAnimations}
         />
       ) : (
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22 }}>Connecting...</div>
+        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22 }}>{t('watching_connecting')}</div>
       )}
 
       {/* Bottom: Sit Down button */}
@@ -154,7 +158,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
             boxShadow: '0 4px 0 var(--ftp-red-dark), 0 6px 12px rgba(0,0,0,0.4)',
           }}
         >
-          Sit Down
+          {t('watching_sit_down')}
         </button>
       </div>
 
@@ -176,7 +180,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="font-bold mb-1" style={{ color: '#FFFFFF', fontSize: 18 }}>
-              Buy In
+              {t('watching_buy_in')}
             </h2>
             <p className="mb-4" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
               {table?.name} &mdash; {table?.stakeLevel.label}
@@ -212,7 +216,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
                   fontWeight: 600,
                 }}
               >
-                Cancel
+                {t('watching_cancel')}
               </button>
               <button
                 onClick={handleConfirmSitDown}
@@ -233,7 +237,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
                     : 'none',
                 }}
               >
-                Confirm
+                {t('watching_confirm')}
               </button>
             </div>
           </div>

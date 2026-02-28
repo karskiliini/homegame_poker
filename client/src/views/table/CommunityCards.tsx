@@ -6,6 +6,8 @@ import { CardBack } from '../../components/CardBack.js';
 interface CommunityCardsProps {
   cards: CardString[];
   winningCards?: CardString[];
+  /** Number of cards already visible (no deal animation) when component mounts. Used for RIT Board 2 shared cards. */
+  initialCount?: number;
 }
 
 /** Single community card with slide-in + 3D flip animation */
@@ -70,9 +72,9 @@ function FlippingCard({ card, isNew, staggerIndex, isWinner }: {
   );
 }
 
-export function CommunityCards({ cards, winningCards = [] }: CommunityCardsProps) {
-  const prevCountRef = useRef(0);
-  const animatedFromRef = useRef(0);
+export function CommunityCards({ cards, winningCards = [], initialCount = 0 }: CommunityCardsProps) {
+  const prevCountRef = useRef(initialCount);
+  const animatedFromRef = useRef(initialCount);
 
   useEffect(() => {
     if (cards.length > prevCountRef.current) {

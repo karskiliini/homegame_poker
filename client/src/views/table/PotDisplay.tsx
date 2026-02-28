@@ -1,6 +1,7 @@
 import type { PotDisplay as PotDisplayType } from '@poker/shared';
 import { breakdownChips } from '@poker/shared';
 import { ChipStack } from '../../components/ChipStack.js';
+import { useT } from '../../hooks/useT.js';
 
 interface PotDisplayProps {
   pots: PotDisplayType[];
@@ -10,6 +11,7 @@ interface PotDisplayProps {
 }
 
 export function PotDisplay({ pots, bigBlind, playerNames, potGrow }: PotDisplayProps) {
+  const t = useT();
   if (pots.length === 0) return null;
 
   const hasSidePots = pots.length > 1;
@@ -43,7 +45,7 @@ export function PotDisplay({ pots, bigBlind, playerNames, potGrow }: PotDisplayP
                 {pot.amount.toLocaleString()}
               </div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>
-                {i === 0 ? 'Total Pot' : `Side Pot ${i}`}
+                {i === 0 ? t('table_total_pot') : `${t('table_side_pot')} ${i}`}
               </div>
               {eligibleNames.length > 0 && (
                 <div

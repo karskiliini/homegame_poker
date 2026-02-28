@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Socket } from 'socket.io-client';
 import { C2S } from '@poker/shared';
+import { useT } from '../../hooks/useT.js';
 
 interface RunItTwicePromptProps {
   socket: Socket;
@@ -12,6 +13,7 @@ export function RunItTwicePrompt({ socket, deadline, onClose }: RunItTwicePrompt
   const [remaining, setRemaining] = useState(
     Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
   );
+  const t = useT();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,10 +36,10 @@ export function RunItTwicePrompt({ socket, deadline, onClose }: RunItTwicePrompt
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full">
         <h2 className="text-white text-xl font-bold text-center mb-2">
-          Run It Twice?
+          {t('rit_title')}
         </h2>
         <p className="text-gray-400 text-center text-sm mb-4">
-          All players are all-in. Deal the remaining cards twice and split the pot?
+          {t('rit_description')}
         </p>
 
         <div className="text-center text-yellow-400 text-2xl font-mono mb-6">
@@ -49,19 +51,19 @@ export function RunItTwicePrompt({ socket, deadline, onClose }: RunItTwicePrompt
             onClick={() => respond(true)}
             className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-lg"
           >
-            Yes
+            {t('rit_yes')}
           </button>
           <button
             onClick={() => respond(false)}
             className="w-full py-3 rounded-lg bg-red-700 hover:bg-red-600 text-white font-bold text-lg"
           >
-            No
+            {t('rit_no')}
           </button>
           <button
             onClick={() => respond(false, true)}
             className="w-full py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm"
           >
-            Always No (don't ask again)
+            {t('rit_always_no')}
           </button>
         </div>
       </div>
