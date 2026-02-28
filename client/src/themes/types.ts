@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Suit, ChipDenomination } from '@poker/shared';
 
-export type ThemeId = 'basic' | 'cccp';
+export type ThemeId = 'basic' | 'cccp' | 'midnight' | 'vegas' | 'arctic' | 'lava';
 
 /** All --ftp-* CSS custom properties that ThemeApplier writes to :root */
 export interface ThemeCSSVars {

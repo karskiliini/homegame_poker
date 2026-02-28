@@ -1,6 +1,15 @@
 import { useGameStore } from '../hooks/useGameStore.js';
 import { THEME_IDS } from '../themes/index.js';
 
+const THEME_ICONS: Record<string, string> = {
+  basic: '\u2663',    // ♣
+  cccp: '\u2606',     // ☆
+  midnight: '\u263D', // ☽
+  vegas: '\u2666',    // ♦
+  arctic: '\u2744',   // ❄
+  lava: '\u2668',     // ♨
+};
+
 export function ThemeToggle({ className = '' }: { className?: string }) {
   const theme = useGameStore(s => s.theme);
   const setTheme = useGameStore(s => s.setTheme);
@@ -34,7 +43,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
       title="Switch theme"
     >
       <span style={{ fontSize: 14 }}>
-        {theme === 'basic' ? '\u2663' : '\u2606'}
+        {THEME_ICONS[theme] ?? '\u2663'}
       </span>
       <span>{theme}</span>
     </button>

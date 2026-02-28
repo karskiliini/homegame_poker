@@ -631,6 +631,70 @@ input[type="range"].ftp-volume-slider::-webkit-slider-thumb:hover {
   animation: cccp-star-glow 4s ease-in-out infinite;
 }
 
+/* Midnight crescent moon glow */
+@keyframes midnight-glow {
+  0%, 100% {
+    opacity: 0.04;
+    filter: drop-shadow(0 0 0px rgba(192, 200, 212, 0));
+  }
+  50% {
+    opacity: 0.08;
+    filter: drop-shadow(0 0 14px rgba(192, 200, 212, 0.3));
+  }
+}
+
+.animate-midnight-glow {
+  animation: midnight-glow 5s ease-in-out infinite;
+}
+
+/* Vegas diamond sparkle */
+@keyframes vegas-sparkle {
+  0%, 100% {
+    opacity: 0.04;
+    filter: drop-shadow(0 0 0px rgba(212, 168, 48, 0));
+  }
+  50% {
+    opacity: 0.10;
+    filter: drop-shadow(0 0 16px rgba(212, 168, 48, 0.4));
+  }
+}
+
+.animate-vegas-sparkle {
+  animation: vegas-sparkle 3s ease-in-out infinite;
+}
+
+/* Arctic snowflake shimmer */
+@keyframes arctic-shimmer {
+  0%, 100% {
+    opacity: 0.04;
+    filter: drop-shadow(0 0 0px rgba(112, 184, 216, 0));
+  }
+  50% {
+    opacity: 0.08;
+    filter: drop-shadow(0 0 12px rgba(112, 184, 216, 0.3));
+  }
+}
+
+.animate-arctic-shimmer {
+  animation: arctic-shimmer 6s ease-in-out infinite;
+}
+
+/* Lava flame pulse */
+@keyframes lava-pulse {
+  0%, 100% {
+    opacity: 0.04;
+    filter: drop-shadow(0 0 0px rgba(208, 96, 48, 0));
+  }
+  50% {
+    opacity: 0.10;
+    filter: drop-shadow(0 0 14px rgba(208, 96, 48, 0.35));
+  }
+}
+
+.animate-lava-pulse {
+  animation: lava-pulse 3.5s ease-in-out infinite;
+}
+
 /* === Chip Trick Animations === */
 
 /* Riffle shuffle: stack splits and interleaves */
