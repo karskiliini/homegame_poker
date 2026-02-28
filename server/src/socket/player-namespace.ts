@@ -31,6 +31,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       if (result.error) {
         socket.emit(S2C_LOBBY.ERROR, { message: result.error });
       } else {
+        socket.emit(S2C_LOBBY.TABLE_CREATED, { tableId: result.tableId });
         tableManager.broadcastTableList();
       }
     });

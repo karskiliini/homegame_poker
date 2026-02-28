@@ -24,6 +24,7 @@ export function PlayerView() {
     screen, setScreen, setConnected,
     setLobbyState, setPrivateState,
     setTables, setPlayerId, setCurrentTableId, setStakeLevels,
+    setWatchingTableId,
   } = useGameStore();
 
   const [showRit, setShowRit] = useState(false);
@@ -51,6 +52,11 @@ export function PlayerView() {
     // Lobby events
     socket.on(S2C_LOBBY.TABLE_LIST, (tables: TableInfo[]) => {
       setTables(tables);
+    });
+
+    socket.on(S2C_LOBBY.TABLE_CREATED, (data: { tableId: string }) => {
+      setWatchingTableId(data.tableId);
+      setScreen('watching');
     });
 
     socket.on(S2C_PLAYER.JOINED, (data: { playerId: string; tableId: string }) => {
