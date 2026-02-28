@@ -12,6 +12,7 @@ import { ActionButtons } from './ActionButtons.js';
 import { PreActionButtons } from './PreActionButtons.js';
 import { useTheme } from '../../themes/useTheme.js';
 import { ChatInput } from '../../components/ChatInput.js';
+import { ChatWindow } from '../../components/ChatWindow.js';
 import type { ChatMessage } from '@poker/shared';
 
 // Use canonical virtual table dimensions from PokerTable
@@ -27,7 +28,7 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, onSpeechBubbleDone }: GameScreenProps) {
-  const { privateState, lobbyState, gameState, setGameState, currentTableId } = useGameStore();
+  const { privateState, lobbyState, gameState, setGameState, currentTableId, chatMessages } = useGameStore();
   const tableSocketRef = useRef(createTableSocket());
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -415,7 +416,8 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
           </div>
         )}
 
-        {/* Chat input */}
+        {/* Chat */}
+        <ChatWindow messages={chatMessages} />
         <ChatInput socket={socket} />
       </div>
     </div>
