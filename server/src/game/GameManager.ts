@@ -413,7 +413,10 @@ export class GameManager {
       }
 
       case 'street_dealt':
-        this.currentCommunityCards = this.handEngine?.getCommunityCards() ?? [];
+        // Append only the cards from this event — do NOT read from engine.getCommunityCards()
+        // because during all-in runout, the engine has already dealt all future cards synchronously.
+        // Reading from the engine would leak river cards before their street_dealt event is processed.
+        this.currentCommunityCards = [...this.currentCommunityCards, ...event.cards];
         this.currentBets.clear();
         this.emitToTableRoom(S2C_TABLE.STREET_DEAL, { street: event.street, cards: event.cards, dramatic: event.dramatic });
         this.emitSound('card_flip');
@@ -1150,7 +1153,7 @@ export class GameManager {
     });
     return {
       phase: this.phase, config: this.config, handNumber: this.handNumber, players,
-      communityCards: this.handEngine?.getCommunityCards() ?? [],
+      communityCards: this.currentCommunityCards,
       secondBoard: this.currentSecondBoard.length > 0 ? this.currentSecondBoard : undefined,
       pots: this.currentPots, currentStreet: null, dealerSeatIndex: this.dealerSeatIndex,
       currentActorSeatIndex: this.currentActorSeatIndex, actionTimeRemaining: this.actionTimer.getRemaining(),
