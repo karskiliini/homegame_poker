@@ -17,6 +17,8 @@ Use Test-Driven Development. For use-case testing:
 ## Worktree
 Always use a git worktree when working on bugs or features. This keeps the main workspace clean and runnable for the user at all times. Merge changes back to main only when the work is complete, tested, and committed.
 
+When merging back to main, always rebase the dev branch onto main first (`git rebase main`) and then fast-forward merge (`git merge --ff-only <branch>`). This keeps the git history linear without merge commits. After merging, delete the worktree branch both locally and from remote (`git branch -d <branch>` and `git push origin --delete <branch>`).
+
 ## Local Testing
 When starting a local server for manual testing, always use a random free port to avoid conflicts with other running instances (e.g. the user's dev server or another Claude instance). Use `--port 0` or pick a random port in the 4000–5999 range. Never use the default ports 3000 or 5173 for testing.
 
@@ -25,6 +27,22 @@ When the user invokes a skill (e.g. `/commit`, `/push`, `/deploy`, `/work`), exe
 
 ## Bug Tracking
 When testing a bug fix or feature, if you discover an unrelated bug, check if it already exists in `doc/bugs.md`. If not, add it there. Do not fix unrelated bugs during the current task — just document them.
+
+## Bug Fix Post-Mortem
+After every bug fix, perform a root cause analysis:
+1. **Why did this bug exist?** — Identify the root cause (missing validation, wrong assumption, unclear spec, missing test coverage, etc.)
+2. **How to prevent recurrence?** — Make the necessary changes:
+   - Add or update tests to cover the exact failure scenario (should already exist if bugfix was done with TDD)
+   - Update skills, CLAUDE.md, or other process docs if the bug reveals a gap in conventions or workflows
+   - Add guardrails (assertions, type checks, validation) if the root cause was a class of error that can happen elsewhere
+3. **Apply the changes** — Don't just document; actually implement the preventive measures as part of the bug fix commit.
+
+## Deployment Architecture
+The app runs on two separate services that must ALWAYS be deployed together:
+- **Vercel** — static frontend (React SPA), URL: https://pokersofta.vercel.app
+- **Railway** — backend server (Node/Express/Socket.IO), URL: https://homegame-poker-production.up.railway.app
+
+The client connects to Railway via `VITE_SERVER_URL` env var (set in Vercel dashboard, baked into bundle at build time). Deploying only one service causes client–server version mismatch bugs. Always use `/deploy` which handles both.
 
 ## Design System
 
