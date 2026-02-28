@@ -9,15 +9,21 @@ interface TableLobbyScreenProps {
 }
 
 export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
-  const { tables, playerName, setWatchingTableId, setScreen } = useGameStore();
+  const { tables, playerName, isConnected, setWatchingTableId, setScreen } = useGameStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const handleCreateTable = (stakeLevel: StakeLevel) => {
+    if (!isConnected) return;
+    setCreating(true);
+    setShowCreateModal(false);
     socket.emit(C2S_LOBBY.CREATE_TABLE, { stakeLevelId: stakeLevel.id }, (response: { tableId: string }) => {
+      setCreating(false);
       setWatchingTableId(response.tableId);
       setScreen('watching');
     });
-    setShowCreateModal(false);
+    // Timeout: if server doesn't respond within 5s, reset state
+    setTimeout(() => setCreating(false), 5000);
   };
 
   const handleWatchTable = (tableId: string) => {
@@ -39,31 +45,50 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
         }}
       >
         <div>
-          <h1 className="font-bold" style={{ color: '#FFFFFF', fontSize: 20 }}>
-            Tables
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-bold" style={{ color: '#FFFFFF', fontSize: 20 }}>
+              Tables
+            </h1>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: isConnected ? '#22C55E' : '#EF4444',
+                boxShadow: isConnected ? '0 0 6px #22C55E' : '0 0 6px #EF4444',
+              }}
+            />
+          </div>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
-            Playing as {playerName}
+            {isConnected
+              ? `Playing as ${playerName}`
+              : 'No server connection'}
           </p>
         </div>
         {tables.length > 0 && (
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => isConnected && !creating && setShowCreateModal(true)}
+            disabled={!isConnected || creating}
             style={{
               padding: '10px 20px',
               borderRadius: 8,
-              background: 'linear-gradient(180deg, #16A34A, #15803D)',
+              background: !isConnected || creating
+                ? '#555'
+                : 'linear-gradient(180deg, #16A34A, #15803D)',
               color: 'white',
               fontWeight: 700,
               fontSize: 14,
               border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 3px 0 #14532D, 0 4px 8px rgba(0,0,0,0.3)',
+              cursor: !isConnected || creating ? 'not-allowed' : 'pointer',
+              boxShadow: !isConnected || creating
+                ? 'none'
+                : '0 3px 0 #14532D, 0 4px 8px rgba(0,0,0,0.3)',
               textTransform: 'uppercase',
               letterSpacing: 1,
+              opacity: !isConnected || creating ? 0.5 : 1,
             }}
           >
-            + Create
+            {creating ? 'Creating...' : '+ Create'}
           </button>
         )}
       </div>
@@ -72,25 +97,36 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
       {tables.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-4">
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>
-            No tables running
+            {isConnected ? 'No tables running' : 'Connecting to server...'}
           </div>
+          {!isConnected && (
+            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', maxWidth: 260 }}>
+              Server is not reachable. Start the server or check your network.
+            </div>
+          )}
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => isConnected && !creating && setShowCreateModal(true)}
+            disabled={!isConnected || creating}
             style={{
               padding: '14px 32px',
               borderRadius: 8,
-              background: 'linear-gradient(180deg, #16A34A, #15803D)',
+              background: !isConnected || creating
+                ? '#555'
+                : 'linear-gradient(180deg, #16A34A, #15803D)',
               color: 'white',
               fontWeight: 700,
               fontSize: 16,
               border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 0 #14532D, 0 6px 12px rgba(0,0,0,0.3)',
+              cursor: !isConnected || creating ? 'not-allowed' : 'pointer',
+              boxShadow: !isConnected || creating
+                ? 'none'
+                : '0 4px 0 #14532D, 0 6px 12px rgba(0,0,0,0.3)',
               textTransform: 'uppercase',
               letterSpacing: 1,
+              opacity: !isConnected || creating ? 0.5 : 1,
             }}
           >
-            Create Table
+            {creating ? 'Creating...' : 'Create Table'}
           </button>
         </div>
       ) : (
