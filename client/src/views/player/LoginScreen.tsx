@@ -86,8 +86,8 @@ export function LoginScreen() {
                     type="button"
                     onClick={() => setSelectedAvatar(avatar.id)}
                     style={{
-                      width: 56,
-                      height: 56,
+                      width: '100%',
+                      aspectRatio: '1',
                       borderRadius: '50%',
                       overflow: 'hidden',
                       background: '#2C3E50',
