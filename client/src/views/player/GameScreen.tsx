@@ -35,6 +35,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [chatMinimized, setChatMinimized] = useState(false);
   const t = useT();
   const { gradients, assets } = useTheme();
   const avatarIds = useMemo(() => Array.from({ length: assets.avatarCount }, (_, i) => String(i + 1)), [assets.avatarCount]);
@@ -145,9 +146,9 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
       {/* Top: Mini poker table (~60vh) */}
       <div
         ref={wrapperRef}
-        className="relative w-full overflow-hidden flex justify-center"
+        className="relative w-full overflow-hidden flex justify-center flex-1"
         style={{
-          height: '55vh',
+          minHeight: '45vh',
           background: gradients.phoneRadialBackground,
         }}
       >
@@ -217,7 +218,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
 
       {/* Bottom: Own cards + actions */}
       <div
-        className="flex-1 flex flex-col px-4 pt-1 pb-1"
+        className="flex flex-col px-4 pt-1 pb-1"
         style={{
           background: 'rgba(0,0,0,0.5)',
           opacity: isFolded ? 0.6 : 1,
@@ -436,7 +437,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
         )}
 
         {/* Chat */}
-        <ChatWindow messages={chatMessages} />
+        <ChatWindow messages={chatMessages} minimized={chatMinimized} onToggleMinimize={() => setChatMinimized(m => !m)} />
         <ChatInput socket={socket} />
       </div>
 

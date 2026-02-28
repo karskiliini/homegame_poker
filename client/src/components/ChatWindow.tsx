@@ -3,11 +3,15 @@ import type { ChatMessage } from '@poker/shared';
 
 interface ChatWindowProps {
   messages: ChatMessage[];
+  minimized?: boolean;
+  onToggleMinimize?: () => void;
 }
 
-export function ChatWindow({ messages }: ChatWindowProps) {
+export function ChatWindow({ messages, minimized: minimizedProp, onToggleMinimize }: ChatWindowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [minimized, setMinimized] = useState(false);
+  const [minimizedLocal, setMinimizedLocal] = useState(false);
+  const minimized = minimizedProp ?? minimizedLocal;
+  const toggle = onToggleMinimize ?? (() => setMinimizedLocal(m => !m));
 
   useEffect(() => {
     if (scrollRef.current && !minimized) {
@@ -35,7 +39,7 @@ export function ChatWindow({ messages }: ChatWindowProps) {
     >
       {/* Header bar — click to toggle */}
       <div
-        onClick={() => setMinimized((m) => !m)}
+        onClick={toggle}
         style={{
           height: 36,
           padding: '0 14px',
