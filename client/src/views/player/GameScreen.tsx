@@ -85,7 +85,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
 
     const updateScale = () => {
       const wrapperWidth = wrapper.clientWidth;
-      setScale((wrapperWidth / TABLE_W) * 0.65);
+      setScale((wrapperWidth / TABLE_W) * 0.75);
     };
 
     updateScale();
@@ -148,7 +148,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
       {/* Top: Mini poker table (~60vh) */}
       <div
         ref={wrapperRef}
-        className="relative w-full overflow-hidden flex justify-center flex-1"
+        className="relative w-full overflow-hidden flex items-center justify-center flex-1"
         style={{
           minHeight: '38vh',
           background: gradients.phoneRadialBackground,
@@ -181,8 +181,8 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
             style={{
               width: TABLE_W,
               height: TABLE_H,
-              transform: `translateY(16px) scale(${scale})`,
-              transformOrigin: 'top center',
+              transform: `scale(${scale})`,
+              transformOrigin: 'center center',
             }}
           >
             <PokerTable
