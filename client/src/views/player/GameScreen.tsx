@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import type { Socket } from 'socket.io-client';
 import { C2S, C2S_TABLE, resolvePreAction } from '@poker/shared';
 import type { PreActionType } from '@poker/shared';
@@ -13,6 +13,7 @@ import { PreActionButtons } from './PreActionButtons.js';
 import { useTheme } from '../../themes/useTheme.js';
 import { ChatInput } from '../../components/ChatInput.js';
 import { ChatWindow } from '../../components/ChatWindow.js';
+import { avatarImageFile } from '../../utils/avatarImageFile.js';
 import type { ChatMessage } from '@poker/shared';
 
 // Use canonical virtual table dimensions from PokerTable
@@ -28,13 +29,15 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, onSpeechBubbleDone }: GameScreenProps) {
-  const { privateState, lobbyState, gameState, setGameState, currentTableId, chatMessages } = useGameStore();
+  const { privateState, lobbyState, gameState, setGameState, currentTableId, chatMessages, setPlayerAvatar } = useGameStore();
   const tableSocketRef = useRef(createTableSocket());
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const t = useT();
-  const { gradients } = useTheme();
+  const { gradients, assets } = useTheme();
+  const avatarIds = useMemo(() => Array.from({ length: assets.avatarCount }, (_, i) => String(i + 1)), [assets.avatarCount]);
 
   // Connect table socket and watch the current table
   useEffect(() => {
@@ -189,6 +192,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               equities={equities}
               dramaticRiver={dramaticRiver}
               badBeat={badBeat}
+              onMyAvatarClick={() => setShowAvatarPicker(true)}
               speechBubble={speechBubble}
               onSpeechBubbleDone={onSpeechBubbleDone}
             />
@@ -420,6 +424,65 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
         <ChatWindow messages={chatMessages} />
         <ChatInput socket={socket} />
       </div>
+
+      {/* Avatar picker modal */}
+      {showAvatarPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setShowAvatarPicker(false)}
+        >
+          <div
+            className="rounded-lg p-4"
+            style={{
+              background: 'var(--ftp-bg-dark)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              maxWidth: 280,
+              width: '90%',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div
+              className="text-center mb-3 font-semibold"
+              style={{ color: 'var(--ftp-text-primary)', fontSize: 14 }}
+            >
+              {t('login_avatar_label')}
+            </div>
+            <div
+              className="grid grid-cols-4 gap-2 justify-items-center"
+              style={{ maxHeight: 240, overflowY: 'auto', padding: 2 }}
+            >
+              {avatarIds.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    socket.emit(C2S.UPDATE_AVATAR, { avatarId: id });
+                    setPlayerAvatar(id);
+                    setShowAvatarPicker(false);
+                  }}
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: '#2C3E50',
+                    border: '2px solid rgba(255,255,255,0.1)',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                >
+                  <img
+                    src={`${assets.avatarBasePath}/${avatarImageFile(id, assets.avatarNames)}`}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

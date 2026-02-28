@@ -789,6 +789,14 @@ export class GameManager {
     this.emitToPlayerRoom(S2C_PLAYER.CHAT_MESSAGE, chatMsg);
   }
 
+  updatePlayerAvatar(socketId: string, avatarId: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+    player.avatarId = avatarId;
+    this.broadcastLobbyState();
+    this.broadcastTableState();
+  }
+
   handleSitOut(socketId: string) {
     const player = this.players.get(socketId);
     if (!player) return;

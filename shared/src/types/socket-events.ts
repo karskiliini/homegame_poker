@@ -13,6 +13,7 @@ export const C2S = {
   SIT_OUT_NEXT_HAND: 'player:sit_out_next_hand',
   AUTO_MUCK: 'player:auto_muck',
   CHAT: 'player:chat',
+  UPDATE_AVATAR: 'player:update_avatar',
 } as const;
 
 export const S2C_PLAYER = {

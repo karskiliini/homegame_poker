@@ -110,6 +110,8 @@ interface PokerTableProps {
   badBeat?: BadBeatData | null;
   /** Called when an empty seat is clicked (for seat selection) */
   onSeatClick?: (seatIndex: number) => void;
+  /** Called when the player clicks their own avatar */
+  onMyAvatarClick?: () => void;
   /** Active speech bubble to render above a seat */
   speechBubble?: ChatMessage | null;
   /** Called when the speech bubble timer expires */
@@ -169,7 +171,7 @@ export function PokerTable({
   timerData, collectingBets, potGrow,
   betChipAnimations = [], dealCardAnimations = [],
   mySeatIndex, myPlayerId, myHoleCards, highlightMySeat,
-  equities, dramaticRiver, badBeat, onSeatClick,
+  equities, dramaticRiver, badBeat, onSeatClick, onMyAvatarClick,
   speechBubble, onSpeechBubbleDone,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
@@ -781,6 +783,7 @@ export function PokerTable({
                   equity={equities?.[seatIndex]}
                   numHoleCards={numHoleCards}
                   cardsBelow={pos.y < 50}
+                  onAvatarClick={myPlayerId && player && player.id === myPlayerId ? onMyAvatarClick : undefined}
                 />
                 {badBeat && badBeat.loserSeatIndex === seatIndex && (
                   <BadBeatBubble seatIndex={seatIndex} playerName={badBeat.playerName} />

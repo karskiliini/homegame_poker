@@ -26,6 +26,8 @@ interface PlayerSeatProps {
   numHoleCards?: number;
   /** Render cards below the avatar (for top-half seats, so cards stay on the felt). */
   cardsBelow?: boolean;
+  /** Called when this player's avatar is clicked (for avatar change). */
+  onAvatarClick?: () => void;
 }
 
 function useDcCountdown(disconnectedAt: number | null): string | null {
@@ -56,7 +58,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardsBelow }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardsBelow, onAvatarClick }: PlayerSeatProps) {
   const { gradients, assets } = useTheme();
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
@@ -144,7 +146,9 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             ? '3px solid rgba(234, 179, 8, 0.8)'
             : '3px solid rgba(255,255,255,0.25)',
           fontSize: 22,
+          cursor: onAvatarClick ? 'pointer' : undefined,
         }}
+        onClick={onAvatarClick}
       >
         {avatarImage ? (
           <img
