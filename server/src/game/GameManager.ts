@@ -71,7 +71,7 @@ export class GameManager {
     return this.config;
   }
 
-  addPlayer(socket: Socket, name: string, buyIn: number): { error?: string } {
+  addPlayer(socket: Socket, name: string, buyIn: number, avatarId?: string): { error?: string } {
     if (buyIn > this.config.maxBuyIn) {
       return { error: `Maximum buy-in is ${this.config.maxBuyIn}` };
     }
@@ -105,6 +105,7 @@ export class GameManager {
       runItTwicePreference: 'ask',
       autoMuck: false,
       disconnectedAt: null,
+      avatarId: avatarId || 'ninja',
     };
 
     this.players.set(socket.id, player);
@@ -170,6 +171,7 @@ export class GameManager {
     this.currentPots = [];
     this.currentShowdownEntries = [];
     this.currentHandPlayers.clear();
+    this.lastTurnEvent = null;
 
     // Reset event queue
     this.eventQueue = [];
@@ -179,6 +181,9 @@ export class GameManager {
       clearTimeout(this.queueTimer);
       this.queueTimer = null;
     }
+
+    // Broadcast phase change so clients know hand is in progress
+    this.broadcastLobbyState();
 
     // Get eligible players (ready, connected, has chips)
     const eligiblePlayers = [...this.players.values()]
@@ -644,9 +649,16 @@ export class GameManager {
       this.offerShowCards(result);
 
       this.broadcastTableState();
-    }, DELAY_POT_AWARD_MS);
 
-    // Auto-start next hand after pause
+      // Auto-start next hand after show cards phase completes (or immediately if no show cards)
+      if (this.pendingShowCards.size === 0) {
+        this.scheduleNextHand();
+      }
+      // If pendingShowCards > 0, scheduleNextHand will be called when all show/muck decisions resolve
+    }, DELAY_POT_AWARD_MS);
+  }
+
+  private scheduleNextHand() {
     setTimeout(() => {
       if (this.phase === 'hand_complete') {
         this.phase = 'waiting_for_players';
@@ -718,6 +730,7 @@ export class GameManager {
     if (this.pendingShowCards.size > 0) {
       this.showCardsTimer = setTimeout(() => {
         this.pendingShowCards.clear();
+        this.scheduleNextHand();
       }, SHOW_CARDS_TIMEOUT_MS);
     }
   }
@@ -743,9 +756,12 @@ export class GameManager {
       }
     }
 
-    if (this.pendingShowCards.size === 0 && this.showCardsTimer) {
-      clearTimeout(this.showCardsTimer);
-      this.showCardsTimer = null;
+    if (this.pendingShowCards.size === 0) {
+      if (this.showCardsTimer) {
+        clearTimeout(this.showCardsTimer);
+        this.showCardsTimer = null;
+      }
+      this.scheduleNextHand();
     }
   }
 
@@ -1043,6 +1059,7 @@ export class GameManager {
         isCurrentActor: p.id === currentActorId,
         holeCards: shownEntry ? shownEntry.holeCards : null,
         hasCards: hp ? !hp.isFolded : false,
+        avatarId: p.avatarId,
       };
     });
 
