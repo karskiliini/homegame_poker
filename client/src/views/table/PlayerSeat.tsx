@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PublicPlayerState } from '@poker/shared';
-import { DISCONNECT_TIMEOUT_MS, AVATAR_OPTIONS } from '@poker/shared';
+import { DISCONNECT_TIMEOUT_MS } from '@poker/shared';
+import { avatarImageFile } from '../../utils/avatarImageFile.js';
 import { CardComponent } from '../../components/Card.js';
 import { CardBack } from '../../components/CardBack.js';
 import { useTheme } from '../../themes/useTheme.js';
@@ -63,8 +64,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const isInactive = isSittingOut || isBusted;
   const isDisconnected = !player.isConnected;
   const dcCountdown = useDcCountdown(player.disconnectedAt);
-  const avatarOption = AVATAR_OPTIONS.find(a => a.id === player.avatarId);
-  const avatarImage = avatarOption ? `${assets.avatarBasePath}/${avatarOption.image}` : null;
+  const avatarImage = player.avatarId ? `${assets.avatarBasePath}/${avatarImageFile(player.avatarId)}` : null;
   const initials = getInitials(player.name);
 
   // Timer bar color

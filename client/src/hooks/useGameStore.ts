@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { GameState, PrivatePlayerState, TableInfo, StakeLevel, ChatMessage } from '@poker/shared';
-import type { AvatarId } from '@poker/shared';
 import type { Language } from '../i18n/translations.js';
 import { detectLanguage } from '../i18n/translations.js';
 import type { ThemeId } from '../themes/types.js';
@@ -48,8 +47,8 @@ interface GameStore {
   setPlayerId: (id: string) => void;
   playerName: string | null;
   setPlayerName: (name: string) => void;
-  playerAvatar: AvatarId;
-  setPlayerAvatar: (avatar: AvatarId) => void;
+  playerAvatar: string;
+  setPlayerAvatar: (avatar: string) => void;
 
   // Table lobby
   tables: TableInfo[];
@@ -106,7 +105,7 @@ export const useGameStore = create<GameStore>((set) => ({
   setPlayerId: (playerId) => set({ playerId }),
   playerName: null,
   setPlayerName: (playerName) => set({ playerName }),
-  playerAvatar: 'ninja',
+  playerAvatar: '1',
   setPlayerAvatar: (playerAvatar) => set({ playerAvatar }),
 
   tables: [],

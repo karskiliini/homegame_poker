@@ -1,24 +1,22 @@
 import { useState } from 'react';
-import { AVATAR_OPTIONS } from '@poker/shared';
-import type { AvatarId } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { VersionInfo } from '../../components/VersionInfo.js';
 import { useT } from '../../hooks/useT.js';
 import { LanguageToggle } from '../../components/LanguageToggle.js';
 import { ThemeToggle } from '../../components/ThemeToggle.js';
 import { useTheme } from '../../themes/useTheme.js';
-
-function getRandomAvatar(): AvatarId {
-  const idx = Math.floor(Math.random() * AVATAR_OPTIONS.length);
-  return AVATAR_OPTIONS[idx].id;
-}
+import { avatarImageFile } from '../../utils/avatarImageFile.js';
 
 export function LoginScreen() {
   const { setScreen, setPlayerName, setPlayerAvatar } = useGameStore();
   const [name, setName] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>(getRandomAvatar);
   const t = useT();
   const { gradients, assets } = useTheme();
+
+  const avatarIds = Array.from({ length: assets.avatarCount }, (_, i) => String(i + 1));
+  const [selectedAvatar, setSelectedAvatar] = useState(() =>
+    String(Math.floor(Math.random() * assets.avatarCount) + 1)
+  );
 
   const handleJoin = () => {
     if (!name.trim()) return;
@@ -89,13 +87,13 @@ export function LoginScreen() {
               className="grid grid-cols-4 gap-2"
               style={{ maxHeight: 240, overflowY: 'auto', padding: 2 }}
             >
-              {AVATAR_OPTIONS.map((avatar) => {
-                const isSelected = selectedAvatar === avatar.id;
+              {avatarIds.map((id) => {
+                const isSelected = selectedAvatar === id;
                 return (
                   <button
-                    key={avatar.id}
+                    key={id}
                     type="button"
-                    onClick={() => setSelectedAvatar(avatar.id)}
+                    onClick={() => setSelectedAvatar(id)}
                     style={{
                       width: 56,
                       height: 56,
@@ -108,11 +106,10 @@ export function LoginScreen() {
                       padding: 0,
                       transition: 'border-color 0.15s, box-shadow 0.15s',
                     }}
-                    title={avatar.label}
                   >
                     <img
-                      src={`${assets.avatarBasePath}/${avatar.image}`}
-                      alt={avatar.label}
+                      src={`${assets.avatarBasePath}/${avatarImageFile(id)}`}
+                      alt={`Avatar ${id}`}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </button>

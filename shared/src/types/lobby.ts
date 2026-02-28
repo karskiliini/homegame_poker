@@ -1,5 +1,4 @@
 import type { GameType } from './game.js';
-import type { AvatarId } from '../avatars.js';
 import { DEFAULT_ACTION_TIME_SECONDS, MIN_PLAYERS, MAX_PLAYERS } from '../constants.js';
 
 export interface StakeLevel {
@@ -32,7 +31,7 @@ export interface TablePlayerInfo {
   name: string;
   stack: number;
   seatIndex: number;
-  avatarId: AvatarId;
+  avatarId: string;
 }
 
 export interface TableInfo {

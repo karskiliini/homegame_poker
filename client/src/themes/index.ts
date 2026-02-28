@@ -15,4 +15,4 @@ export function getTheme(id: ThemeId): ThemeConfig {
   return themes[id];
 }
 
-export const DEFAULT_THEME: ThemeId = 'basic';
+export const DEFAULT_THEME: ThemeId = 'cccp';

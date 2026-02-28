@@ -17,7 +17,6 @@ import { HandEngine } from './HandEngine.js';
 import type { HandEngineEvent, HandResult, ShowdownEntry } from './HandEngine.js';
 import { ActionTimer } from './ActionTimer.js';
 import type { HandRecord } from '@poker/shared';
-import type { AvatarId } from '@poker/shared';
 
 export class GameManager {
   private config: GameConfig;
@@ -93,7 +92,7 @@ export class GameManager {
       name: p.name,
       stack: p.stack,
       seatIndex: p.seatIndex,
-      avatarId: p.avatarId as AvatarId,
+      avatarId: p.avatarId as TablePlayerInfo['avatarId'],
     }));
   }
 
@@ -129,7 +128,7 @@ export class GameManager {
       status: isFirstPlayer ? 'waiting' : 'sitting_out',
       isConnected: true, isReady: isFirstPlayer,
       runItTwicePreference: 'ask', autoMuck: false, disconnectedAt: null,
-      avatarId: avatarId || 'link',
+      avatarId: avatarId || '1',
     };
 
     const playerToken = uuidv4();

@@ -186,6 +186,8 @@ export interface SoundParams {
 export interface ThemeAssets {
   /** Base path for avatar images, e.g. '/themes/basic/avatars' */
   avatarBasePath: string;
+  /** Number of avatar images available in this theme */
+  avatarCount: number;
 }
 
 /** Complete theme configuration */

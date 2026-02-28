@@ -186,5 +186,6 @@ export const basicTheme: ThemeConfig = {
 
   assets: {
     avatarBasePath: '/themes/basic/avatars',
+    avatarCount: 54,
   },
 };

@@ -29,5 +29,6 @@ export const cccpTheme: ThemeConfig = {
   },
   assets: {
     avatarBasePath: '/themes/cccp/avatars',
+    avatarCount: 54,
   },
 };
