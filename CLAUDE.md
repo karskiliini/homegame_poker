@@ -20,6 +20,9 @@ Always use a git worktree when working on bugs or features. This keeps the main 
 ## Local Testing
 When starting a local server for manual testing, always use a random free port to avoid conflicts with other running instances (e.g. the user's dev server or another Claude instance). Use `--port 0` or pick a random port in the 4000–5999 range. Never use the default ports 3000 or 5173 for testing.
 
+## Skills / Slash Commands
+When the user invokes a skill (e.g. `/commit`, `/push`, `/deploy`, `/work`), execute it immediately without asking for confirmation. Never ask "should I proceed?" or "do you want me to run this?" — just do it.
+
 ## Bug Tracking
 When testing a bug fix or feature, if you discover an unrelated bug, check if it already exists in `doc/bugs.md`. If not, add it there. Do not fix unrelated bugs during the current task — just document them.
 
