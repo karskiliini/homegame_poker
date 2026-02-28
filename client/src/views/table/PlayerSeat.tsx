@@ -53,6 +53,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
   const isAllIn = player.status === 'all_in';
+  const isSittingOut = player.status === 'sitting_out';
   const isDisconnected = !player.isConnected;
   const dcCountdown = useDcCountdown(player.disconnectedAt);
   const avatarImage = AVATAR_OPTIONS.find(a => a.id === player.avatarId)?.image ?? null;
@@ -67,8 +68,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const showCardBacks = player.hasCards && !player.holeCards && !isFolded;
 
   return (
-    <div className={`relative flex flex-col items-center ${isFolded ? 'opacity-40' : ''}`}>
-      {/* Cards above the panel */}
+    <div className={`relative flex flex-col items-center ${isFolded || isSittingOut ? 'opacity-40' : ''}`}>
+      {/* Cards above the avatar */}
       <div className="flex gap-0.5 mb-1" style={{ minHeight: 52 }}>
         {player.holeCards ? (
           player.holeCards.map((card, i) => (
@@ -99,124 +100,147 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         )}
       </div>
 
-      {/* Avatar + Panel row */}
-      <div className="flex items-center gap-1.5">
-        {/* Avatar (outside panel) */}
+      {/* Large avatar (Full Tilt style) */}
+      <div
+        className={`
+          flex items-center justify-center text-white font-bold shrink-0
+          ${isWinner ? 'animate-winner-glow' : ''}
+        `}
+        style={{
+          width: 80,
+          height: 80,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          background: '#2C3E50',
+          boxShadow: isActive
+            ? '0 0 14px 4px rgba(234, 179, 8, 0.45), 0 3px 8px rgba(0,0,0,0.5)'
+            : '0 3px 8px rgba(0,0,0,0.5)',
+          border: isActive
+            ? '3px solid rgba(234, 179, 8, 0.8)'
+            : '3px solid rgba(255,255,255,0.25)',
+          fontSize: 22,
+        }}
+      >
+        {avatarImage ? (
+          <img
+            src={avatarImage}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          initials
+        )}
+      </div>
+
+      {/* Name plate below avatar */}
+      <div
+        className={`
+          relative px-3 py-1 -mt-2 transition-all duration-200
+          ${isAllIn ? 'animate-allin-pulse' : ''}
+        `}
+        style={{
+          minWidth: 90,
+          textAlign: 'center',
+          background: isActive
+            ? 'linear-gradient(180deg, #FFFDE7, #FFF9C4, #FFF176)'
+            : 'linear-gradient(180deg, #F0F0F0, #D8D8D8, #C8C8C8)',
+          border: isAllIn
+            ? '2px solid #EAB308'
+            : `1px solid ${isActive ? 'rgba(234, 179, 8, 0.8)' : 'rgba(0,0,0,0.3)'}`,
+          borderRadius: 4,
+          boxShadow: isActive
+            ? '0 0 12px 4px rgba(234, 179, 8, 0.4), inset 0 1px 0 rgba(255,255,255,0.5)'
+            : '0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.6)',
+          zIndex: 1,
+        }}
+      >
+        {/* Name */}
         <div
-          className="flex items-center justify-center text-white font-bold shrink-0"
+          className="font-semibold truncate"
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            overflow: 'hidden',
-            background: '#2C3E50',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-            border: isActive ? '2px solid rgba(234, 179, 8, 0.7)' : '2px solid rgba(255,255,255,0.25)',
-            fontSize: 15,
+            fontSize: 12,
+            maxWidth: 80,
+            color: isActive ? '#8B6914' : '#1A1A1A',
+            margin: '0 auto',
           }}
         >
-          {avatarImage ? (
-            <img
-              src={avatarImage}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          ) : (
-            initials
+          {player.name}
+          {isDisconnected && (
+            <span style={{ color: '#DC2626', marginLeft: 4, fontSize: 10 }}>
+              DC{dcCountdown ? ` ${dcCountdown}` : ''}
+            </span>
           )}
         </div>
 
-        {/* Player panel (light background) */}
+        {/* Stack */}
         <div
-          className={`
-            relative px-3 py-1.5 transition-all duration-200
-            ${isWinner ? 'animate-winner-glow' : ''}
-            ${isAllIn ? 'animate-allin-pulse' : ''}
-          `}
+          className="font-mono tabular-nums"
           style={{
-            minWidth: 100,
-            background: isActive
-              ? 'linear-gradient(180deg, #FFFDE7, #FFF9C4, #FFF176)'
-              : 'linear-gradient(180deg, #F0F0F0, #D8D8D8, #C8C8C8)',
-            border: isAllIn
-              ? '2px solid #EAB308'
-              : `1px solid ${isActive ? 'rgba(234, 179, 8, 0.8)' : 'rgba(0,0,0,0.3)'}`,
-            borderRadius: 4,
-            boxShadow: isActive
-              ? '0 0 12px 4px rgba(234, 179, 8, 0.4), inset 0 1px 0 rgba(255,255,255,0.5)'
-              : '0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.6)',
+            fontSize: 12,
+            color: isActive ? '#8B6914' : '#555555',
+            fontWeight: 600,
           }}
         >
-          {/* Name */}
+          {player.stack.toLocaleString()}
+        </div>
+
+        {/* All-in badge */}
+        {isAllIn && (
           <div
-            className="font-semibold truncate"
+            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 animate-allin-label px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
             style={{
-              fontSize: 13,
-              maxWidth: 80,
-              color: isActive ? '#8B6914' : '#1A1A1A',
+              fontSize: 11,
+              background: 'linear-gradient(135deg, #DC2626, #991B1B)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              whiteSpace: 'nowrap',
             }}
           >
-            {player.name}
-            {isDisconnected && (
-              <span style={{ color: '#DC2626', marginLeft: 4, fontSize: 10 }}>
-                DC{dcCountdown ? ` ${dcCountdown}` : ''}
-              </span>
-            )}
+            ALL IN
           </div>
+        )}
 
-          {/* Stack */}
+        {/* Away badge */}
+        {isSittingOut && (
           <div
-            className="font-mono tabular-nums"
+            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
             style={{
-              fontSize: 12,
-              color: isActive ? '#8B6914' : '#555555',
-              fontWeight: 600,
+              fontSize: 11,
+              background: 'linear-gradient(135deg, #6B7280, #4B5563)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              whiteSpace: 'nowrap',
             }}
           >
-            {player.stack.toLocaleString()}
+            AWAY
           </div>
+        )}
 
-          {/* All-in badge */}
-          {isAllIn && (
+        {/* Timer bar */}
+        {isActive && timerSeconds != null && (
+          <div
+            className="absolute bottom-0 left-0 right-0 overflow-hidden"
+            style={{ height: 4, borderRadius: '0 0 4px 4px', background: 'rgba(0,0,0,0.15)' }}
+          >
             <div
-              className="absolute -bottom-2.5 left-1/2 animate-allin-label px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
               style={{
-                fontSize: 11,
-                background: 'linear-gradient(135deg, #DC2626, #991B1B)',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-                whiteSpace: 'nowrap',
+                height: '100%',
+                width: '100%',
+                background: timerColor,
+                transform: `scaleX(${timerPercent / 100})`,
+                transformOrigin: 'left',
+                transition: 'transform 1s linear, background-color 0.5s ease',
               }}
-            >
-              ALL IN
-            </div>
-          )}
-
-          {/* Timer bar */}
-          {isActive && timerSeconds != null && (
-            <div
-              className="absolute bottom-0 left-0 right-0 overflow-hidden"
-              style={{ height: 4, borderRadius: '0 0 4px 4px', background: 'rgba(0,0,0,0.15)' }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  width: '100%',
-                  background: timerColor,
-                  transform: `scaleX(${timerPercent / 100})`,
-                  transformOrigin: 'left',
-                  transition: 'transform 1s linear, background-color 0.5s ease',
-                }}
-              />
-            </div>
-          )}
-        </div>
+            />
+          </div>
+        )}
       </div>
 
       {/* Dealer button */}
       {player.isDealer && (
         <div
-          className="absolute -top-1 -right-3 flex items-center justify-center font-bold"
+          className="absolute flex items-center justify-center font-bold"
           style={{
+            top: 52,
+            right: -14,
             width: 24,
             height: 24,
             borderRadius: '50%',
@@ -225,6 +249,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             color: '#5D4037',
             fontSize: 11,
             boxShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 6px rgba(255,213,79,0.3)',
+            zIndex: 2,
           }}
         >
           D
@@ -234,14 +259,17 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
       {/* Blind indicators */}
       {player.isSmallBlind && !player.isDealer && (
         <div
-          className="absolute -top-1 -left-3 flex items-center justify-center font-bold text-white"
+          className="absolute flex items-center justify-center font-bold text-white"
           style={{
+            top: 52,
+            left: -14,
             width: 24,
             height: 24,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
             fontSize: 9,
             boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            zIndex: 2,
           }}
         >
           SB
@@ -249,14 +277,17 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
       )}
       {player.isBigBlind && (
         <div
-          className="absolute -top-1 -left-3 flex items-center justify-center font-bold text-white"
+          className="absolute flex items-center justify-center font-bold text-white"
           style={{
+            top: 52,
+            left: -14,
             width: 24,
             height: 24,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #EF4444, #DC2626)',
             fontSize: 9,
             boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            zIndex: 2,
           }}
         >
           BB

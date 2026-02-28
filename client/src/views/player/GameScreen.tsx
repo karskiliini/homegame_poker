@@ -4,6 +4,7 @@ import { C2S, C2S_TABLE, resolvePreAction } from '@poker/shared';
 import type { PreActionType } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { useTableAnimations } from '../../hooks/useTableAnimations.js';
+import { useT } from '../../hooks/useT.js';
 import { createTableSocket } from '../../socket.js';
 import { PokerTable } from '../table/PokerTable.js';
 import { CardComponent } from '../../components/Card.js';
@@ -26,6 +27,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const t = useT();
 
   // Connect table socket and watch the current table
   useEffect(() => {
@@ -130,25 +132,43 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
           background: 'radial-gradient(ellipse at 50% 80%, #1A2744, #141E33, #0D1526)',
         }}
       >
-        {/* Leave Table button */}
-        {onLeaveTable && !isHandActive && (
-          <button
-            onClick={onLeaveTable}
-            className="absolute top-3 left-3 z-30"
-            style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              background: 'rgba(255,255,255,0.1)',
-              color: 'var(--ftp-text-secondary)',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontWeight: 600,
-            }}
-          >
-            Leave Table
-          </button>
-        )}
+        {/* Top-left buttons: Leave Table + Sit Out */}
+        <div className="absolute top-3 left-3 z-30 flex gap-2">
+          {onLeaveTable && !isHandActive && (
+            <button
+              onClick={onLeaveTable}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                background: 'rgba(255,255,255,0.1)',
+                color: 'var(--ftp-text-secondary)',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {t('game_leave_table')}
+            </button>
+          )}
+          {!isSittingOut && !isBusted && (!isHandActive || isFolded) && (
+            <button
+              onClick={() => socket.emit(C2S.SIT_OUT)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                background: 'rgba(255,255,255,0.1)',
+                color: 'var(--ftp-text-secondary)',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {t('game_sit_out')}
+            </button>
+          )}
+        </div>
 
         {gameState ? (
           <div
@@ -179,7 +199,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
         ) : (
           <div className="flex items-center justify-center h-full">
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>
-              Connecting to table...
+              {t('game_connecting')}
             </div>
           </div>
         )}
@@ -213,7 +233,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
                 ))}
               </div>
               <div className="text-right ml-2">
-                <div style={{ color: 'var(--ftp-text-secondary)', fontSize: 12 }}>Stack</div>
+                <div style={{ color: 'var(--ftp-text-secondary)', fontSize: 12 }}>{t('game_stack')}</div>
                 <div
                   className="font-mono font-bold tabular-nums"
                   style={{ color: '#FFFFFF', fontSize: 20 }}
@@ -225,14 +245,14 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
                     className="font-mono tabular-nums"
                     style={{ color: '#EAB308', fontSize: 13 }}
                   >
-                    Pot: {privateState.potTotal.toLocaleString()}
+                    {t('game_pot')} {privateState.potTotal.toLocaleString()}
                   </div>
                 )}
               </div>
             </>
           ) : (
             <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14, padding: 20 }}>
-              Waiting for cards...
+              {t('game_waiting_cards')}
             </div>
           )}
         </div>
@@ -242,25 +262,25 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
           {isSittingOut && (privateState?.stack ?? 0) > 0 ? (
             <div className="text-center py-4 space-y-3">
               <div style={{ color: 'var(--ftp-text-muted)', fontSize: 15 }}>
-                Sitting Out
+                {t('game_sitting_out')}
               </div>
               <button
                 onClick={() => socket.emit(C2S.SIT_IN)}
                 className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-lg"
               >
-                Sit In
+                {t('game_sit_in')}
               </button>
             </div>
           ) : (isBusted || (privateState?.stack ?? 0) <= 0) ? (
             <div className="text-center py-4 space-y-3">
               <div style={{ color: 'var(--ftp-text-muted)', fontSize: 15 }}>
-                {isBusted ? 'Busted' : 'Sitting Out'}
+                {isBusted ? 'Busted' : t('game_sitting_out')}
               </div>
               <button
                 onClick={() => socket.emit(C2S.REBUY, { amount: config?.maxBuyIn ?? 200 })}
                 className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-lg"
               >
-                Rebuy {config?.maxBuyIn ?? 200}
+                {t('game_rebuy')} {config?.maxBuyIn ?? 200}
               </button>
             </div>
           ) : showActions && privateState ? (
@@ -283,7 +303,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
                 color: isFolded ? 'var(--ftp-text-muted)' : 'var(--ftp-text-secondary)',
                 fontSize: 15,
               }}>
-                {isFolded ? 'Folded' : 'Waiting for your turn...'}
+                {isFolded ? t('game_folded') : t('game_waiting_turn')}
               </div>
             </div>
           )}
