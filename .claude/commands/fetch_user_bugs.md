@@ -1,25 +1,22 @@
 ---
-description: Fetch user-submitted bug reports from the local SQLite database and write them to doc/user_bugs.md.
+description: Fetch user-submitted bug reports from the production Railway server and write them to doc/user_bugs.md.
 ---
 
 # Fetch User Bug Reports
 
-Bug reports are stored in a local SQLite database at `server/data/bugs.db` (created when the server runs during game nights).
+Bug reports are stored in the production SQLite database on Railway. Fetch them via the REST API.
 
-1. **Check if database exists** — Look for `server/data/bugs.db`. If it doesn't exist, report "No bug database found" and stop.
+**Production server:** `https://homegame-poker-production.up.railway.app`
 
-2. **Fetch unarchived bugs** — Run this from the repo root:
+1. **Fetch unarchived bugs** — Call the production API:
    ```
-   bun -e "
-   const Database = require('better-sqlite3');
-   const db = new Database('server/data/bugs.db');
-   const bugs = db.prepare('SELECT * FROM bug_reports WHERE archived = 0 ORDER BY id DESC').all();
-   console.log(JSON.stringify(bugs));
-   db.close();
-   "
+   curl -s https://homegame-poker-production.up.railway.app/api/bugs
    ```
+   This returns a JSON array of bug report objects with fields: `id`, `description`, `reporter_name`, `table_id`, `created_at`.
 
-3. **Parse the JSON output** (array of bug report objects with fields: id, description, reporter_name, table_id, created_at)
+2. **If empty array or server unreachable** — Report "No new bug reports" and stop.
+
+3. **Parse the JSON output** and compare against existing entries in `doc/user_bugs.md`. Only add bugs whose `#<id>` is not already listed.
 
 4. **Write/append to `doc/user_bugs.md`** with the following format, preserving any existing `[DONE]` and `[WONTFIX]` markers — only add `[NEW]` for reports not already listed:
 
@@ -35,14 +32,11 @@ Bug reports are stored in a local SQLite database at `server/data/bugs.db` (crea
 ---
 ```
 
-5. **Archive fetched bugs** — Mark them as archived so they won't be fetched again:
+5. **Archive fetched bugs** — Mark them as archived on the production server so they won't be fetched again:
    ```
-   bun -e "
-   const Database = require('better-sqlite3');
-   const db = new Database('server/data/bugs.db');
-   db.prepare('UPDATE bug_reports SET archived = 1 WHERE archived = 0').run();
-   db.close();
-   "
+   curl -s -X POST https://homegame-poker-production.up.railway.app/api/bugs/archive \
+     -H 'Content-Type: application/json' \
+     -d '{"ids": [<comma-separated ids>]}'
    ```
 
 6. Report how many new bugs were found.
