@@ -16,9 +16,9 @@ export const SEAT_POSITIONS: { x: number; y: number }[] = [
   { x: 18, y: 82 },   // 1: bottom left
   { x: 3, y: 55 },    // 2: left
   { x: 3, y: 30 },    // 3: upper left
-  { x: 18, y: 10 },   // 4: top left
-  { x: 50, y: 3 },    // 5: top center
-  { x: 82, y: 10 },   // 6: top right
+  { x: 18, y: 12 },   // 4: top left
+  { x: 50, y: 8 },    // 5: top center
+  { x: 82, y: 12 },   // 6: top right
   { x: 97, y: 30 },   // 7: upper right
   { x: 97, y: 55 },   // 8: right
   { x: 82, y: 82 },   // 9: bottom right
@@ -30,9 +30,9 @@ export const BET_POSITIONS: { x: number; y: number }[] = [
   { x: 31, y: 69 },   // 1
   { x: 22, y: 53 },   // 2
   { x: 22, y: 38 },   // 3
-  { x: 31, y: 26 },   // 4
-  { x: 50, y: 22 },   // 5
-  { x: 69, y: 26 },   // 6
+  { x: 31, y: 27 },   // 4
+  { x: 50, y: 25 },   // 5
+  { x: 69, y: 27 },   // 6
   { x: 78, y: 38 },   // 7
   { x: 78, y: 53 },   // 8
   { x: 69, y: 69 },   // 9
