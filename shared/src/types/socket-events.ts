@@ -10,6 +10,7 @@ export const C2S = {
   GET_HAND: 'player:get_hand',
   RECONNECT: 'player:reconnect',
   REPORT_BUG: 'player:report_bug',
+  SIT_OUT_NEXT_HAND: 'player:sit_out_next_hand',
 } as const;
 
 export const S2C_PLAYER = {

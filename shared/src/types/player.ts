@@ -58,4 +58,5 @@ export interface PrivatePlayerState {
   showCardsOption: boolean;
   runItTwiceOffer: boolean;
   runItTwiceDeadline: number;
+  sitOutNextHand: boolean;
 }

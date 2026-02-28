@@ -62,6 +62,7 @@ export class GameManager {
 
   private disconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private pendingRemovals: Set<string> = new Set();
+  private pendingSitOutNextHand: Set<string> = new Set();
 
   constructor(config: GameConfig, io: Server, tableId: string, onEmpty?: () => void) {
     this.config = config;
@@ -131,6 +132,7 @@ export class GameManager {
       status: player.status as any, holeCards: [], currentBet: 0, availableActions: [],
       minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
       showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+      sitOutNextHand: false,
     };
     socket.emit(S2C_PLAYER.PRIVATE_STATE, initialState);
 
@@ -450,6 +452,11 @@ export class GameManager {
       if (this.phase === 'hand_complete') {
         this.phase = 'waiting_for_players';
         this.processPendingRemovals();
+        // Process pending sit-out-next-hand requests
+        for (const socketId of [...this.pendingSitOutNextHand]) {
+          this.pendingSitOutNextHand.delete(socketId);
+          this.handleSitOut(socketId);
+        }
         for (const [, player] of this.players) {
           if (player.stack > 0 && player.isConnected && player.status !== 'busted' && player.status !== 'sitting_out') player.isReady = true;
         }
@@ -468,6 +475,7 @@ export class GameManager {
         status: player.status as any, holeCards: [], currentBet: 0, availableActions: [],
         minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
         showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+        sitOutNextHand: this.pendingSitOutNextHand.has(socketId),
       };
       socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
     }
@@ -503,6 +511,7 @@ export class GameManager {
             status: player.status as any, holeCards: cards, currentBet: 0, availableActions: [],
             minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
             showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+            sitOutNextHand: this.pendingSitOutNextHand.has(socketId),
           });
         }
       }
@@ -590,9 +599,52 @@ export class GameManager {
     return {};
   }
 
+  handleSitOutNextHand(socketId: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+    // Toggle
+    if (this.pendingSitOutNextHand.has(socketId)) {
+      this.pendingSitOutNextHand.delete(socketId);
+    } else {
+      this.pendingSitOutNextHand.add(socketId);
+      // If not in a hand, sit out immediately
+      if (this.phase !== 'hand_in_progress') {
+        this.pendingSitOutNextHand.delete(socketId);
+        this.handleSitOut(socketId);
+        return;
+      }
+    }
+    // Broadcast updated private state
+    this.sendPrivateStateForPlayer(socketId);
+  }
+
+  private sendPrivateStateForPlayer(socketId: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+    const socket = this.socketMap.get(socketId);
+    if (!socket) return;
+
+    // During a hand, delegate to full sendPrivateStateToAll to get accurate hand data
+    if (this.phase === 'hand_in_progress' && this.handEngine) {
+      this.sendPrivateStateToAll();
+      return;
+    }
+
+    // Between hands, send a cleared state
+    const state: PrivatePlayerState = {
+      id: player.id, name: player.name, seatIndex: player.seatIndex, stack: player.stack,
+      status: player.status as any, holeCards: [], currentBet: 0, availableActions: [],
+      minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
+      showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+      sitOutNextHand: this.pendingSitOutNextHand.has(socketId),
+    };
+    socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
+  }
+
   handleSitOut(socketId: string) {
     const player = this.players.get(socketId);
     if (!player) return;
+    this.pendingSitOutNextHand.delete(socketId);
     const timer = this.pendingRebuyPrompts.get(socketId);
     if (timer) { clearTimeout(timer); this.pendingRebuyPrompts.delete(socketId); }
     player.status = 'sitting_out';
@@ -605,6 +657,7 @@ export class GameManager {
   handleSitIn(socketId: string) {
     const player = this.players.get(socketId);
     if (!player) return;
+    this.pendingSitOutNextHand.delete(socketId);
     if (player.status !== 'sitting_out') return;
     if (player.stack <= 0) return;
     player.status = 'waiting';
@@ -647,6 +700,10 @@ export class GameManager {
     this.seatMap.set(player.seatIndex, newSocketId);
     this.cancelDisconnectTimer(oldSocketId);
     this.pendingRemovals.delete(oldSocketId);
+    if (this.pendingSitOutNextHand.has(oldSocketId)) {
+      this.pendingSitOutNextHand.delete(oldSocketId);
+      this.pendingSitOutNextHand.add(newSocketId);
+    }
     const rebuyTimer = this.pendingRebuyPrompts.get(oldSocketId);
     if (rebuyTimer) { clearTimeout(rebuyTimer); this.pendingRebuyPrompts.delete(oldSocketId); }
     player.isConnected = true;
@@ -691,6 +748,7 @@ export class GameManager {
     this.socketMap.delete(socketId);
     this.players.delete(socketId);
     this.pendingRemovals.delete(socketId);
+    this.pendingSitOutNextHand.delete(socketId);
     this.emitToTableRoom(S2C_TABLE.PLAYER_LEFT, { playerId: player.id, seatIndex: player.seatIndex, playerName: player.name });
     this.broadcastLobbyState();
     this.broadcastTableState();
@@ -742,6 +800,7 @@ export class GameManager {
         callAmount: isMyTurn ? turnInfo!.callAmount : 0,
         potTotal: totalPot, isMyTurn,
         showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+        sitOutNextHand: this.pendingSitOutNextHand.has(socketId),
       };
       socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
     }

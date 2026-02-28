@@ -25,6 +25,14 @@ When starting a local server for manual testing, always use a random free port t
 ## Skills / Slash Commands
 When the user invokes a skill (e.g. `/commit`, `/push`, `/deploy`, `/work`), execute it immediately without asking for confirmation. Never ask "should I proceed?" or "do you want me to run this?" — just do it.
 
+## Version Bumping
+Always bump the version number when a feature or bugfix is complete (before committing). Use semver:
+- **patch** (x.y.Z) — bug fixes
+- **minor** (x.Y.0) — new features
+- **major** (X.0.0) — breaking changes
+
+All 4 `package.json` files must be updated together: root, `shared/`, `server/`, `client/`. Use `/bump` to do this automatically.
+
 ## Bug Tracking
 When testing a bug fix or feature, if you discover an unrelated bug, check if it already exists in `doc/bugs.md`. If not, add it there. Do not fix unrelated bugs during the current task — just document them.
 

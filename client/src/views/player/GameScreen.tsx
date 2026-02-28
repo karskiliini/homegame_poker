@@ -109,6 +109,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
   const isFolded = privateState?.status === 'folded';
   const isSittingOut = privateState?.status === 'sitting_out';
   const isBusted = privateState?.status === 'busted';
+  const sitOutNextHand = privateState?.sitOutNextHand ?? false;
   const isHandActive = lobbyState?.phase === 'hand_in_progress';
   const showActions = privateState?.isMyTurn && isHandActive && (privateState?.availableActions.length ?? 0) > 0;
   const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && !isSittingOut && !isBusted && (privateState?.holeCards.length ?? 0) > 0;
@@ -184,9 +185,9 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
         )}
       </div>
 
-      {/* Bottom: Own cards + actions (~42vh) */}
+      {/* Bottom: Own cards + actions */}
       <div
-        className="flex-1 flex flex-col justify-between px-4 pt-3 pb-4"
+        className="flex-1 flex flex-col px-4 pt-3 pb-2"
         style={{
           opacity: isFolded ? 0.6 : 1,
           transition: 'opacity 0.3s ease',
@@ -237,7 +238,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
         </div>
 
         {/* Actions */}
-        <div className="mt-2">
+        <div className="mt-3">
           {isSittingOut && (privateState?.stack ?? 0) > 0 ? (
             <div className="text-center py-4 space-y-3">
               <div style={{ color: 'var(--ftp-text-muted)', fontSize: 15 }}>
@@ -287,6 +288,52 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
             </div>
           )}
         </div>
+
+        {/* Sit Out Next Hand checkbox */}
+        {!isSittingOut && !isBusted && (privateState?.stack ?? 0) > 0 && (
+          <div className="flex justify-center mt-2">
+            <button
+              onClick={() => socket.emit(C2S.SIT_OUT_NEXT_HAND)}
+              className="flex items-center gap-2"
+              style={{
+                padding: '6px 12px',
+                borderRadius: 6,
+                background: sitOutNextHand ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
+                border: sitOutNextHand ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 3,
+                  border: sitOutNextHand ? '2px solid #EAB308' : '2px solid rgba(255,255,255,0.3)',
+                  background: sitOutNextHand ? '#EAB308' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  fontSize: 11,
+                  color: '#000',
+                  fontWeight: 700,
+                }}
+              >
+                {sitOutNextHand && '\u2713'}
+              </div>
+              <span
+                style={{
+                  fontSize: 12,
+                  color: sitOutNextHand ? '#EAB308' : 'var(--ftp-text-muted)',
+                  fontWeight: sitOutNextHand ? 600 : 400,
+                }}
+              >
+                Sit Out Next Hand
+              </span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
