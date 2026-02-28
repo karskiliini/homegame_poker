@@ -200,7 +200,7 @@ describe('Player reconnection with token', () => {
     const { playerId, playerToken } = gm.addPlayer(socket1, 'Alice', 100);
 
     gm.handlePlayerDisconnect('sock-1');
-    vi.advanceTimersByTime(60_000); // 1 minute in
+    vi.advanceTimersByTime(DISCONNECT_TIMEOUT_MS / 2); // Half the timeout
 
     const socket2 = createMockSocket('sock-2');
     gm.reconnectPlayer(playerId!, socket2, playerToken!);

@@ -1048,7 +1048,7 @@ export class GameManager {
   private processPendingRemovals() {
     for (const socketId of this.pendingRemovals) {
       const player = this.players.get(socketId);
-      if (player && !player.isConnected) this.removePlayer(socketId);
+      if (player) this.removePlayer(socketId);
     }
     this.pendingRemovals.clear();
   }

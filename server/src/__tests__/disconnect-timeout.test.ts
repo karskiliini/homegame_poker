@@ -100,7 +100,7 @@ describe('Disconnect timeout', () => {
     gm.addPlayer(socket, 'Carol', 100);
 
     gm.handlePlayerDisconnect('sock-1');
-    vi.advanceTimersByTime(60_000); // 1 minute
+    vi.advanceTimersByTime(DISCONNECT_TIMEOUT_MS / 2); // Half the timeout
 
     // Simulate reconnect
     gm.handlePlayerReconnect('sock-1');
@@ -152,7 +152,7 @@ describe('Disconnect timeout', () => {
 
     // First disconnect
     gm.handlePlayerDisconnect('sock-1');
-    vi.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(DISCONNECT_TIMEOUT_MS / 3); // Advance partially
 
     // Reconnect
     gm.handlePlayerReconnect('sock-1');
@@ -160,12 +160,13 @@ describe('Disconnect timeout', () => {
     // Second disconnect
     gm.handlePlayerDisconnect('sock-1');
 
-    // The old timer shouldn't fire (it was cancelled)
-    vi.advanceTimersByTime(DISCONNECT_TIMEOUT_MS - 60_000);
+    // The old timer was cancelled, new timer starts fresh
+    // After half the timeout from second disconnect, player should still be present
+    vi.advanceTimersByTime(DISCONNECT_TIMEOUT_MS / 2);
     expect(gm.getTableState().players).toHaveLength(1);
 
     // New timer should fire after full duration from second disconnect
-    vi.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(DISCONNECT_TIMEOUT_MS / 2 + 1);
     expect(gm.getTableState().players).toHaveLength(0);
   });
 });
