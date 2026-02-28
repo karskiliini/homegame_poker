@@ -20,6 +20,7 @@ export const S2C_PLAYER = {
   HAND_START: 'player:hand_start',
   YOUR_TURN: 'player:your_turn',
   RIT_OFFER: 'player:rit_offer',
+  RIT_RESOLVED: 'player:rit_resolved',
   SHOW_CARDS_OFFER: 'player:show_cards_offer',
   HAND_RESULT: 'player:hand_result',
   BUSTED: 'player:busted',

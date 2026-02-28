@@ -6,6 +6,7 @@ import { CommunityCards } from './CommunityCards.js';
 import { PotDisplay } from './PotDisplay.js';
 import { BetChip } from './BetChip.js';
 import { CardBack } from '../../components/CardBack.js';
+import { CardComponent } from '../../components/Card.js';
 import { ChipStack } from '../../components/ChipStack.js';
 
 // Seat positions around an oval table (percentage-based, for 10 seats)
@@ -283,33 +284,77 @@ export function PokerTable({
         )}
       </div>
 
-      {/* Community cards — Board 1 (shifts up when two boards) */}
-      {communityCards.length > 0 && (
-        <div className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 ${secondBoard && secondBoard.length > 0 ? 'top-[37%]' : 'top-[42%]'}`}>
-          {secondBoard && secondBoard.length > 0 && (
-            <div className="text-center mb-0.5" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 600 }}>
-              Board 1
-            </div>
-          )}
-          <CommunityCards
-            cards={communityCards}
-            winningCards={winnerSeats.length > 0 ? communityCards : undefined}
-          />
-        </div>
-      )}
+      {/* Community cards */}
+      {communityCards.length > 0 && (() => {
+        const hasRIT = secondBoard && secondBoard.length > 0;
 
-      {/* Community cards — Board 2 (RIT) */}
-      {secondBoard && secondBoard.length > 0 && (
-        <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="text-center mb-0.5" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 600 }}>
-            Board 2
+        if (!hasRIT) {
+          // Single board — render normally
+          return (
+            <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <CommunityCards
+                cards={communityCards}
+                winningCards={winnerSeats.length > 0 ? communityCards : undefined}
+              />
+            </div>
+          );
+        }
+
+        // RIT: find shared (pre-all-in) cards
+        let sharedCount = 0;
+        while (sharedCount < communityCards.length && sharedCount < secondBoard.length
+               && communityCards[sharedCount] === secondBoard[sharedCount]) {
+          sharedCount++;
+        }
+
+        const sharedCards = communityCards.slice(0, sharedCount);
+        const board1Extra = communityCards.slice(sharedCount);
+        const board2Extra = secondBoard.slice(sharedCount);
+        const isWinner = winnerSeats.length > 0;
+
+        return (
+          <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="flex gap-2 items-center">
+              {/* Shared pre-all-in cards — centered */}
+              {sharedCards.map((card) => (
+                <CardComponent key={`shared-${card}`} card={card} size="md" isWinner={isWinner} />
+              ))}
+
+              {/* Board 1 & 2 split: fork above/below the shared card row */}
+              {board1Extra.length > 0 && (
+                <div style={{
+                  position: 'relative',
+                  width: board1Extra.length * 58 - 8,
+                  height: 72,
+                }}>
+                  {/* Board 1 — half card height above, 3px gap */}
+                  <div style={{ position: 'absolute', left: 0, bottom: 39 }}>
+                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 600, marginBottom: 1 }}>
+                      Board 1
+                    </div>
+                    <div className="flex gap-2">
+                      {board1Extra.map((card) => (
+                        <CardComponent key={`b1-${card}`} card={card} size="md" isWinner={isWinner} />
+                      ))}
+                    </div>
+                  </div>
+                  {/* Board 2 — half card height below, 3px gap */}
+                  <div style={{ position: 'absolute', left: 0, top: 39 }}>
+                    <div className="flex gap-2">
+                      {board2Extra.map((card) => (
+                        <CardComponent key={`b2-${card}`} card={card} size="md" isWinner={isWinner} />
+                      ))}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 600, marginTop: 1 }}>
+                      Board 2
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <CommunityCards
-            cards={secondBoard}
-            winningCards={winnerSeats.length > 0 ? secondBoard : undefined}
-          />
-        </div>
-      )}
+        );
+      })()}
 
       {/* Pots */}
       {pots.length > 0 && (

@@ -383,8 +383,24 @@ export class GameManager {
   private resolveRit() {
     if (this.ritTimer) { clearTimeout(this.ritTimer); this.ritTimer = null; }
     const allAccepted = this.ritPlayerIds.every(pid => this.ritResponses.get(pid) === true);
-    this.handEngine?.setRunItTwice(allAccepted);
+
+    // Dismiss RIT prompt on all eligible players' phones
+    for (const pid of this.ritPlayerIds) {
+      const socketId = this.playerIdToSocketId.get(pid);
+      if (socketId) {
+        const socket = this.socketMap.get(socketId);
+        socket?.emit(S2C_PLAYER.RIT_RESOLVED, { accepted: allAccepted });
+      }
+    }
+
     console.log(`Run It Twice: ${allAccepted ? 'AGREED' : 'DECLINED'}`);
+
+    if (allAccepted) {
+      // Pause to let players see the table before dealing
+      setTimeout(() => this.handEngine?.setRunItTwice(true), 1500);
+    } else {
+      this.handEngine?.setRunItTwice(false);
+    }
   }
 
   private handleHandComplete(result: HandResult) {

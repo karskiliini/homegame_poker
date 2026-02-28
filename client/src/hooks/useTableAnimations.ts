@@ -198,12 +198,15 @@ export function useTableAnimations({
     };
 
     const onSecondBoardDealt = (data: { cards: CardString[] }) => {
-      const current = gameStateRef.current;
-      if (current) {
-        const updated = { ...current, secondBoard: data.cards };
-        gameStateRef.current = updated;
-        setGameState(updated);
-      }
+      // Delay second board display so players can see board 1 first
+      setTimeout(() => {
+        const current = gameStateRef.current;
+        if (current) {
+          const updated = { ...current, secondBoard: data.cards };
+          gameStateRef.current = updated;
+          setGameState(updated);
+        }
+      }, 1500);
     };
 
     socket.on(S2C_TABLE.GAME_STATE, onGameState);

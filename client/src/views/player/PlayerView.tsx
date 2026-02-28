@@ -93,6 +93,10 @@ export function PlayerView() {
       setShowRit(true);
     });
 
+    socket.on(S2C_PLAYER.RIT_RESOLVED, () => {
+      setShowRit(false);
+    });
+
     socket.on(S2C_PLAYER.SHOW_CARDS_OFFER, () => {
       setShowShowCards(true);
     });
