@@ -5,3 +5,4 @@
 - Pöydän muoto ei saa muuttua ikkunan koon mukaan. Pöydän tulee säilyttää kiinteä aspect ratio riippumatta selainikkunan koosta.
 - Disconnected pelaaja ei voi refreshin jälkeen palata istumaan samaan pöytään.
 -[DONE] Pelaaja ei voi valita omaa istuintaan pelipöytään istuttaessa. Korjattu: addPlayer hyväksyy valinnaisen seatIndex-parametrin. Tyhjät paikat näyttävät hoverin aikana pumppaavan "Sit In" -tekstin vihreällä pohjalla ja glow-efektillä. Klikkaus avaa buy-in-dialogin valitulle paikalle.
+- Run It Twice: toinen board vain ilmestyy eikä sillä ole animaatiota. Ensimmäinen board tulee hyvin, mutta toisen pitää tulla samalla tavalla animoituna. Kokemuksen pitää olla yhtenäinen sekä RIT-käsissä että normaaleissa käsissä.

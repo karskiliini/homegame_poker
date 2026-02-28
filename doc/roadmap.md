@@ -22,9 +22,9 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [x] Testaus: koko flow pelaajan bustista → rebuy-prompt → rebuy → takaisin peliin
 
 ### 0.2 Chip Stack -visualisointi (suunnitelma olemassa)
-- [ ] Realistiset chippipinovisuaalit beteille ja poteille
-- [ ] Denominaatiot suhteessa BB:hen (valkoinen/punainen/vihreä/musta/sininen)
-- [ ] Animaatiot: chip fly seat→bet, collect bet→pot, pot award→winner
+- [x] Realistiset chippipinovisuaalit beteille ja poteille
+- [x] Denominaatiot suhteessa BB:hen (valkoinen/punainen/vihreä/musta/sininen)
+- [x] Animaatiot: chip fly seat→bet, collect bet→pot, pot award→winner
 
 ### 0.3 PLO:n viimeistely
 - [ ] 4 kättä PLO-pelaajille (nyt jaetaan vain 2)
