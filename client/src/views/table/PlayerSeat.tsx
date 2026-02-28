@@ -55,6 +55,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const isFolded = player.status === 'folded';
   const isAllIn = player.status === 'all_in';
   const isSittingOut = player.status === 'sitting_out';
+  const isBusted = player.status === 'busted';
+  const isInactive = isSittingOut || isBusted;
   const isDisconnected = !player.isConnected;
   const dcCountdown = useDcCountdown(player.disconnectedAt);
   const avatarImage = AVATAR_OPTIONS.find(a => a.id === player.avatarId)?.image ?? null;
@@ -69,7 +71,10 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const showCardBacks = player.hasCards && !player.holeCards && !isFolded;
 
   return (
-    <div className={`relative flex flex-col items-center ${isFolded || isSittingOut ? 'opacity-40' : ''}`}>
+    <div
+      className={`relative flex flex-col items-center ${isFolded || isInactive ? 'opacity-40' : ''}`}
+      style={isInactive ? { filter: 'grayscale(0.6)' } : undefined}
+    >
       {/* Cards above the avatar */}
       <div className="flex gap-0.5 mb-1" style={{ minHeight: 52 }}>
         {player.holeCards ? (
@@ -200,8 +205,23 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
           </div>
         )}
 
+        {/* Busted badge */}
+        {isBusted && (
+          <div
+            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
+            style={{
+              fontSize: 11,
+              background: 'linear-gradient(135deg, #7F1D1D, #991B1B)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            BUSTED
+          </div>
+        )}
+
         {/* Away badge */}
-        {isSittingOut && (
+        {isSittingOut && !isBusted && (
           <div
             className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
             style={{
