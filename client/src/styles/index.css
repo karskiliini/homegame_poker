@@ -12,12 +12,12 @@
   --ftp-bg-tertiary: #383838;
 
   /* TABLE */
-  --ftp-felt-green: #2D6B3F;
-  --ftp-felt-green-dark: #1A5C32;
-  --ftp-felt-green-light: #3A8050;
-  --ftp-table-rail: #5C3A1E;
-  --ftp-table-rail-light: #8B6914;
-  --ftp-table-border: #3A2510;
+  --ftp-felt-green: #358A4E;
+  --ftp-felt-green-dark: #1F7038;
+  --ftp-felt-green-light: #4A9A62;
+  --ftp-table-rail: #C41E2A;
+  --ftp-table-rail-light: #A01525;
+  --ftp-table-border: #6B0F18;
 
   /* ACCENTS */
   --ftp-gold: #C9A84C;
@@ -30,9 +30,9 @@
   --ftp-text-muted: #707070;
 
   /* PLAYER PANEL */
-  --ftp-panel-bg: rgba(0, 0, 0, 0.65);
-  --ftp-panel-active: rgba(200, 160, 60, 0.3);
-  --ftp-panel-border: rgba(255, 255, 255, 0.15);
+  --ftp-panel-bg: linear-gradient(180deg, #2A2A30, #1A1A1E, #111115);
+  --ftp-panel-active: linear-gradient(180deg, #3D350A, #2A2305);
+  --ftp-panel-border: rgba(0, 0, 0, 0.3);
   --ftp-panel-active-border: rgba(234, 179, 8, 0.6);
 
   /* ACTION BUTTONS */

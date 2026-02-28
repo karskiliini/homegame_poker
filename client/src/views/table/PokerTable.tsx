@@ -151,14 +151,50 @@ export function PokerTable({
 
   return (
     <div ref={tableRef} className="relative w-full h-full max-w-[1400px] max-h-[900px]">
-      {/* Table rail (outer border) */}
+      {/* Table rail (outer border) — red padded leather */}
       <div
         className="absolute pointer-events-none"
         style={{
           inset: '5.5%',
           borderRadius: '50%',
-          background: 'linear-gradient(180deg, #8B6914 0%, #5C3A1E 30%, #3A2510 100%)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1)',
+          background: 'linear-gradient(180deg, #C41E2A 0%, #A01525 25%, #8B1520 60%, #6B0F18 100%)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 3px 6px rgba(255,255,255,0.15), inset 0 -3px 6px rgba(0,0,0,0.4), inset 0 0 20px rgba(0,0,0,0.2)',
+        }}
+      />
+
+      {/* Chrome accent — light reflection on rail top */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          inset: '5.5%',
+          borderRadius: '50%',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 8%, transparent 100%)',
+        }}
+      />
+
+      {/* Chrome ornament — left (9 o'clock) */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          left: '4.5%',
+          top: '46%',
+          width: 6,
+          height: 40,
+          borderRadius: 3,
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))',
+        }}
+      />
+
+      {/* Chrome ornament — right (3 o'clock) */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          right: '4.5%',
+          top: '46%',
+          width: 6,
+          height: 40,
+          borderRadius: 3,
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))',
         }}
       />
 
@@ -168,10 +204,32 @@ export function PokerTable({
         style={{
           inset: '7%',
           borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 50% 45%, #3A8050 0%, #2D6B3F 40%, #1A5C32 100%)',
+          background: 'radial-gradient(ellipse at 50% 45%, #4A9A62 0%, #358A4E 40%, #1F7038 100%)',
           boxShadow: 'inset 0 2px 20px rgba(0,0,0,0.3)',
         }}
       />
+
+      {/* Felt watermark */}
+      <div
+        className="absolute pointer-events-none flex items-center justify-center"
+        style={{
+          inset: '7%',
+          borderRadius: '50%',
+        }}
+      >
+        <span
+          style={{
+            color: 'rgba(255,255,255,0.04)',
+            fontSize: 36,
+            fontWeight: 800,
+            letterSpacing: 12,
+            textTransform: 'uppercase',
+            userSelect: 'none',
+          }}
+        >
+          POKER NIGHT
+        </span>
+      </div>
 
       {/* Inner line on felt */}
       <div
@@ -179,27 +237,28 @@ export function PokerTable({
         style={{
           inset: '10%',
           borderRadius: '50%',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid rgba(200,180,100,0.12)',
         }}
       />
 
       {/* Game info */}
       <div className="absolute top-[13%] left-1/2 -translate-x-1/2 text-center">
         <div
-          className="font-semibold tracking-wider"
+          className="tracking-wider"
           style={{
             color: 'var(--ftp-gold)',
-            fontSize: 13,
+            fontSize: 14,
+            fontWeight: 700,
             textShadow: '0 1px 3px rgba(0,0,0,0.5)',
           }}
         >
           {config.gameType} {config.smallBlind}/{config.bigBlind}
-          {handNumber > 0 && (
-            <span style={{ marginLeft: 16, color: 'rgba(255,255,255,0.4)' }}>
-              Hand #{handNumber}
-            </span>
-          )}
         </div>
+        {handNumber > 0 && (
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 2 }}>
+            Hand #{handNumber}
+          </div>
+        )}
       </div>
 
       {/* Community cards */}
@@ -417,11 +476,11 @@ export function PokerTable({
               <div
                 className="flex items-center justify-center"
                 style={{
-                  width: 100,
+                  width: 140,
                   height: 56,
                   borderRadius: 6,
                   border: '1px solid rgba(255,255,255,0.06)',
-                  background: 'rgba(0,0,0,0.15)',
+                  background: 'linear-gradient(180deg, rgba(42,42,48,0.4), rgba(26,26,30,0.4))',
                   color: 'rgba(255,255,255,0.15)',
                   fontSize: 11,
                 }}

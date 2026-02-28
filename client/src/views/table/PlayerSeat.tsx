@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PublicPlayerState } from '@poker/shared';
-import { DISCONNECT_TIMEOUT_MS } from '@poker/shared';
+import { DISCONNECT_TIMEOUT_MS, AVATAR_OPTIONS, AVATAR_BACKGROUNDS } from '@poker/shared';
+import type { AvatarId } from '@poker/shared';
 import { CardComponent } from '../../components/Card.js';
 import { CardBack } from '../../components/CardBack.js';
 
-const AVATAR_COLORS = [
+const AVATAR_COLORS_FALLBACK: [string, string][] = [
   ['#DC2626', '#991B1B'],
   ['#2563EB', '#1E40AF'],
   ['#16A34A', '#15803D'],
@@ -18,12 +19,12 @@ const AVATAR_COLORS = [
   ['#0891B2', '#0E7490'],
 ];
 
-function getAvatarColors(name: string): [string, string] {
+function getFallbackColors(name: string): [string, string] {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length] as [string, string];
+  return AVATAR_COLORS_FALLBACK[Math.abs(hash) % AVATAR_COLORS_FALLBACK.length];
 }
 
 function getInitials(name: string): string {
@@ -32,6 +33,15 @@ function getInitials(name: string): string {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
   return name.slice(0, 2).toUpperCase();
+}
+
+function getAvatarEmoji(avatarId: string): string | null {
+  const opt = AVATAR_OPTIONS.find(a => a.id === avatarId);
+  return opt ? opt.emoji : null;
+}
+
+function getAvatarBg(avatarId: string): [string, string] | null {
+  return AVATAR_BACKGROUNDS[avatarId as AvatarId] ?? null;
 }
 
 interface PlayerSeatProps {
@@ -76,7 +86,10 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const isAllIn = player.status === 'all_in';
   const isDisconnected = !player.isConnected;
   const dcCountdown = useDcCountdown(player.disconnectedAt);
-  const [color1, color2] = getAvatarColors(player.name);
+  const avatarEmoji = getAvatarEmoji(player.avatarId);
+  const avatarBg = getAvatarBg(player.avatarId);
+  const [fallbackC1, fallbackC2] = getFallbackColors(player.name);
+  const [color1, color2] = avatarBg || [fallbackC1, fallbackC2];
   const initials = getInitials(player.name);
 
   // Timer bar color
@@ -128,31 +141,33 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
           ${isAllIn ? 'animate-allin-pulse' : ''}
         `}
         style={{
-          minWidth: 120,
-          background: isActive ? 'var(--ftp-panel-active)' : 'var(--ftp-panel-bg)',
+          minWidth: 140,
+          background: isActive
+            ? 'linear-gradient(180deg, #3D350A, #2A2305)'
+            : 'linear-gradient(180deg, #2A2A30, #1A1A1E, #111115)',
           border: isAllIn
             ? '2px solid #EAB308'
             : `1px solid ${isActive ? 'var(--ftp-panel-active-border)' : 'var(--ftp-panel-border)'}`,
           borderRadius: 6,
           boxShadow: isActive
-            ? '0 0 15px 5px rgba(234, 179, 8, 0.3)'
-            : '0 2px 8px rgba(0, 0, 0, 0.3)',
+            ? '0 0 15px 5px rgba(234, 179, 8, 0.3), inset 0 1px 0 rgba(255,215,0,0.2)'
+            : '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(0,0,0,0.3)',
         }}
       >
         {/* Avatar */}
         <div
           className="flex items-center justify-center text-white font-bold shrink-0"
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 4,
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
             background: `linear-gradient(135deg, ${color1}, ${color2})`,
-            fontSize: 16,
+            fontSize: avatarEmoji ? 28 : 18,
             boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 1px 3px rgba(0,0,0,0.2)',
-            border: isActive ? '2px solid rgba(234, 179, 8, 0.6)' : '1px solid rgba(255,255,255,0.1)',
+            border: isActive ? '2px solid rgba(234, 179, 8, 0.6)' : '2px solid rgba(255,255,255,0.15)',
           }}
         >
-          {initials}
+          {avatarEmoji || initials}
         </div>
 
         {/* Name + Stack */}
@@ -162,7 +177,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             style={{
               fontSize: 13,
               maxWidth: 80,
-              color: isActive ? '#1a1a1a' : '#FFFFFF',
+              color: isActive ? '#FFD700' : '#FFFFFF',
             }}
           >
             {player.name}
@@ -176,7 +191,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             className="font-mono tabular-nums"
             style={{
               fontSize: 12,
-              color: isActive ? '#1a1a1a' : 'var(--ftp-text-secondary)',
+              color: isActive ? '#FFD700' : 'var(--ftp-text-secondary)',
               fontWeight: 600,
             }}
           >
@@ -227,11 +242,11 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             width: 24,
             height: 24,
             borderRadius: '50%',
-            background: 'radial-gradient(circle at 35% 35%, #FFFFFF, #E0E0E0)',
-            border: '2px solid #999',
-            color: '#333',
+            background: 'linear-gradient(135deg, #FFFDE7, #FFD54F)',
+            border: '2px solid #F9A825',
+            color: '#5D4037',
             fontSize: 11,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 6px rgba(255,213,79,0.3)',
           }}
         >
           D
@@ -243,8 +258,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         <div
           className="absolute -top-1 -left-3 flex items-center justify-center font-bold text-white"
           style={{
-            width: 22,
-            height: 22,
+            width: 24,
+            height: 24,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
             fontSize: 9,
@@ -258,8 +273,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         <div
           className="absolute -top-1 -left-3 flex items-center justify-center font-bold text-white"
           style={{
-            width: 22,
-            height: 22,
+            width: 24,
+            height: 24,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #EF4444, #DC2626)',
             fontSize: 9,
