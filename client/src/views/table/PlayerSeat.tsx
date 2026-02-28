@@ -268,28 +268,6 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         )}
       </div>
 
-      {/* Dealer button */}
-      {player.isDealer && (
-        <div
-          className="absolute flex items-center justify-center font-bold"
-          style={{
-            top: 52,
-            right: -14,
-            width: 24,
-            height: 24,
-            borderRadius: '50%',
-            background: gradients.dealerButton,
-            border: '2px solid #F9A825',
-            color: '#5D4037',
-            fontSize: 11,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 6px rgba(255,213,79,0.3)',
-            zIndex: 2,
-          }}
-        >
-          D
-        </div>
-      )}
-
       {/* Blind indicators */}
       {player.isSmallBlind && !player.isDealer && (
         <div

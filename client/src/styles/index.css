@@ -418,6 +418,18 @@ input[type="range"].ftp-slider::-webkit-slider-thumb:hover {
   animation: speech-fade-out 500ms ease-in forwards;
 }
 
+/* Dealer button move */
+@keyframes dealer-button-move {
+  0%   { transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(1); }
+  70%  { transform: translate(0, 0) scale(1); }
+  85%  { transform: translate(0, 0) scale(1.3); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.animate-dealer-move {
+  animation: dealer-button-move 600ms var(--ftp-ease-deal) forwards;
+}
+
 /* Timer bar */
 @keyframes timer-shrink {
   from { width: 100%; }

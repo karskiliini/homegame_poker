@@ -177,6 +177,12 @@ export function PokerTable({
   const t = useT();
   const { gradients } = useTheme();
 
+  // Dealer button animation state
+  const prevDealerSeatRef = useRef<number | null>(null);
+  const [dealerMoveAnim, setDealerMoveAnim] = useState<{
+    fromX: number; fromY: number; toX: number; toY: number;
+  } | null>(null);
+
   // Position lookup that respects seat rotation
   const getDisplaySeatPos = useCallback((physicalSeatIndex: number) => {
     if (mySeatIndex == null) return SEAT_POSITIONS[physicalSeatIndex];
@@ -239,6 +245,34 @@ export function PokerTable({
     const scale = 80;
     return { x: (dx / len) * scale, y: (dy / len) * scale };
   }, [getDisplaySeatPos]);
+
+  // Compute dealer button position in pixels for a given seat index
+  const getDealerBtnPos = useCallback((seatIndex: number) => {
+    const pos = getDisplaySeatPos(seatIndex);
+    return {
+      x: (pos.x / 100) * TABLE_VIRTUAL_W + 42,
+      y: (pos.y / 100) * TABLE_VIRTUAL_H - 16,
+    };
+  }, [getDisplaySeatPos]);
+
+  // Detect dealer seat changes and trigger move animation
+  const currentDealerSeat = useMemo(() => {
+    const dealer = players.find(p => p.isDealer);
+    return dealer?.seatIndex ?? null;
+  }, [players]);
+
+  useEffect(() => {
+    const prev = prevDealerSeatRef.current;
+    if (currentDealerSeat != null && prev != null && prev !== currentDealerSeat) {
+      const from = getDealerBtnPos(prev);
+      const to = getDealerBtnPos(currentDealerSeat);
+      setDealerMoveAnim({ fromX: from.x, fromY: from.y, toX: to.x, toY: to.y });
+      const timer = setTimeout(() => setDealerMoveAnim(null), 650);
+      prevDealerSeatRef.current = currentDealerSeat;
+      return () => clearTimeout(timer);
+    }
+    prevDealerSeatRef.current = currentDealerSeat;
+  }, [currentDealerSeat, getDealerBtnPos]);
 
   return (
     <div
@@ -740,6 +774,55 @@ export function PokerTable({
           </div>
         );
       })}
+
+      {/* Dealer button — animated overlay */}
+      {currentDealerSeat != null && !dealerMoveAnim && (() => {
+        const btnPos = getDealerBtnPos(currentDealerSeat);
+        return (
+          <div
+            className="absolute pointer-events-none flex items-center justify-center font-bold"
+            style={{
+              left: btnPos.x,
+              top: btnPos.y,
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              background: gradients.dealerButton,
+              border: '2px solid #F9A825',
+              color: '#5D4037',
+              fontSize: 11,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 6px rgba(255,213,79,0.3)',
+              zIndex: 15,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            D
+          </div>
+        );
+      })()}
+      {dealerMoveAnim && (
+        <div
+          className="absolute pointer-events-none flex items-center justify-center font-bold animate-dealer-move"
+          style={{
+            left: dealerMoveAnim.toX,
+            top: dealerMoveAnim.toY,
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            background: gradients.dealerButton,
+            border: '2px solid #F9A825',
+            color: '#5D4037',
+            fontSize: 11,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 6px rgba(255,213,79,0.3)',
+            zIndex: 15,
+            '--start-x': `${dealerMoveAnim.fromX - dealerMoveAnim.toX}px`,
+            '--start-y': `${dealerMoveAnim.fromY - dealerMoveAnim.toY}px`,
+            transform: 'translate(-50%, -50%)',
+          } as React.CSSProperties}
+        >
+          D
+        </div>
+      )}
 
       {/* Speech bubble above active seat */}
       {speechBubble && onSpeechBubbleDone && (() => {
