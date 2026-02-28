@@ -137,9 +137,9 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
           background: gradients.phoneRadialBackground,
         }}
       >
-        {/* Top-left buttons: Leave Table + Sit Out */}
-        <div className="absolute top-3 left-3 z-30 flex gap-2">
-          {onLeaveTable && !isHandActive && (
+        {/* Top-left: Leave Table (only when sitting out) */}
+        {onLeaveTable && isSittingOut && (
+          <div className="absolute top-3 left-3 z-30">
             <button
               onClick={onLeaveTable}
               style={{
@@ -155,25 +155,8 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
             >
               {t('game_leave_table')}
             </button>
-          )}
-          {!isSittingOut && !isBusted && (!isHandActive || isFolded) && (
-            <button
-              onClick={() => socket.emit(C2S.SIT_OUT)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 6,
-                background: 'rgba(255,255,255,0.1)',
-                color: 'var(--ftp-text-secondary)',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              {t('game_sit_out')}
-            </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {gameState ? (
           <div
@@ -319,6 +302,27 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
             </div>
           )}
         </div>
+
+        {/* Sit Out button (between hands or folded) */}
+        {!isSittingOut && !isBusted && (!isHandActive || isFolded) && (
+          <div className="flex justify-center mt-1">
+            <button
+              onClick={() => socket.emit(C2S.SIT_OUT)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                background: 'rgba(255,255,255,0.08)',
+                color: 'var(--ftp-text-secondary)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {t('game_sit_out')}
+            </button>
+          </div>
+        )}
 
         {/* Sit Out Next Hand + Auto-Muck checkboxes */}
         {!isSittingOut && !isBusted && (privateState?.stack ?? 0) > 0 && (

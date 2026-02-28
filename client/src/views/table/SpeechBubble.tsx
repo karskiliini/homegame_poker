@@ -23,7 +23,7 @@ export function SpeechBubble({ message, onDone }: SpeechBubbleProps) {
     <div
       className={fading ? 'animate-speech-fade-out' : 'animate-speech-pop-in'}
       style={{
-        maxWidth: 160,
+        maxWidth: 220,
         padding: '6px 10px',
         borderRadius: 10,
         background: '#FFFFFF',
@@ -33,7 +33,9 @@ export function SpeechBubble({ message, onDone }: SpeechBubbleProps) {
         fontWeight: 500,
         boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
         position: 'relative',
+        overflowWrap: 'break-word',
         wordBreak: 'break-word',
+        overflow: 'hidden',
         animationFillMode: 'forwards',
       }}
     >
