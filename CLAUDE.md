@@ -36,6 +36,8 @@ Always bump the version number when a feature or bugfix is complete (before comm
 
 All 4 `package.json` files must be updated together: root, `shared/`, `server/`, `client/`. Use `/bump` to do this automatically.
 
+**Rebase version conflicts:** If during `git rebase main` the version in your branch conflicts with main (i.e. someone else already bumped to the same version), you must re-bump to a higher version after resolving the conflict. For example, if you set 1.4.0 but main is already at 1.4.0, bump to 1.4.1 (or 1.5.0 if appropriate).
+
 ## Bug Tracking
 When testing a bug fix or feature, if you discover an unrelated bug, check if it already exists in `doc/bugs.md`. If not, add it there. Do not fix unrelated bugs during the current task — just document them.
 
