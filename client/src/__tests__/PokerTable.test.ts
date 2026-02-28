@@ -14,8 +14,7 @@ import { join } from 'path';
  * TABLE_VIRTUAL_H = 900x550) and CSS `transform: scale()` to fit the table
  * into the available space. This guarantees the aspect ratio is always preserved.
  *
- * - Watching view: scales to fit viewport with `contain` behavior (min of scaleX, scaleY)
- * - Phone view: scales to fit wrapper width
+ * Both watching and phone views use width-based scaling for consistent layout.
  */
 
 describe('PokerTable aspect ratio', () => {
@@ -50,7 +49,7 @@ describe('PokerTable aspect ratio', () => {
     expect(rootClasses).not.toContain('h-full');
   });
 
-  it('WatchingScreen uses scale-transform with contain behavior', () => {
+  it('WatchingScreen uses same phone-style layout as GameScreen', () => {
     const src = readFileSync(
       join(__dirname, '..', 'views', 'player', 'WatchingScreen.tsx'),
       'utf-8'
@@ -60,12 +59,12 @@ describe('PokerTable aspect ratio', () => {
     expect(src).toContain('TABLE_VIRTUAL_W');
     expect(src).toContain('TABLE_VIRTUAL_H');
 
-    // Should use Math.min for contain behavior (fit both width and height)
-    expect(src).toContain('Math.min(scaleX, scaleY)');
+    // Should use width-based scaling like GameScreen (not contain behavior)
+    expect(src).toContain('wrapperWidth / TABLE_W');
 
     // Should wrap PokerTable in a container with fixed virtual size + scale transform
-    expect(src).toContain('width: TABLE_VIRTUAL_W');
-    expect(src).toContain('height: TABLE_VIRTUAL_H');
+    expect(src).toContain('width: TABLE_W');
+    expect(src).toContain('height: TABLE_H');
     expect(src).toMatch(/transform:.*scale/);
   });
 

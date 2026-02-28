@@ -16,6 +16,10 @@ import { LanguageToggle } from '../../components/LanguageToggle.js';
 import { ThemeToggle } from '../../components/ThemeToggle.js';
 import { useTheme } from '../../themes/useTheme.js';
 
+// Use canonical virtual table dimensions from PokerTable
+const TABLE_W = TABLE_VIRTUAL_W;
+const TABLE_H = TABLE_VIRTUAL_H;
+
 interface WatchingScreenProps {
   playerSocket: Socket;
 }
@@ -39,6 +43,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   const [showBuyIn, setShowBuyIn] = useState(false);
   const [buyInAmount, setBuyInAmount] = useState(0);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
+  const [chatMinimized, setChatMinimized] = useState(true);
 
   const table = tables.find(t => t.tableId === watchingTableId);
   const tableMaxBuyIn = table?.stakeLevel.maxBuyIn ?? 200;
@@ -89,19 +94,14 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     enableSound: true,
   });
 
-  // Calculate scale to fit the virtual table into the viewport (contain mode)
+  // Calculate scale to fit the virtual table into the wrapper width (phone style)
   useEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
 
     const updateScale = () => {
       const wrapperWidth = wrapper.clientWidth;
-      // Subtract bottom bar reserved space (paddingBottom) from available height
-      const wrapperHeight = wrapper.clientHeight - 80;
-      // Scale to fit both dimensions (contain behavior)
-      const scaleX = wrapperWidth / TABLE_VIRTUAL_W;
-      const scaleY = wrapperHeight / TABLE_VIRTUAL_H;
-      setScale(Math.min(scaleX, scaleY));
+      setScale((wrapperWidth / TABLE_W) * 0.75);
     };
 
     updateScale();
@@ -142,105 +142,127 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
 
   return (
     <div
-      ref={wrapperRef}
-      className="w-screen h-screen overflow-hidden flex items-center justify-center"
-      style={{ background: gradients.tvBackground, paddingBottom: 80 }}
+      className="flex flex-col"
+      style={{ minHeight: '100dvh', background: gradients.phoneBackground }}
     >
-      {/* Top controls */}
-      <div className="fixed top-4 left-4 z-50">
-        <button
-          onClick={handleBack}
-          style={{
-            padding: '6px 14px',
-            borderRadius: 6,
-            background: 'rgba(255,255,255,0.1)',
-            color: 'var(--ftp-text-secondary)',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          {t('watching_back')}
-        </button>
-      </div>
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
-        <ThemeToggle />
-        <LanguageToggle />
-        <SoundToggle soundManager={tableSoundManager} />
-      </div>
-
-      {/* Poker table — fixed virtual size, scaled to fit viewport */}
-      {gameState ? (
-        <div
-          ref={tableContainerRef}
-          style={{
-            width: TABLE_VIRTUAL_W,
-            height: TABLE_VIRTUAL_H,
-            transform: `scale(${scale})`,
-            transformOrigin: 'center center',
-          }}
-        >
-          <PokerTable
-            gameState={gameState}
-            potAwards={potAwards}
-            winnerSeats={winnerSeats}
-            winningCards={winningCards}
-            awardingPotIndex={awardingPotIndex}
-            timerData={timerData}
-            collectingBets={collectingBets}
-            potGrow={potGrow}
-            betChipAnimations={betChipAnimations}
-            dealCardAnimations={dealCardAnimations}
-            equities={equities}
-            dramaticRiver={dramaticRiver}
-            badBeat={badBeat}
-            chipTrick={chipTrick}
-            onSeatClick={handleSeatClick}
-            speechBubble={activeBubble}
-            onSpeechBubbleDone={onBubbleDone}
-          />
+      {/* Top: Mini poker table (same layout as GameScreen) */}
+      <div
+        ref={wrapperRef}
+        className="relative w-full overflow-hidden flex items-center justify-center flex-1"
+        style={{
+          minHeight: '38vh',
+          background: gradients.phoneRadialBackground,
+        }}
+      >
+        {/* Top-left: Back button */}
+        <div className="absolute top-3 left-3 z-30">
+          <button
+            onClick={handleBack}
+            style={{
+              padding: '10px 16px',
+              borderRadius: 6,
+              background: 'rgba(255,255,255,0.1)',
+              color: 'var(--ftp-text-secondary)',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 600,
+            }}
+          >
+            {t('watching_back')}
+          </button>
         </div>
-      ) : (
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22 }}>{t('watching_connecting')}</div>
-      )}
 
-      {/* Chat window — bottom left */}
-      <div className="fixed bottom-20 left-4" style={{ zIndex: 30 }}>
-        <ChatWindow messages={chatMessages} />
+        {/* Top-right: Controls */}
+        <div className="absolute top-3 right-3 z-30 flex items-center gap-3">
+          <ThemeToggle />
+          <LanguageToggle />
+          <SoundToggle soundManager={tableSoundManager} />
+        </div>
+
+        {/* Poker table -- fixed virtual size, scaled to fit wrapper width */}
+        {gameState ? (
+          <div
+            ref={tableContainerRef}
+            style={{
+              width: TABLE_W,
+              height: TABLE_H,
+              transform: `scale(${scale})`,
+              transformOrigin: 'center center',
+            }}
+          >
+            <PokerTable
+              gameState={gameState}
+              potAwards={potAwards}
+              winnerSeats={winnerSeats}
+              winningCards={winningCards}
+              awardingPotIndex={awardingPotIndex}
+              timerData={timerData}
+              collectingBets={collectingBets}
+              potGrow={potGrow}
+              betChipAnimations={betChipAnimations}
+              dealCardAnimations={dealCardAnimations}
+              equities={equities}
+              dramaticRiver={dramaticRiver}
+              badBeat={badBeat}
+              chipTrick={chipTrick}
+              onSeatClick={handleSeatClick}
+              speechBubble={activeBubble}
+              onSpeechBubbleDone={onBubbleDone}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>
+              {t('watching_connecting')}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom: Sit Down button */}
-      <div className="fixed bottom-6 left-0 right-0 z-50 flex flex-col items-center gap-2">
-        {!canBuyIn && (
-          <span style={{ color: '#EF4444', fontSize: 13, fontWeight: 600 }}>
-            {t('balance_insufficient')}
-          </span>
-        )}
-        <button
-          onClick={canBuyIn ? handleSitDown : undefined}
-          disabled={!canBuyIn}
-          style={{
-            padding: '14px 40px',
-            borderRadius: 8,
-            background: canBuyIn
-              ? 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))'
-              : '#555',
-            color: 'white',
-            fontWeight: 700,
-            fontSize: 16,
-            border: 'none',
-            cursor: canBuyIn ? 'pointer' : 'not-allowed',
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-            boxShadow: canBuyIn
-              ? '0 4px 0 var(--ftp-red-dark), 0 6px 12px rgba(0,0,0,0.4)'
-              : 'none',
-            opacity: canBuyIn ? 1 : 0.5,
-          }}
-        >
-          {t('watching_sit_down')}
-        </button>
+      {/* Bottom: Sit Down + Chat (same position as GameScreen action panel) */}
+      <div
+        className="flex flex-col px-3 pt-1 pb-1"
+        style={{
+          background: 'rgba(0,0,0,0.5)',
+          paddingBottom: 'max(4px, env(safe-area-inset-bottom))',
+        }}
+      >
+        {/* Sit Down area */}
+        <div className="flex flex-col items-center gap-2 py-3">
+          {!canBuyIn && (
+            <span style={{ color: '#EF4444', fontSize: 13, fontWeight: 600 }}>
+              {t('balance_insufficient')}
+            </span>
+          )}
+          <button
+            onClick={canBuyIn ? handleSitDown : undefined}
+            disabled={!canBuyIn}
+            style={{
+              padding: '14px 40px',
+              borderRadius: 8,
+              background: canBuyIn
+                ? 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))'
+                : '#555',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: 16,
+              border: 'none',
+              cursor: canBuyIn ? 'pointer' : 'not-allowed',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              boxShadow: canBuyIn
+                ? '0 4px 0 var(--ftp-red-dark), 0 6px 12px rgba(0,0,0,0.4)'
+                : 'none',
+              opacity: canBuyIn ? 1 : 0.5,
+            }}
+          >
+            {t('watching_sit_down')}
+          </button>
+        </div>
+
+        {/* Chat */}
+        <ChatWindow messages={chatMessages} minimized={chatMinimized} onToggleMinimize={() => setChatMinimized(m => !m)} />
       </div>
 
       {/* Buy-in modal */}
