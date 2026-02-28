@@ -30,57 +30,58 @@ describe('PotManager - calculatePots', () => {
     expect(pots[0].eligiblePlayerIds).toEqual(['a', 'b']);
   });
 
-  it('should create side pot when one player is all-in for less', () => {
+  it('should refund excess when one player invests more than everyone else (heads-up)', () => {
     const players = [
       makeHandPlayer({ playerId: 'short', totalInvested: 50, isAllIn: true }),
-      makeHandPlayer({ playerId: 'big', totalInvested: 100 }),
+      makeHandPlayer({ playerId: 'big', totalInvested: 100, currentStack: 0 }),
     ];
     const pots = calculatePots(players);
-    expect(pots).toHaveLength(2);
 
-    // Main pot: 50*2 = 100
-    expect(pots[0].amount).toBe(100);
+    // Only 1 pot — big's excess 50 is refunded, not a side pot
+    expect(pots).toHaveLength(1);
+    expect(pots[0].amount).toBe(100); // 50*2
     expect(pots[0].eligiblePlayerIds).toContain('short');
     expect(pots[0].eligiblePlayerIds).toContain('big');
 
-    // Side pot: 50*1 = 50 (only big is eligible)
-    expect(pots[1].amount).toBe(50);
-    expect(pots[1].eligiblePlayerIds).toEqual(['big']);
+    // Big's excess chips returned to their stack
+    expect(players[1].currentStack).toBe(50);
   });
 
-  it('should handle 3-way pot with different all-in amounts', () => {
+  it('should refund deep stack excess in 3-way all-in with different amounts', () => {
     const players = [
       makeHandPlayer({ playerId: 'short', totalInvested: 50, isAllIn: true }),
       makeHandPlayer({ playerId: 'medium', totalInvested: 100, isAllIn: true }),
-      makeHandPlayer({ playerId: 'deep', totalInvested: 200 }),
+      makeHandPlayer({ playerId: 'deep', totalInvested: 200, currentStack: 0 }),
     ];
     const pots = calculatePots(players);
-    expect(pots).toHaveLength(3);
+
+    // Only 2 pots — deep's excess 100 is refunded
+    expect(pots).toHaveLength(2);
 
     // Main pot: 50*3 = 150 (all eligible)
     expect(pots[0].amount).toBe(150);
     expect(pots[0].eligiblePlayerIds).toHaveLength(3);
 
-    // Side pot 1: 50*2 = 100 (medium + deep)
+    // Side pot: 50*2 = 100 (medium + deep)
     expect(pots[1].amount).toBe(100);
     expect(pots[1].eligiblePlayerIds).toHaveLength(2);
     expect(pots[1].eligiblePlayerIds).not.toContain('short');
 
-    // Side pot 2: 100*1 = 100 (deep only)
-    expect(pots[2].amount).toBe(100);
-    expect(pots[2].eligiblePlayerIds).toEqual(['deep']);
+    // Deep's excess refunded
+    expect(players[2].currentStack).toBe(100);
   });
 
-  it('should exclude folded players from eligibility but keep their chips', () => {
+  it('should exclude folded players from eligibility and refund winner excess', () => {
     const players = [
       makeHandPlayer({ playerId: 'folder', totalInvested: 50, isFolded: true }),
-      makeHandPlayer({ playerId: 'winner', totalInvested: 100 }),
+      makeHandPlayer({ playerId: 'winner', totalInvested: 100, currentStack: 0 }),
     ];
     const pots = calculatePots(players);
 
-    // Total pot should include folded player's chips
+    // Pot includes folder's chips but winner's excess (above folder's level) is refunded
     const totalPot = pots.reduce((sum, p) => sum + p.amount, 0);
-    expect(totalPot).toBe(150);
+    expect(totalPot).toBe(100); // 50*2 at level 50
+    expect(players[1].currentStack).toBe(50); // winner's excess refunded
 
     // Only non-folded player should be eligible
     for (const pot of pots) {
@@ -88,17 +89,20 @@ describe('PotManager - calculatePots', () => {
     }
   });
 
-  it('should conserve total chips', () => {
+  it('should conserve total chips (pots + refunded stacks = original invested)', () => {
     const players = [
       makeHandPlayer({ playerId: 'a', totalInvested: 30, isAllIn: true }),
       makeHandPlayer({ playerId: 'b', totalInvested: 80, isAllIn: true }),
       makeHandPlayer({ playerId: 'c', totalInvested: 80, isFolded: true }),
-      makeHandPlayer({ playerId: 'd', totalInvested: 150 }),
+      makeHandPlayer({ playerId: 'd', totalInvested: 150, currentStack: 0 }),
     ];
+    const originalInvested = players.reduce((sum, p) => sum + p.totalInvested, 0);
     const pots = calculatePots(players);
     const totalPot = pots.reduce((sum, p) => sum + p.amount, 0);
-    const totalInvested = players.reduce((sum, p) => sum + p.totalInvested, 0);
-    expect(totalPot).toBe(totalInvested);
+    const totalRefunded = players.reduce((sum, p) => sum + p.currentStack, 0);
+    // d's excess (150-80=70) is refunded, rest goes into pots
+    expect(totalPot + totalRefunded).toBe(originalInvested);
+    expect(players[3].currentStack).toBe(70); // d's refund
   });
 
   it('should merge pots when folded player creates same-eligible split (no spurious side pots)', () => {
@@ -134,14 +138,17 @@ describe('PotManager - calculatePots', () => {
     expect(pots[0].eligiblePlayerIds).toHaveLength(2);
   });
 
-  it('should NOT merge pots when eligible sets differ (real side pot)', () => {
-    // Short all-in 50, big has 100 — different eligible sets → 2 pots
+  it('should keep real side pots where multiple players compete', () => {
+    // Short all-in 50, medium all-in 100, big 100 — 2 real pots, no refund
     const players = [
       makeHandPlayer({ playerId: 'short', totalInvested: 50, isAllIn: true }),
-      makeHandPlayer({ playerId: 'big', totalInvested: 100 }),
+      makeHandPlayer({ playerId: 'medium', totalInvested: 100, isAllIn: true }),
+      makeHandPlayer({ playerId: 'big', totalInvested: 100, currentStack: 0 }),
     ];
     const pots = calculatePots(players);
     expect(pots).toHaveLength(2);
+    // No refund since big's investment matches medium's
+    expect(players[2].currentStack).toBe(0);
   });
 
   it('should merge where eligible matches but keep real side pots (mixed scenario)', () => {

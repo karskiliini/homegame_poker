@@ -26,7 +26,15 @@ export function calculatePots(players: HandPlayer[]): Pot[] {
       .map(p => p.playerId);
 
     if (potAmount > 0) {
-      if (eligible.length > 0) {
+      if (contributors.length === 1 && eligible.length === 1) {
+        // Only one contributor who is also the sole eligible player —
+        // this is their own excess chips that no one else can match. Refund.
+        const player = players.find(p => p.playerId === eligible[0]);
+        if (player) {
+          player.currentStack += potAmount;
+          player.totalInvested -= contribution;
+        }
+      } else if (eligible.length > 0) {
         pots.push({ amount: potAmount, eligiblePlayerIds: eligible });
       } else {
         // All eligible folded - merge into previous pot
