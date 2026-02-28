@@ -20,6 +20,7 @@ import { BugReportButton } from '../../components/BugReportButton.js';
 import { LanguageToggle } from '../../components/LanguageToggle.js';
 import { ThemeToggle } from '../../components/ThemeToggle.js';
 import { useT } from '../../hooks/useT.js';
+import { useSpeechBubbleQueue } from '../../hooks/useSpeechBubbleQueue.js';
 
 // === Session persistence for reconnection ===
 const SESSION_KEY = 'ftp-session';
@@ -80,6 +81,7 @@ export function PlayerView() {
   const [handHistoryView, setHandHistoryView] = useState<'none' | 'list' | 'detail'>('none');
   const [handHistoryData, setHandHistoryData] = useState<HandRecord[]>([]);
   const [selectedHand, setSelectedHand] = useState<HandRecord | null>(null);
+  const { activeBubble, enqueue, onBubbleDone } = useSpeechBubbleQueue();
   useEffect(() => {
     const socket = socketRef.current;
     socket.connect();
@@ -210,6 +212,7 @@ export function PlayerView() {
 
     socket.on(S2C_PLAYER.CHAT_MESSAGE, (msg: ChatMessage) => {
       addChatMessage(msg);
+      enqueue(msg);
     });
 
     socket.on(S2C_PLAYER.SOUND, (data: { sound: SoundType }) => {
@@ -277,7 +280,7 @@ export function PlayerView() {
       case 'lobby':
         return <LobbyScreen />;
       case 'game':
-        return <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} />;
+        return <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} speechBubble={activeBubble} onSpeechBubbleDone={onBubbleDone} />;
       default:
         return <LoginScreen />;
     }
