@@ -222,7 +222,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
         <div className="flex items-center justify-center gap-4">
           {privateState && privateState.holeCards.length > 0 ? (
             <>
-              <div className="flex gap-2">
+              <div className="flex" style={{ gap: privateState.holeCards.length > 2 ? 4 : 8 }}>
                 {privateState.holeCards.map((card, i) => (
                   <div
                     key={i}
@@ -233,7 +233,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
                       transition: 'opacity 0.3s ease',
                     }}
                   >
-                    <CardComponent card={card} size="lg" />
+                    <CardComponent card={card} size={privateState.holeCards.length > 2 ? 'md' : 'lg'} />
                   </div>
                 ))}
               </div>

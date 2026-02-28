@@ -156,6 +156,7 @@ export function PokerTable({
   equities, dramaticRiver, onSeatClick,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
+  const numHoleCards = config.gameType === 'PLO' ? 4 : 2;
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
   const t = useT();
@@ -620,6 +621,7 @@ export function PokerTable({
                 timerMax={config.actionTimeSeconds}
                 foldDirection={getFoldDirection(seatIndex)}
                 equity={equities?.[seatIndex]}
+                numHoleCards={numHoleCards}
               />
             ) : (
               <EmptySeat

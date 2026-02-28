@@ -20,6 +20,8 @@ interface PlayerSeatProps {
   timerMax?: number;
   foldDirection?: { x: number; y: number };
   equity?: number;
+  /** Number of hole cards (2 for NLHE, 4 for PLO). Defaults to 2. */
+  numHoleCards?: number;
 }
 
 function useDcCountdown(disconnectedAt: number | null): string | null {
@@ -50,7 +52,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2 }: PlayerSeatProps) {
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
   const isAllIn = player.status === 'all_in';
@@ -76,10 +78,14 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
       style={isInactive ? { filter: 'grayscale(0.6)' } : undefined}
     >
       {/* Cards above the avatar */}
-      <div className="flex gap-0.5 mb-1" style={{ minHeight: 52 }}>
+      <div className="flex mb-1" style={{ minHeight: 52, gap: numHoleCards > 2 ? 0 : 2 }}>
         {player.holeCards ? (
           player.holeCards.map((card, i) => (
-            <div key={i} className="animate-card-flip">
+            <div
+              key={i}
+              className="animate-card-flip"
+              style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : undefined}
+            >
               <CardComponent card={card} size="sm" isWinner={isWinner} />
             </div>
           ))
@@ -87,7 +93,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
           <AnimatePresence>
             {showCardBacks && (
               <motion.div
-                className="flex gap-0.5"
+                className="flex"
+                style={{ gap: numHoleCards > 2 ? 0 : 2 }}
                 initial={false}
                 exit={{
                   x: foldDirection?.x ?? 0,
@@ -98,8 +105,11 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
                 }}
                 transition={{ duration: 0.4, ease: 'easeIn' }}
               >
-                <CardBack size="sm" />
-                <CardBack size="sm" />
+                {Array.from({ length: numHoleCards }, (_, i) => (
+                  <div key={i} style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : undefined}>
+                    <CardBack size="sm" />
+                  </div>
+                ))}
               </motion.div>
             )}
           </AnimatePresence>

@@ -237,7 +237,12 @@ export class HandEngine {
 
       case 'bet':
       case 'raise': {
-        const targetBet = amount ?? this.currentBet + this.minRaiseSize;
+        let targetBet = amount ?? this.currentBet + this.minRaiseSize;
+        // Clamp to pot-limit max for PLO
+        if (this.gameType === 'PLO') {
+          const maxPL = this.getMaxRaise(player);
+          targetBet = Math.min(targetBet, maxPL);
+        }
         const toAdd = Math.min(targetBet - player.currentBet, player.currentStack);
         const newBet = player.currentBet + toAdd;
         const raiseBy = newBet - this.currentBet;
@@ -364,7 +369,7 @@ export class HandEngine {
     const actions = this.getAvailableActions(player);
     const callAmount = Math.min(this.currentBet - player.currentBet, player.currentStack);
     const minRaise = this.getMinRaise(player);
-    const maxRaise = player.currentStack + player.currentBet; // Total bet if all-in
+    const maxRaise = this.getMaxRaise(player);
 
     this.onEvent({
       type: 'player_turn',
@@ -401,15 +406,37 @@ export class HandEngine {
   }
 
   private getMinRaise(player: HandPlayer): number {
+    const allInAmount = player.currentStack + player.currentBet;
+    const minNLRaise = this.currentBet + this.minRaiseSize;
     if (this.gameType === 'PLO') {
-      // Pot-limit: max raise = pot + call + call
-      const potAfterCall = this.getTotalPot() + (this.currentBet - player.currentBet);
-      const maxPLRaise = potAfterCall + this.currentBet;
-      const minNLRaise = this.currentBet + this.minRaiseSize;
-      return Math.min(minNLRaise, maxPLRaise, player.currentStack + player.currentBet);
+      // Pot-limit: min raise is the same as NLHE, but capped by pot-limit max
+      const maxPL = this.getPotLimitMax(player);
+      return Math.min(minNLRaise, maxPL, allInAmount);
     }
     // NLHE: min raise = current bet + last raise size
-    return Math.min(this.currentBet + this.minRaiseSize, player.currentStack + player.currentBet);
+    return Math.min(minNLRaise, allInAmount);
+  }
+
+  private getMaxRaise(player: HandPlayer): number {
+    const allInAmount = player.currentStack + player.currentBet;
+    if (this.gameType === 'PLO') {
+      // Pot-limit: max raise is pot-limit, capped by stack
+      const maxPL = this.getPotLimitMax(player);
+      return Math.min(maxPL, allInAmount);
+    }
+    // NLHE: max raise is all-in
+    return allInAmount;
+  }
+
+  /**
+   * Calculate the pot-limit maximum bet/raise amount.
+   * Formula: max total bet = myCurrentBet + callAmount + potAfterCall
+   * Where potAfterCall = totalPot + callAmount
+   */
+  private getPotLimitMax(player: HandPlayer): number {
+    const callAmount = Math.max(0, this.currentBet - player.currentBet);
+    const potAfterCall = this.getTotalPot() + callAmount;
+    return player.currentBet + callAmount + potAfterCall;
   }
 
   private getTotalPot(): number {
@@ -807,7 +834,7 @@ export class HandEngine {
     const actions = this.getAvailableActions(player);
     const callAmount = Math.min(this.currentBet - player.currentBet, player.currentStack);
     const minRaise = this.getMinRaise(player);
-    const maxRaise = player.currentStack + player.currentBet;
+    const maxRaise = this.getMaxRaise(player);
     return { playerId: player.playerId, availableActions: actions, callAmount, minRaise, maxRaise };
   }
 }

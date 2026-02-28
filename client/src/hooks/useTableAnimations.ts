@@ -150,7 +150,9 @@ export function useTableAnimations({
       const rect = container.getBoundingClientRect();
       const dealerPos = getSeatPos(data.dealerSeatIndex);
 
-      const rounds = 2;
+      const current = gameStateRef.current;
+      const isPLO = current?.config?.gameType === 'PLO';
+      const rounds = isPLO ? 4 : 2;
       for (let round = 0; round < rounds; round++) {
         for (let i = 0; i < data.seatIndices.length; i++) {
           const seatIndex = data.seatIndices[i];
