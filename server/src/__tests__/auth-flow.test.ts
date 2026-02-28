@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
 import {
   _setDb, _initSchema,
-  findPlayerByName, createPlayer, verifyPassword,
+  findPlayerByName, findPlayerById, createPlayer, verifyPassword,
+  createSession, findSession,
 } from '../db/players.js';
 
 let db: Database.Database;
@@ -64,5 +65,57 @@ describe('Auth flow', () => {
 
     // Trying to register same name in different case should fail
     await expect(createPlayer('CASESENSITIVE', 'pass2')).rejects.toThrow();
+  });
+});
+
+describe('Session auth flow', () => {
+  it('login creates a session token that can be used to auto-login', async () => {
+    // Register
+    const player = await createPlayer('SessionPlayer', 'pass');
+    // Simulate server creating session on login
+    const sessionToken = createSession(player.id);
+    expect(sessionToken).toBeTruthy();
+
+    // Simulate auto-login with session token (as if server restarted)
+    const session = findSession(sessionToken);
+    expect(session).toBeDefined();
+    expect(session!.player_id).toBe(player.id);
+
+    // Look up player from session
+    const found = findPlayerById(session!.player_id);
+    expect(found).toBeDefined();
+    expect(found!.name).toBe('SessionPlayer');
+  });
+
+  it('session token is invalid after re-login (new session replaces old)', async () => {
+    const player = await createPlayer('ReLogin', 'pass');
+    const token1 = createSession(player.id);
+    const token2 = createSession(player.id); // Simulates re-login
+
+    // Old token should be invalid
+    expect(findSession(token1)).toBeUndefined();
+    // New token should work
+    expect(findSession(token2)).toBeDefined();
+  });
+
+  it('session token persists player data across simulated server restart', async () => {
+    const player = await createPlayer('Persistent', 'pass', '5');
+    // Deposit some money
+    const { updateBalance, getPlayerBalance } = await import('../db/players.js');
+    updateBalance(player.id, 1000);
+
+    const sessionToken = createSession(player.id);
+
+    // Simulate "server restart" — clear all in-memory state, but DB persists
+    // In real server, the in-memory Maps are gone but SQLite file stays
+
+    // Client reconnects with session token
+    const session = findSession(sessionToken);
+    expect(session).toBeDefined();
+    const restored = findPlayerById(session!.player_id);
+    expect(restored).toBeDefined();
+    expect(restored!.name).toBe('Persistent');
+    expect(restored!.avatar_id).toBe('5');
+    expect(getPlayerBalance(restored!.id)).toBe(1000);
   });
 });

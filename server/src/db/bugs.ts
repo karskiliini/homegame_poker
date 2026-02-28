@@ -60,7 +60,7 @@ export function getAllBugReports(): BugReport[] {
 export function archiveBugReports(ids: number[]): number {
   if (ids.length === 0) return 0;
   const placeholders = ids.map(() => '?').join(',');
-  const stmt = getDb().prepare(`UPDATE bug_reports SET archived = 1 WHERE id IN (${placeholders}) AND archived = 0`);
+  const stmt = getDb().prepare(`DELETE FROM bug_reports WHERE id IN (${placeholders})`);
   const result = stmt.run(...ids);
   return result.changes;
 }

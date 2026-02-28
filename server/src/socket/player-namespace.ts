@@ -6,8 +6,9 @@ import { C2S, C2S_LOBBY, S2C_PLAYER, S2C_LOBBY, STAKE_LEVELS } from '@poker/shar
 import type { TableManager } from '../game/TableManager.js';
 import { insertBugReport } from '../db/bugs.js';
 import {
-  findPlayerByName, createPlayer, verifyPassword,
+  findPlayerByName, findPlayerById, createPlayer, verifyPassword,
   getPlayerBalance, updateBalance, updateLastLogin, updateAvatar,
+  createSession, findSession,
 } from '../db/players.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -67,11 +68,13 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         const player = await createPlayer(name, data.password, data.avatarId || '1');
         authenticatedPlayerId = player.id;
         authenticatedPlayerName = player.name;
+        const sessionToken = createSession(player.id);
         socket.emit(S2C_LOBBY.AUTH_SUCCESS, {
           playerId: player.id,
           name: player.name,
           avatarId: player.avatar_id,
           balance: player.balance,
+          sessionToken,
         });
       } catch (err) {
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Registration failed' });
@@ -96,11 +99,40 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       updateLastLogin(player.id);
       authenticatedPlayerId = player.id;
       authenticatedPlayerName = player.name;
+      const sessionToken = createSession(player.id);
       socket.emit(S2C_LOBBY.AUTH_SUCCESS, {
         playerId: player.id,
         name: player.name,
         avatarId: player.avatar_id,
         balance: player.balance,
+        sessionToken,
+      });
+    });
+
+    socket.on(C2S_LOBBY.SESSION_AUTH, (data: { sessionToken: string }) => {
+      if (!data.sessionToken || typeof data.sessionToken !== 'string') {
+        socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Session token required' });
+        return;
+      }
+      const session = findSession(data.sessionToken);
+      if (!session) {
+        socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Invalid or expired session' });
+        return;
+      }
+      const player = findPlayerById(session.player_id);
+      if (!player) {
+        socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Player not found' });
+        return;
+      }
+      updateLastLogin(player.id);
+      authenticatedPlayerId = player.id;
+      authenticatedPlayerName = player.name;
+      socket.emit(S2C_LOBBY.AUTH_SUCCESS, {
+        playerId: player.id,
+        name: player.name,
+        avatarId: player.avatar_id,
+        balance: player.balance,
+        sessionToken: data.sessionToken,
       });
     });
 
@@ -226,11 +258,12 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       } else {
         currentTableId = targetTableId;
         socket.leave('lobby');
-        // Restore auth state from persistent player ID
-        const player = findPlayerByName('');  // We need to find by ID
-        // Try to restore auth from the player's persistent ID
-        // The playerId from reconnect might be a persistent DB ID
-        authenticatedPlayerId = data.playerId;
+        // Restore auth state from persistent player ID stored in the database
+        const player = findPlayerById(data.playerId);
+        if (player) {
+          authenticatedPlayerId = player.id;
+          authenticatedPlayerName = player.name;
+        }
         socket.emit(S2C_PLAYER.RECONNECTED, { playerId: data.playerId, tableId: targetTableId });
       }
     });

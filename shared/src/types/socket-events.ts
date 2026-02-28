@@ -50,6 +50,7 @@ export const C2S_LOBBY = {
   REGISTER: 'lobby:register',
   LOGIN: 'lobby:login',
   DEPOSIT: 'lobby:deposit',
+  SESSION_AUTH: 'lobby:session_auth',
 } as const;
 
 export const S2C_LOBBY = {

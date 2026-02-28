@@ -14,6 +14,12 @@ export interface PlayerRecord {
   last_login: string;
 }
 
+export interface SessionRecord {
+  token: string;
+  player_id: string;
+  created_at: string;
+}
+
 const BCRYPT_ROUNDS = 10;
 
 let db: Database.Database;
@@ -25,28 +31,12 @@ function getDb(): Database.Database {
       fs.mkdirSync(dataDir, { recursive: true });
     }
     db = new Database(path.join(dataDir, 'players.db'));
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS players (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE COLLATE NOCASE,
-        password_hash TEXT NOT NULL,
-        avatar_id TEXT DEFAULT '1',
-        balance REAL DEFAULT 0,
-        created_at TEXT DEFAULT (datetime('now')),
-        last_login TEXT DEFAULT (datetime('now'))
-      )
-    `);
+    initAllTables(db);
   }
   return db;
 }
 
-/** For testing: inject an in-memory database */
-export function _setDb(testDb: Database.Database) {
-  db = testDb;
-}
-
-/** Initialize the players table on an existing database instance */
-export function _initSchema(database: Database.Database) {
+function initAllTables(database: Database.Database) {
   database.exec(`
     CREATE TABLE IF NOT EXISTS players (
       id TEXT PRIMARY KEY,
@@ -58,10 +48,32 @@ export function _initSchema(database: Database.Database) {
       last_login TEXT DEFAULT (datetime('now'))
     )
   `);
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      token TEXT PRIMARY KEY,
+      player_id TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+    )
+  `);
+}
+
+/** For testing: inject an in-memory database */
+export function _setDb(testDb: Database.Database) {
+  db = testDb;
+}
+
+/** Initialize all tables on an existing database instance */
+export function _initSchema(database: Database.Database) {
+  initAllTables(database);
 }
 
 export function findPlayerByName(name: string): PlayerRecord | undefined {
   return getDb().prepare('SELECT * FROM players WHERE name = ? COLLATE NOCASE').get(name) as PlayerRecord | undefined;
+}
+
+export function findPlayerById(id: string): PlayerRecord | undefined {
+  return getDb().prepare('SELECT * FROM players WHERE id = ?').get(id) as PlayerRecord | undefined;
 }
 
 export async function createPlayer(name: string, password: string, avatarId: string = '1'): Promise<PlayerRecord> {
@@ -100,4 +112,30 @@ export function updateLastLogin(playerId: string): void {
 
 export function updateAvatar(playerId: string, avatarId: string): void {
   getDb().prepare('UPDATE players SET avatar_id = ? WHERE id = ?').run(avatarId, playerId);
+}
+
+// === Session management ===
+
+/** Create a new session token for a player. Invalidates any existing sessions for that player. */
+export function createSession(playerId: string): string {
+  const token = uuidv4();
+  // Remove existing sessions for this player (single active session)
+  getDb().prepare('DELETE FROM sessions WHERE player_id = ?').run(playerId);
+  getDb().prepare('INSERT INTO sessions (token, player_id) VALUES (?, ?)').run(token, playerId);
+  return token;
+}
+
+/** Find a session by its token. Returns undefined if not found. */
+export function findSession(token: string): SessionRecord | undefined {
+  return getDb().prepare('SELECT * FROM sessions WHERE token = ?').get(token) as SessionRecord | undefined;
+}
+
+/** Delete a specific session by token. */
+export function deleteSession(token: string): void {
+  getDb().prepare('DELETE FROM sessions WHERE token = ?').run(token);
+}
+
+/** Delete all sessions for a player. */
+export function deletePlayerSessions(playerId: string): void {
+  getDb().prepare('DELETE FROM sessions WHERE player_id = ?').run(playerId);
 }

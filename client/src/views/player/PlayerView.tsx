@@ -22,7 +22,22 @@ import { ThemeToggle } from '../../components/ThemeToggle.js';
 import { useT } from '../../hooks/useT.js';
 import { useSpeechBubbleQueue } from '../../hooks/useSpeechBubbleQueue.js';
 
-// === Session persistence for reconnection ===
+// === Auth session persistence (survives server restarts) ===
+const AUTH_SESSION_KEY = 'ftp-auth-session';
+
+function saveAuthSession(token: string) {
+  try { localStorage.setItem(AUTH_SESSION_KEY, token); } catch { /* noop */ }
+}
+
+function loadAuthSession(): string | null {
+  try { return localStorage.getItem(AUTH_SESSION_KEY); } catch { return null; }
+}
+
+function clearAuthSession() {
+  try { localStorage.removeItem(AUTH_SESSION_KEY); } catch { /* noop */ }
+}
+
+// === Table session persistence for reconnection ===
 const SESSION_KEY = 'ftp-session';
 
 interface StoredSession {
@@ -91,7 +106,7 @@ export function PlayerView() {
     socket.on('connect', () => {
       setConnected(true);
 
-      // Attempt reconnection if we have a stored session
+      // Attempt table reconnection if we have a stored game session
       const session = loadSession();
       if (session) {
         socket.emit(C2S.RECONNECT, {
@@ -99,6 +114,12 @@ export function PlayerView() {
           tableId: session.tableId,
           playerToken: session.playerToken,
         });
+      }
+
+      // Auto-login with session token if we have one (survives server restarts)
+      const authToken = loadAuthSession();
+      if (authToken && !session) {
+        socket.emit(C2S_LOBBY.SESSION_AUTH, { sessionToken: authToken });
       }
     });
     socket.on('disconnect', () => setConnected(false));
@@ -117,17 +138,24 @@ export function PlayerView() {
       }
     });
 
-    socket.on(S2C_LOBBY.AUTH_SUCCESS, (data: { playerId: string; name: string; avatarId: string; balance: number }) => {
+    socket.on(S2C_LOBBY.AUTH_SUCCESS, (data: { playerId: string; name: string; avatarId: string; balance: number; sessionToken?: string }) => {
       setAuthState('authenticated');
       setAuthError(null);
       setPersistentPlayerId(data.playerId);
       setAccountBalance(data.balance);
       useGameStore.getState().setPlayerName(data.name);
       setPlayerAvatar(data.avatarId);
+      if (data.sessionToken) {
+        saveAuthSession(data.sessionToken);
+      }
       setScreen('table_lobby');
     });
 
     socket.on(S2C_LOBBY.AUTH_ERROR, (data: { message: string }) => {
+      // If session auth failed, clear the stored token so we don't retry
+      if (data.message === 'Invalid or expired session') {
+        clearAuthSession();
+      }
       setAuthError(data.message);
     });
 
