@@ -1,5 +1,20 @@
 import type { ThemeConfig } from './types.js';
 
+const basicWatermark = (
+  <span
+    style={{
+      color: 'rgba(255,255,255,0.03)',
+      fontSize: 36,
+      fontWeight: 800,
+      letterSpacing: 12,
+      textTransform: 'uppercase' as const,
+      userSelect: 'none' as const,
+    }}
+  >
+    POKER NIGHT
+  </span>
+);
+
 export const basicTheme: ThemeConfig = {
   id: 'basic',
   name: 'Basic',
@@ -188,4 +203,6 @@ export const basicTheme: ThemeConfig = {
     avatarBasePath: '/themes/basic/avatars',
     avatarCount: 54,
   },
+
+  watermark: basicWatermark,
 };

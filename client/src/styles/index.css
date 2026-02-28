@@ -544,3 +544,19 @@ input[type="range"].ftp-slider::-webkit-slider-thumb:hover {
 .animate-bad-beat-shake {
   animation: bad-beat-shake 0.6s ease-in-out 2;
 }
+
+/* CCCP Soviet star glow */
+@keyframes cccp-star-glow {
+  0%, 100% {
+    opacity: 0.04;
+    filter: drop-shadow(0 0 0px rgba(201, 168, 76, 0));
+  }
+  50% {
+    opacity: 0.08;
+    filter: drop-shadow(0 0 12px rgba(201, 168, 76, 0.3));
+  }
+}
+
+.animate-cccp-star-glow {
+  animation: cccp-star-glow 4s ease-in-out infinite;
+}

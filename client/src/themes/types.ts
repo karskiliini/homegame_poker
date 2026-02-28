@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Suit, ChipDenomination } from '@poker/shared';
 
 export type ThemeId = 'basic' | 'cccp';
@@ -200,4 +201,5 @@ export interface ThemeConfig {
   gradients: ThemeGradients;
   soundParams: SoundParams;
   assets: ThemeAssets;
+  watermark: ReactNode;
 }

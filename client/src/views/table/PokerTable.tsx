@@ -175,7 +175,7 @@ export function PokerTable({
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
   const t = useT();
-  const { gradients } = useTheme();
+  const { gradients, watermark } = useTheme();
 
   // Dealer button animation state
   const prevDealerSeatRef = useRef<number | null>(null);
@@ -346,18 +346,7 @@ export function PokerTable({
           borderRadius: '50%',
         }}
       >
-        <span
-          style={{
-            color: 'rgba(255,255,255,0.03)',
-            fontSize: 36,
-            fontWeight: 800,
-            letterSpacing: 12,
-            textTransform: 'uppercase',
-            userSelect: 'none',
-          }}
-        >
-          POKER NIGHT
-        </span>
+        {watermark}
       </div>
 
       {/* Inner line on felt */}
