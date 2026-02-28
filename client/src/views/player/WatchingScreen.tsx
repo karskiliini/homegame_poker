@@ -96,7 +96,8 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
 
     const updateScale = () => {
       const wrapperWidth = wrapper.clientWidth;
-      const wrapperHeight = wrapper.clientHeight;
+      // Subtract bottom bar reserved space (paddingBottom) from available height
+      const wrapperHeight = wrapper.clientHeight - 80;
       // Scale to fit both dimensions (contain behavior)
       const scaleX = wrapperWidth / TABLE_VIRTUAL_W;
       const scaleY = wrapperHeight / TABLE_VIRTUAL_H;
@@ -143,7 +144,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     <div
       ref={wrapperRef}
       className="w-screen h-screen overflow-hidden flex items-center justify-center"
-      style={{ background: gradients.tvBackground }}
+      style={{ background: gradients.tvBackground, paddingBottom: 80 }}
     >
       {/* Top controls */}
       <div className="fixed top-4 left-4 z-50">
