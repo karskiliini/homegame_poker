@@ -133,105 +133,108 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         )}
       </div>
 
-      {/* Player panel */}
-      <div
-        className={`
-          relative flex items-center gap-2 rounded-md px-3 py-2 transition-all duration-200
-          ${isWinner ? 'animate-winner-glow' : ''}
-          ${isAllIn ? 'animate-allin-pulse' : ''}
-        `}
-        style={{
-          minWidth: 140,
-          background: isActive
-            ? 'linear-gradient(180deg, #3D350A, #2A2305)'
-            : 'linear-gradient(180deg, #2A2A30, #1A1A1E, #111115)',
-          border: isAllIn
-            ? '2px solid #EAB308'
-            : `1px solid ${isActive ? 'var(--ftp-panel-active-border)' : 'var(--ftp-panel-border)'}`,
-          borderRadius: 6,
-          boxShadow: isActive
-            ? '0 0 15px 5px rgba(234, 179, 8, 0.3), inset 0 1px 0 rgba(255,215,0,0.2)'
-            : '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(0,0,0,0.3)',
-        }}
-      >
-        {/* Avatar */}
+      {/* Avatar + Panel row */}
+      <div className="flex items-center gap-1.5">
+        {/* Avatar (outside panel) */}
         <div
           className="flex items-center justify-center text-white font-bold shrink-0"
           style={{
-            width: 64,
-            height: 64,
+            width: 48,
+            height: 48,
             borderRadius: '50%',
             background: `linear-gradient(135deg, ${color1}, ${color2})`,
-            fontSize: avatarEmoji ? 28 : 18,
-            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 1px 3px rgba(0,0,0,0.2)',
-            border: isActive ? '2px solid rgba(234, 179, 8, 0.6)' : '2px solid rgba(255,255,255,0.15)',
+            fontSize: avatarEmoji ? 22 : 15,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+            border: isActive ? '2px solid rgba(234, 179, 8, 0.7)' : '2px solid rgba(255,255,255,0.25)',
           }}
         >
           {avatarEmoji || initials}
         </div>
 
-        {/* Name + Stack */}
-        <div className="min-w-0">
+        {/* Player panel (light background) */}
+        <div
+          className={`
+            relative px-3 py-1.5 transition-all duration-200
+            ${isWinner ? 'animate-winner-glow' : ''}
+            ${isAllIn ? 'animate-allin-pulse' : ''}
+          `}
+          style={{
+            minWidth: 100,
+            background: isActive
+              ? 'linear-gradient(180deg, #FFFDE7, #FFF9C4, #FFF176)'
+              : 'linear-gradient(180deg, #F0F0F0, #D8D8D8, #C8C8C8)',
+            border: isAllIn
+              ? '2px solid #EAB308'
+              : `1px solid ${isActive ? 'rgba(234, 179, 8, 0.8)' : 'rgba(0,0,0,0.3)'}`,
+            borderRadius: 4,
+            boxShadow: isActive
+              ? '0 0 12px 4px rgba(234, 179, 8, 0.4), inset 0 1px 0 rgba(255,255,255,0.5)'
+              : '0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.6)',
+          }}
+        >
+          {/* Name */}
           <div
             className="font-semibold truncate"
             style={{
               fontSize: 13,
               maxWidth: 80,
-              color: isActive ? '#FFD700' : '#FFFFFF',
+              color: isActive ? '#8B6914' : '#1A1A1A',
             }}
           >
             {player.name}
             {isDisconnected && (
-              <span style={{ color: '#EF4444', marginLeft: 4, fontSize: 10 }}>
+              <span style={{ color: '#DC2626', marginLeft: 4, fontSize: 10 }}>
                 DC{dcCountdown ? ` ${dcCountdown}` : ''}
               </span>
             )}
           </div>
+
+          {/* Stack */}
           <div
             className="font-mono tabular-nums"
             style={{
               fontSize: 12,
-              color: isActive ? '#FFD700' : 'var(--ftp-text-secondary)',
+              color: isActive ? '#8B6914' : '#555555',
               fontWeight: 600,
             }}
           >
             {player.stack.toLocaleString()}
           </div>
-        </div>
 
-        {/* All-in badge */}
-        {isAllIn && (
-          <div
-            className="absolute -bottom-2.5 left-1/2 animate-allin-label px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
-            style={{
-              fontSize: 11,
-              background: 'linear-gradient(135deg, #DC2626, #991B1B)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            ALL IN
-          </div>
-        )}
-
-        {/* Timer bar */}
-        {isActive && timerSeconds != null && (
-          <div
-            className="absolute bottom-0 left-0 right-0 overflow-hidden"
-            style={{ height: 4, borderRadius: '0 0 6px 6px', background: '#333' }}
-          >
+          {/* All-in badge */}
+          {isAllIn && (
             <div
+              className="absolute -bottom-2.5 left-1/2 animate-allin-label px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
               style={{
-                height: '100%',
-                width: '100%',
-                background: timerColor,
-                transform: `scaleX(${timerPercent / 100})`,
-                transformOrigin: 'left',
-                transition: 'transform 1s linear, background-color 0.5s ease',
+                fontSize: 11,
+                background: 'linear-gradient(135deg, #DC2626, #991B1B)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                whiteSpace: 'nowrap',
               }}
-            />
-          </div>
-        )}
+            >
+              ALL IN
+            </div>
+          )}
+
+          {/* Timer bar */}
+          {isActive && timerSeconds != null && (
+            <div
+              className="absolute bottom-0 left-0 right-0 overflow-hidden"
+              style={{ height: 4, borderRadius: '0 0 4px 4px', background: 'rgba(0,0,0,0.15)' }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: '100%',
+                  background: timerColor,
+                  transform: `scaleX(${timerPercent / 100})`,
+                  transformOrigin: 'left',
+                  transition: 'transform 1s linear, background-color 0.5s ease',
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Dealer button */}

@@ -35,7 +35,7 @@ export function PotDisplay({ pots, bigBlind, playerNames, potGrow }: PotDisplayP
               <div
                 className="font-bold font-mono tabular-nums"
                 style={{
-                  color: '#EAB308',
+                  color: '#FFFFFF',
                   fontSize: 16,
                   textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                 }}
@@ -43,7 +43,7 @@ export function PotDisplay({ pots, bigBlind, playerNames, potGrow }: PotDisplayP
                 {pot.amount.toLocaleString()}
               </div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>
-                {i === 0 ? 'Main Pot' : `Side Pot ${i}`}
+                {i === 0 ? 'Total Pot' : `Side Pot ${i}`}
               </div>
               {eligibleNames.length > 0 && (
                 <div

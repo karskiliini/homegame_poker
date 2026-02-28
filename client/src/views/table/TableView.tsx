@@ -89,7 +89,7 @@ export function TableView() {
     <div
       ref={tableContainerRef}
       className="w-screen h-screen overflow-hidden flex items-center justify-center"
-      style={{ background: 'radial-gradient(ellipse at 50% 80%, #1A1208, #12100C, #0A0A0F, #050508)' }}
+      style={{ background: 'radial-gradient(ellipse at 50% 80%, #1A2744, #141E33, #0D1526, #080C18)' }}
     >
       <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
         <SoundToggle
