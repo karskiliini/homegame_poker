@@ -55,7 +55,7 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Custom table felt & card backs — admin valitsee ulkoasun, pelaajat voivat valita oman card backin
 
 ### 1.2 Avataarijärjestelmän uudistus
-- [ ] **BUG:** Avatar-kuvat eivät ole keskitetty valintapallossa puhelinnäkymässä
+- [x] **BUG:** Avatar-kuvat eivät ole keskitetty valintapallossa puhelinnäkymässä
 - [ ] Siirtyminen emoji-avatareista kustomoituihin piirrettyihin hahmoihin (Full Tilt -tyyli)
   - Ninja, Cowgirl, Robot, Pirate, Wizard, Alien, Viking, Detective, Astronaut, Chef, Samurai, Vampire
   - Lisää uusia: Panda, Penguin, Shark, Lion, Phoenix, Dragon, Jester, Gladiator
