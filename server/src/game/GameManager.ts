@@ -470,6 +470,16 @@ export class GameManager {
       if (cards) {
         this.currentShowdownEntries.push({ playerId: player.id, seatIndex: player.seatIndex, holeCards: cards, handName: 'Shown', handDescription: '', shown: true });
         this.broadcastTableState();
+        // Send shown cards back to the player so their phone displays them
+        const socket = this.socketMap.get(socketId);
+        if (socket) {
+          socket.emit(S2C_PLAYER.PRIVATE_STATE, {
+            id: player.id, name: player.name, seatIndex: player.seatIndex, stack: player.stack,
+            status: player.status as any, holeCards: cards, currentBet: 0, availableActions: [],
+            minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
+            showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+          });
+        }
       }
     }
     if (this.pendingShowCards.size === 0) {

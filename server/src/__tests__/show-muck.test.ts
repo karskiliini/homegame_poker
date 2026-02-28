@@ -240,6 +240,27 @@ describe('Show/muck cards', () => {
     expect(offerCalls).toHaveLength(0);
   });
 
+  it('when winner shows, their phone should receive a private state with their hole cards', () => {
+    const result = makeUncontestedResult();
+    (gm as any).handleHandComplete(result);
+    vi.advanceTimersByTime(DELAY_POT_AWARD_MS);
+
+    // Clear previous emits to focus on what happens after "show"
+    sock1.emit.mockClear();
+
+    // Player chooses "show"
+    gm.handleShowCards('sock-1', true);
+
+    // The winner's socket should have received a PRIVATE_STATE with their hole cards
+    const privateCalls = sock1.emit.mock.calls.filter(
+      (call: any[]) => call[0] === S2C_PLAYER.PRIVATE_STATE
+    );
+    expect(privateCalls.length).toBeGreaterThan(0);
+
+    const lastPrivateState = privateCalls[privateCalls.length - 1][1];
+    expect(lastPrivateState.holeCards).toEqual(['Ah', 'Kh']);
+  });
+
   it('shown cards should persist in table state until next hand starts', () => {
     const result = makeUncontestedResult();
     (gm as any).handleHandComplete(result);
