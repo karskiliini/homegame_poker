@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Socket } from 'socket.io-client';
 import type { ActionType, GameType } from '@poker/shared';
 import { C2S, calcPotSizedBet, calcHalfPotBet } from '@poker/shared';
@@ -24,6 +24,9 @@ export function ActionButtons({
   potTotal, bigBlind, maxBuyIn, gameType,
 }: ActionButtonsProps) {
   const [raiseAmount, setRaiseAmount] = useState(minRaise);
+  const [inputValue, setInputValue] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const t = useT();
 
   // Reset raiseAmount to minRaise when available actions change
@@ -130,12 +133,43 @@ export function ActionButtons({
             />
             <div className="flex justify-between items-center mt-1">
               <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>{minRaise}</span>
-              <span
-                className="font-bold font-mono tabular-nums"
-                style={{ color: '#EAB308', fontSize: 20 }}
-              >
-                {raiseAmount.toLocaleString()}
-              </span>
+              <input
+                ref={inputRef}
+                type="text"
+                inputMode="numeric"
+                className="font-bold font-mono tabular-nums text-center"
+                style={{
+                  color: '#EAB308',
+                  fontSize: 20,
+                  background: isEditing ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  border: isEditing ? '1px solid #D97706' : '1px solid transparent',
+                  borderRadius: 6,
+                  outline: 'none',
+                  width: 100,
+                  padding: '2px 4px',
+                }}
+                value={isEditing ? inputValue : raiseAmount.toLocaleString()}
+                onFocus={() => {
+                  setIsEditing(true);
+                  setInputValue(String(raiseAmount));
+                  setTimeout(() => inputRef.current?.select(), 0);
+                }}
+                onBlur={() => {
+                  setIsEditing(false);
+                  const parsed = parseInt(inputValue, 10);
+                  if (!isNaN(parsed)) {
+                    setRaiseAmount(clampRaise(parsed));
+                  }
+                }}
+                onChange={(e) => {
+                  setInputValue(e.target.value.replace(/[^0-9]/g, ''));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    inputRef.current?.blur();
+                  }
+                }}
+              />
               <span style={{ color: 'var(--ftp-text-muted)', fontSize: 12 }}>
                 {isPotLimit && !isMaxAllIn ? t('action_pot') : t('action_all_in_preset')} ({maxRaise})
               </span>
