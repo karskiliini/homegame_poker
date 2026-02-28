@@ -122,11 +122,12 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   const isFolded = privateState?.status === 'folded';
   const isSittingOut = privateState?.status === 'sitting_out';
   const isBusted = privateState?.status === 'busted';
+  const isAllIn = privateState?.status === 'all_in';
   const sitOutNextHand = privateState?.sitOutNextHand ?? false;
   const autoMuck = privateState?.autoMuck ?? false;
   const isHandActive = lobbyState?.phase === 'hand_in_progress';
   const showActions = privateState?.isMyTurn && isHandActive && (privateState?.availableActions.length ?? 0) > 0;
-  const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && !isSittingOut && !isBusted && (privateState?.holeCards.length ?? 0) > 0;
+  const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && !isSittingOut && !isBusted && !isAllIn && (privateState?.holeCards.length ?? 0) > 0;
 
   const handleChipTrick = useCallback(() => {
     if ((privateState?.stack ?? 0) >= CHIP_TRICK_MIN_STACK) {
@@ -280,6 +281,12 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               >
                 {t('game_sit_in')}
               </button>
+            </div>
+          ) : isAllIn ? (
+            <div className="text-center py-2">
+              <div className="font-bold" style={{ color: '#EAB308', fontSize: 16 }}>
+                ALL IN
+              </div>
             </div>
           ) : (isBusted || isSittingOut || (privateState?.stack ?? 0) <= 0) ? (
             <div className="text-center py-2 space-y-2">
