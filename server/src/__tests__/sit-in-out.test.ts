@@ -140,6 +140,52 @@ describe('Sit In / Sit Out', () => {
     expect(privateStateCall![1].status).toBe('waiting');
   });
 
+  it('handleSitOut emits private state with status sitting_out so client shows Sit In and Leave Table buttons', () => {
+    const sock1 = createMockSocket('sock-1');
+    gm.addPlayer(sock1, 'Alice', 100);
+    sock1.emit.mockClear();
+
+    // Player presses Sit Out between hands
+    gm.handleSitOut('sock-1');
+
+    // Server must emit PRIVATE_STATE with status 'sitting_out'
+    // Without this, the client never learns the status changed and buttons are broken
+    const privateStateCall = sock1.emit.mock.calls.find(
+      (c: any[]) => c[0] === 'player:private_state'
+    );
+    expect(privateStateCall).toBeDefined();
+    expect(privateStateCall![1].status).toBe('sitting_out');
+  });
+
+  it('handleSitOut during hand emits private state with sitting_out status', () => {
+    const sock1 = createMockSocket('sock-1');
+    const sock2 = createMockSocket('sock-2');
+    gm.addPlayer(sock1, 'Alice', 100);
+    gm.addPlayer(sock2, 'Bob', 100);
+    gm.handleSitIn('sock-2');
+
+    // Start a hand
+    gm.checkStartGame();
+    vi.advanceTimersByTime(10000);
+    expect((gm as any).phase).toBe('hand_in_progress');
+
+    // Add a third player who joins mid-hand (sitting_out by default)
+    const sock3 = createMockSocket('sock-3');
+    gm.addPlayer(sock3, 'Charlie', 100);
+    gm.handleSitIn('sock-3');
+    sock3.emit.mockClear();
+
+    // Player presses Sit Out during a hand they're not in
+    gm.handleSitOut('sock-3');
+
+    // Must emit private state with sitting_out
+    const privateStateCall = sock3.emit.mock.calls.find(
+      (c: any[]) => c[0] === 'player:private_state'
+    );
+    expect(privateStateCall).toBeDefined();
+    expect(privateStateCall![1].status).toBe('sitting_out');
+  });
+
   it('player who sits back in is eligible for next hand', () => {
     const sock1 = createMockSocket('sock-1');
     const sock2 = createMockSocket('sock-2');

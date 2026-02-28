@@ -794,13 +794,19 @@ export class GameManager {
     const socket = this.socketMap.get(socketId);
     if (!socket) return;
 
-    // During a hand, delegate to full sendPrivateStateToAll to get accurate hand data
+    // During a hand, check if this player is a hand participant
     if (this.phase === 'hand_in_progress' && this.handEngine) {
-      this.sendPrivateStateToAll();
-      return;
+      const handPlayers = this.handEngine.getPlayers();
+      const isHandPlayer = handPlayers.some(hp => hp.playerId === player.id);
+      if (isHandPlayer) {
+        // Delegate to full sendPrivateStateToAll to get accurate hand data
+        this.sendPrivateStateToAll();
+        return;
+      }
+      // Not a hand player (joined mid-hand, sitting out, etc.) — fall through to send cleared state
     }
 
-    // Between hands, send a cleared state
+    // Between hands or non-hand player: send a cleared state
     const state: PrivatePlayerState = {
       id: player.id, name: player.name, seatIndex: player.seatIndex, stack: player.stack,
       status: player.status as any, holeCards: [], currentBet: 0, availableActions: [],
@@ -880,6 +886,7 @@ export class GameManager {
     player.status = 'sitting_out';
     player.isReady = false;
     console.log(`${player.name} is sitting out`);
+    this.sendPrivateStateForPlayer(socketId);
     this.broadcastLobbyState();
     this.broadcastTableState();
   }
