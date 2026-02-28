@@ -59,4 +59,5 @@ export interface PrivatePlayerState {
   runItTwiceOffer: boolean;
   runItTwiceDeadline: number;
   sitOutNextHand: boolean;
+  autoMuck: boolean;
 }

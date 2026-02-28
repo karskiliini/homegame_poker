@@ -132,7 +132,7 @@ export class GameManager {
       status: player.status as any, holeCards: [], currentBet: 0, availableActions: [],
       minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
       showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
-      sitOutNextHand: false,
+      sitOutNextHand: false, autoMuck: false,
     };
     socket.emit(S2C_PLAYER.PRIVATE_STATE, initialState);
 
@@ -476,6 +476,7 @@ export class GameManager {
         minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
         showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
         sitOutNextHand: this.pendingSitOutNextHand.has(socketId),
+        autoMuck: player.autoMuck ?? false,
       };
       socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
     }
@@ -512,6 +513,7 @@ export class GameManager {
             minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
             showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
             sitOutNextHand: this.pendingSitOutNextHand.has(socketId),
+            autoMuck: player.autoMuck ?? false,
           });
         }
       }
@@ -637,8 +639,16 @@ export class GameManager {
       minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
       showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
       sitOutNextHand: this.pendingSitOutNextHand.has(socketId),
+      autoMuck: player.autoMuck ?? false,
     };
     socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
+  }
+
+  handleAutoMuck(socketId: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+    player.autoMuck = !player.autoMuck;
+    this.sendPrivateStateForPlayer(socketId);
   }
 
   handleSitOut(socketId: string) {
@@ -801,6 +811,7 @@ export class GameManager {
         potTotal: totalPot, isMyTurn,
         showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
         sitOutNextHand: this.pendingSitOutNextHand.has(socketId),
+        autoMuck: this.players.get(socketId)?.autoMuck ?? false,
       };
       socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
     }

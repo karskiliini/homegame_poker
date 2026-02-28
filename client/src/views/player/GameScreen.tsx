@@ -112,6 +112,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
   const isSittingOut = privateState?.status === 'sitting_out';
   const isBusted = privateState?.status === 'busted';
   const sitOutNextHand = privateState?.sitOutNextHand ?? false;
+  const autoMuck = privateState?.autoMuck ?? false;
   const isHandActive = lobbyState?.phase === 'hand_in_progress';
   const showActions = privateState?.isMyTurn && isHandActive && (privateState?.availableActions.length ?? 0) > 0;
   const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && !isSittingOut && !isBusted && (privateState?.holeCards.length ?? 0) > 0;
@@ -128,7 +129,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
         ref={wrapperRef}
         className="relative w-full overflow-hidden"
         style={{
-          height: '58vh',
+          height: '68vh',
           background: 'radial-gradient(ellipse at 50% 80%, #1A2744, #141E33, #0D1526)',
         }}
       >
@@ -207,7 +208,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
 
       {/* Bottom: Own cards + actions */}
       <div
-        className="flex-1 flex flex-col px-4 pt-3 pb-2"
+        className="flex-1 flex flex-col px-4 pt-1 pb-1"
         style={{
           opacity: isFolded ? 0.6 : 1,
           transition: 'opacity 0.3s ease',
@@ -251,34 +252,34 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
               </div>
             </>
           ) : (
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14, padding: 20 }}>
+            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, padding: 8 }}>
               {t('game_waiting_cards')}
             </div>
           )}
         </div>
 
         {/* Actions */}
-        <div className="mt-3">
+        <div className="mt-1">
           {isSittingOut && (privateState?.stack ?? 0) > 0 ? (
-            <div className="text-center py-4 space-y-3">
-              <div style={{ color: 'var(--ftp-text-muted)', fontSize: 15 }}>
+            <div className="text-center py-2 space-y-2">
+              <div style={{ color: 'var(--ftp-text-muted)', fontSize: 14 }}>
                 {t('game_sitting_out')}
               </div>
               <button
                 onClick={() => socket.emit(C2S.SIT_IN)}
-                className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-lg"
+                className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-base"
               >
                 {t('game_sit_in')}
               </button>
             </div>
           ) : (isBusted || (privateState?.stack ?? 0) <= 0) ? (
-            <div className="text-center py-4 space-y-3">
-              <div style={{ color: 'var(--ftp-text-muted)', fontSize: 15 }}>
+            <div className="text-center py-2 space-y-2">
+              <div style={{ color: 'var(--ftp-text-muted)', fontSize: 14 }}>
                 {isBusted ? 'Busted' : t('game_sitting_out')}
               </div>
               <button
                 onClick={() => socket.emit(C2S.REBUY, { amount: config?.maxBuyIn ?? 200 })}
-                className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-lg"
+                className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-base"
               >
                 {t('game_rebuy')} {config?.maxBuyIn ?? 200}
               </button>
@@ -298,10 +299,10 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
           ) : showPreActions ? (
             <PreActionButtons preAction={preAction} setPreAction={setPreAction} />
           ) : (
-            <div className="text-center py-4">
+            <div className="text-center py-2">
               <div style={{
                 color: isFolded ? 'var(--ftp-text-muted)' : 'var(--ftp-text-secondary)',
-                fontSize: 15,
+                fontSize: 14,
               }}>
                 {isFolded ? t('game_folded') : t('game_waiting_turn')}
               </div>
@@ -309,9 +310,9 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
           )}
         </div>
 
-        {/* Sit Out Next Hand checkbox */}
+        {/* Sit Out Next Hand + Auto-Muck checkboxes */}
         {!isSittingOut && !isBusted && (privateState?.stack ?? 0) > 0 && (
-          <div className="flex justify-center mt-2">
+          <div className="flex justify-center gap-3 mt-1">
             <button
               onClick={() => socket.emit(C2S.SIT_OUT_NEXT_HAND)}
               className="flex items-center gap-2"
@@ -350,6 +351,46 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
                 }}
               >
                 Sit Out Next Hand
+              </span>
+            </button>
+            <button
+              onClick={() => socket.emit(C2S.AUTO_MUCK)}
+              className="flex items-center gap-2"
+              style={{
+                padding: '6px 12px',
+                borderRadius: 6,
+                background: autoMuck ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
+                border: autoMuck ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 3,
+                  border: autoMuck ? '2px solid #EAB308' : '2px solid rgba(255,255,255,0.3)',
+                  background: autoMuck ? '#EAB308' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  fontSize: 11,
+                  color: '#000',
+                  fontWeight: 700,
+                }}
+              >
+                {autoMuck && '\u2713'}
+              </div>
+              <span
+                style={{
+                  fontSize: 12,
+                  color: autoMuck ? '#EAB308' : 'var(--ftp-text-muted)',
+                  fontWeight: autoMuck ? 600 : 400,
+                }}
+              >
+                Auto-Muck
               </span>
             </button>
           </div>

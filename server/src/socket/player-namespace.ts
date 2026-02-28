@@ -170,6 +170,13 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       gm.handleSitOutNextHand(socket.id);
     });
 
+    socket.on(C2S.AUTO_MUCK, () => {
+      if (!currentTableId) return;
+      const gm = tableManager.getTable(currentTableId);
+      if (!gm) return;
+      gm.handleAutoMuck(socket.id);
+    });
+
     socket.on(C2S.SIT_IN, () => {
       if (!currentTableId) return;
       const gm = tableManager.getTable(currentTableId);
