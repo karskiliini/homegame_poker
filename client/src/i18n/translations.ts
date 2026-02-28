@@ -2,7 +2,7 @@ export type Language = 'en' | 'fi';
 
 const en = {
   // Login
-  login_title: 'POKER NIGHT',
+  login_title: 'CCCPokeri',
   login_subtitle: 'Choose your name and avatar',
   login_name_label: 'NAME',
   login_name_placeholder: 'Enter your name',
@@ -149,7 +149,7 @@ export const translations: Record<Language, Translations> = {
   en,
   fi: {
     // Login
-    login_title: 'POKER NIGHT',
+    login_title: 'CCCPokeri',
     login_subtitle: 'Valitse nimi ja avatar',
     login_name_label: 'NIMI',
     login_name_placeholder: 'Syota nimesi',

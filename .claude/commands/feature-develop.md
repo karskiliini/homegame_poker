@@ -41,7 +41,7 @@ Read the file `doc/roadmap.md` and pick the first unchecked item (`- [ ]`) that 
 7. **Manual testing** — Start the local server and test the feature end-to-end yourself. YOU are the tester:
    - Test the happy path
    - Test edge cases
-   - Test on both table view (TV) and player view (phone)
+   - Test on both watching view and player view (phone)
    - Verify animations look smooth and polished
    - Check that existing functionality still works
 

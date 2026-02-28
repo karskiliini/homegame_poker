@@ -106,12 +106,12 @@ describe('Theme-specific table backgrounds', () => {
 
   // ---- PokerTable no hardcoded watermark ----
 
-  it('PokerTable does not contain hardcoded "POKER NIGHT" text', () => {
+  it('PokerTable does not contain hardcoded "CCCPokeri" text', () => {
     const src = readFileSync(
       join(__dirname, '..', 'views', 'table', 'PokerTable.tsx'),
       'utf-8'
     );
-    expect(src).not.toContain('POKER NIGHT');
+    expect(src).not.toContain('CCCPokeri');
   });
 
   it('PokerTable renders theme watermark', () => {

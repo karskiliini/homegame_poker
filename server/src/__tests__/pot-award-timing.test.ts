@@ -5,6 +5,9 @@ import {
   S2C_TABLE, S2C_PLAYER,
   HAND_COMPLETE_PAUSE_MS,
   DELAY_POT_AWARD_MS,
+  DELAY_BETWEEN_POT_AWARDS_MS,
+  DELAY_SHOWDOWN_TO_RESULT_MS,
+  DELAY_BAD_BEAT_TO_RESULT_MS,
 } from '@poker/shared';
 import type { HandResult } from '../game/HandEngine.js';
 
@@ -135,13 +138,11 @@ describe('Pot award timing', () => {
 
   it('emits a single POT_AWARD for a single-pot hand', () => {
     const result = makeSinglePotResult();
-    // Set phase to hand_in_progress so handleHandComplete works correctly
     (gm as any).phase = 'hand_in_progress';
     (gm as any).playerIdToSocketId.set('p1', 'sock-1');
     (gm as any).playerIdToSocketId.set('p2', 'sock-2');
     (gm as any).handleHandComplete(result);
 
-    // POT_AWARD should be emitted with all awards in one call
     const potAwardCalls = io._emitFn.mock.calls.filter(
       (call: any[]) => call[0] === S2C_TABLE.POT_AWARD
     );
@@ -153,12 +154,13 @@ describe('Pot award timing', () => {
       winnerName: 'Alice',
       winnerSeatIndex: 0,
     });
+    expect(potAwardCalls[0][1].isLastPot).toBe(true);
+    expect(potAwardCalls[0][1].totalPots).toBe(1);
   });
 
-  it('emits all pot awards in a single POT_AWARD for multi-pot hands', () => {
+  it('emits pot awards sequentially for multi-pot hands', () => {
     const result = makeMultiPotResult();
     (gm as any).phase = 'hand_in_progress';
-    // Add third player
     const sock3 = createMockSocket('sock-3');
     gm.addPlayer(sock3, 'Carol', 200);
     (gm as any).playerIdToSocketId.set('p1', 'sock-1');
@@ -166,32 +168,41 @@ describe('Pot award timing', () => {
     (gm as any).playerIdToSocketId.set('p3', 'sock-3');
     (gm as any).handleHandComplete(result);
 
-    // All awards emitted in a single POT_AWARD event
-    const potAwardCalls = io._emitFn.mock.calls.filter(
+    // First POT_AWARD emitted immediately (Main Pot)
+    let potAwardCalls = io._emitFn.mock.calls.filter(
       (call: any[]) => call[0] === S2C_TABLE.POT_AWARD
     );
     expect(potAwardCalls).toHaveLength(1);
-    expect(potAwardCalls[0][1].awards).toHaveLength(2);
     expect(potAwardCalls[0][1].awards[0]).toMatchObject({
       potIndex: 0,
       amount: 150,
       winnerName: 'Bob',
     });
-    expect(potAwardCalls[0][1].awards[1]).toMatchObject({
+    expect(potAwardCalls[0][1].isLastPot).toBe(false);
+    expect(potAwardCalls[0][1].totalPots).toBe(2);
+
+    // Second POT_AWARD emitted after DELAY_BETWEEN_POT_AWARDS_MS
+    vi.advanceTimersByTime(DELAY_BETWEEN_POT_AWARDS_MS);
+    potAwardCalls = io._emitFn.mock.calls.filter(
+      (call: any[]) => call[0] === S2C_TABLE.POT_AWARD
+    );
+    expect(potAwardCalls).toHaveLength(2);
+    expect(potAwardCalls[1][1].awards[0]).toMatchObject({
       potIndex: 1,
       amount: 100,
       winnerName: 'Bob',
     });
+    expect(potAwardCalls[1][1].isLastPot).toBe(true);
   });
 
-  it('emits HAND_RESULT after DELAY_POT_AWARD_MS', () => {
+  it('emits HAND_RESULT after last pot award + DELAY_POT_AWARD_MS', () => {
     const result = makeSinglePotResult();
     (gm as any).phase = 'hand_in_progress';
     (gm as any).playerIdToSocketId.set('p1', 'sock-1');
     (gm as any).playerIdToSocketId.set('p2', 'sock-2');
     (gm as any).handleHandComplete(result);
 
-    // HAND_RESULT should NOT be emitted yet (only POT_AWARD so far)
+    // HAND_RESULT should NOT be emitted yet
     let handResultCalls = io._emitFn.mock.calls.filter(
       (call: any[]) => call[0] === S2C_TABLE.HAND_RESULT
     );
@@ -206,8 +217,41 @@ describe('Pot award timing', () => {
     expect(handResultCalls).toHaveLength(1);
   });
 
+  it('emits HAND_RESULT after all sequential pots + DELAY_POT_AWARD_MS for multi-pot', () => {
+    const result = makeMultiPotResult();
+    (gm as any).phase = 'hand_in_progress';
+    const sock3 = createMockSocket('sock-3');
+    gm.addPlayer(sock3, 'Carol', 200);
+    (gm as any).playerIdToSocketId.set('p1', 'sock-1');
+    (gm as any).playerIdToSocketId.set('p2', 'sock-2');
+    (gm as any).playerIdToSocketId.set('p3', 'sock-3');
+    (gm as any).handleHandComplete(result);
+
+    // After first pot, no HAND_RESULT yet
+    vi.advanceTimersByTime(DELAY_BETWEEN_POT_AWARDS_MS - 1);
+    let handResultCalls = io._emitFn.mock.calls.filter(
+      (call: any[]) => call[0] === S2C_TABLE.HAND_RESULT
+    );
+    expect(handResultCalls).toHaveLength(0);
+
+    // Second pot emitted at DELAY_BETWEEN_POT_AWARDS_MS
+    vi.advanceTimersByTime(1);
+
+    // Still no HAND_RESULT (need DELAY_POT_AWARD_MS after last pot)
+    handResultCalls = io._emitFn.mock.calls.filter(
+      (call: any[]) => call[0] === S2C_TABLE.HAND_RESULT
+    );
+    expect(handResultCalls).toHaveLength(0);
+
+    // Advance past DELAY_POT_AWARD_MS after last pot
+    vi.advanceTimersByTime(DELAY_POT_AWARD_MS);
+    handResultCalls = io._emitFn.mock.calls.filter(
+      (call: any[]) => call[0] === S2C_TABLE.HAND_RESULT
+    );
+    expect(handResultCalls).toHaveLength(1);
+  });
+
   it('calls scheduleNextHand after all pot awards and DELAY_POT_AWARD_MS', () => {
-    // Use a showdown result (not uncontested) so offerShowCards is skipped
     const result = makeSinglePotResult();
     result.showdownResults = [
       { playerId: 'p1', seatIndex: 0, holeCards: ['Ah', 'Kh'], handName: 'High Card', handDescription: 'Ace high', shown: true },
@@ -220,11 +264,39 @@ describe('Pot award timing', () => {
 
     (gm as any).handleHandComplete(result);
 
-    // scheduleNextHand should NOT be called yet
     expect(scheduleSpy).not.toHaveBeenCalled();
 
     // After DELAY_POT_AWARD_MS, afterAllPotsAwarded fires → scheduleNextHand called
     vi.advanceTimersByTime(DELAY_POT_AWARD_MS);
     expect(scheduleSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Bad beat delay', () => {
+  it('hand_complete after bad_beat gets DELAY_SHOWDOWN_TO_RESULT_MS + DELAY_BAD_BEAT_TO_RESULT_MS', () => {
+    const io = createMockIo();
+    const gm = new GameManager(makeConfig(), io, 'test-table');
+    // Simulate that the last processed event was bad_beat
+    (gm as any).lastProcessedEventType = 'bad_beat';
+    const delay = (gm as any).getEventDelay({ type: 'hand_complete', result: {} });
+    expect(delay).toBe(DELAY_SHOWDOWN_TO_RESULT_MS + DELAY_BAD_BEAT_TO_RESULT_MS);
+  });
+
+  it('hand_complete after showdown gets only DELAY_SHOWDOWN_TO_RESULT_MS', () => {
+    const io = createMockIo();
+    const gm = new GameManager(makeConfig(), io, 'test-table');
+    (gm as any).lastProcessedEventType = 'showdown';
+    const delay = (gm as any).getEventDelay({ type: 'hand_complete', result: {} });
+    expect(delay).toBe(DELAY_SHOWDOWN_TO_RESULT_MS);
+  });
+});
+
+describe('Timing constants', () => {
+  it('DELAY_BAD_BEAT_TO_RESULT_MS is at least 3000ms', () => {
+    expect(DELAY_BAD_BEAT_TO_RESULT_MS).toBeGreaterThanOrEqual(3000);
+  });
+
+  it('DELAY_BETWEEN_POT_AWARDS_MS is at least 2000ms', () => {
+    expect(DELAY_BETWEEN_POT_AWARDS_MS).toBeGreaterThanOrEqual(2000);
   });
 });

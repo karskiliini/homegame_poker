@@ -12,8 +12,7 @@ Tee seuraavat asiat järjestyksessä:
 
 3. **Hae koneen IP** — Aja `ipconfig getifaddr en0` saadaksesi lähiverkon IP-osoitteen.
 
-4. **Avaa selainikkunat** — Aja nämä kolme komentoa rinnakkain:
-   - `open http://localhost:5173/table` (TV-näkymä)
+4. **Avaa selainikkunat** — Aja nämä kaksi komentoa rinnakkain:
    - `open http://localhost:5173` (Pelaaja 1)
    - `open http://localhost:5173` (Pelaaja 2 — avautuu samaan profiiliin, mutta riittää testaukseen)
 
@@ -25,7 +24,6 @@ Tee seuraavat asiat järjestyksessä:
 
 | Näkymä | URL |
 |--------|-----|
-| TV / pöytä | http://localhost:5173/table |
 | Pelaaja 1 | http://localhost:5173 |
 | Pelaaja 2 | http://localhost:5173 |
 | Pelaaja puhelimella | http://<IP>:5173 |

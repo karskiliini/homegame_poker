@@ -14,7 +14,6 @@ bun run dev
 
 Käynnistää sekä serverin (portti 3000) että Vite-clientin (portti 5173) samaan aikaan.
 
-- **TV/pöytänäkymä:** `http://localhost:5173/table`
 - **Pelaajat (sama kone):** `http://localhost:5173`
 - **Pelaajat (puhelimella):** `http://<koneen-ip>:5173` (esim. `http://192.168.1.100:5173`)
 
@@ -36,7 +35,6 @@ Parametrit ovat säädettävissä:
 
 Serveri tarjoaa buildin suoraan:
 
-- **TV/pöytänäkymä:** `http://localhost:3000/table`
 - **Pelaajat (sama kone):** `http://localhost:3000`
 - **Pelaajat (puhelimella):** `http://<koneen-ip>:3000` (esim. `http://192.168.1.100:3000`)
 
@@ -64,8 +62,7 @@ vercel env add VITE_SERVER_URL
 
 ### Clientien avaaminen
 
-- **Pelaajat:** avaa puhelimella `https://pokersofta.vercel.app`
-- **TV/pöytänäkymä:** avaa tietokoneella `https://pokersofta.vercel.app/table`
+- **Pelaajat:** avaa selaimella `https://pokersofta.vercel.app`
 
 ### Deploy-komennot
 

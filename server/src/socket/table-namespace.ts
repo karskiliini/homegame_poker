@@ -60,7 +60,7 @@ export function setupTableNamespace(nsp: Namespace, tableManager: TableManager) 
 
     socket.on(C2S.REPORT_BUG, (data: { description: string }) => {
       if (!data.description || typeof data.description !== 'string') return;
-      insertBugReport(data.description, 'TV Viewer', currentTableId ?? undefined);
+      insertBugReport(data.description, 'Spectator', currentTableId ?? undefined);
       socket.emit(S2C_PLAYER.BUG_REPORTED);
     });
   });

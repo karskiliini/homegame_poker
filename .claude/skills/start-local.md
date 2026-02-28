@@ -12,8 +12,7 @@ Tee seuraavat asiat järjestyksessä:
 
 3. **Hae koneen IP** — Aja `ipconfig getifaddr en0` saadaksesi lähiverkon IP-osoitteen.
 
-4. **Avaa selainikkunat** — Aja seuraavat komennot avataksesi kolme selainikkunaa (pöytä + 2 pelaajaa):
-   - `open http://localhost:5173/table`
+4. **Avaa selainikkunat** — Aja seuraavat komennot avataksesi kaksi selainikkunaa (2 pelaajaa):
    - `open http://localhost:5173`
    - `open -na "Google Chrome" --args --incognito http://localhost:5173`
 
@@ -25,11 +24,10 @@ Tee seuraavat asiat järjestyksessä:
 
 **Serveri käynnistetty!**
 
-Selainikkunat avattu: pöytä + 2 pelaajaa (toinen incognito).
+Selainikkunat avattu: 2 pelaajaa (toinen incognito).
 
 | Näkymä | URL |
 |--------|-----|
-| TV / pöytä | http://localhost:5173/table |
 | Pelaaja 1 | http://localhost:5173 |
 | Pelaaja 2 | http://localhost:5173 (incognito) |
 | Pelaaja puhelimella | http://<IP>:5173 |

@@ -78,8 +78,8 @@ No CSS Modules, no styled-components, no Sass.
 - **Easing:** `--ftp-ease-*` (e.g. `--ftp-ease-overshoot` for pop-in effects)
 
 ### Two Rendering Targets
-- **TV view** (`/table`) — full-screen `w-screen h-screen`, dark radial gradient bg, large text, no scrolling
-- **Phone view** (`/*`) — `min-h-screen flex flex-col`, 58vh mini-table + 42vh action area, scaled via CSS `transform`
+- **Watching view** (WatchingScreen) — full-screen `w-screen h-screen`, dark radial gradient bg, large text, no scrolling
+- **Phone view** (GameScreen) — `min-h-screen flex flex-col`, 79vh mini-table + action area, scaled via CSS `transform`
 
 ### Component Patterns
 - Shared components in `client/src/components/` (Card, CardBack, ChipStack, SoundToggle, BugReport*)

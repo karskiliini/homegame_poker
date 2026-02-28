@@ -17,8 +17,7 @@ httpServer.listen(port, () => {
 ║  Multi-table lobby enabled                   ║
 ║  Port:       ${String(port).padEnd(30)}║
 ╠══════════════════════════════════════════════╣
-║  Table view: http://localhost:${port}/table${' '.repeat(Math.max(0, 9 - String(port).length))}║
-║  Player URL: http://localhost:${port}/${' '.repeat(Math.max(0, 14 - String(port).length))}║
+║  URL: http://localhost:${port}/${' '.repeat(Math.max(0, 21 - String(port).length))}║
 ╚══════════════════════════════════════════════╝
   `);
 });

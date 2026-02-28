@@ -16,7 +16,7 @@ import { ChipTrickAnimation } from './ChipTrickAnimation.js';
 import type { BadBeatData, ChipTrickData } from '../../hooks/useTableAnimations.js';
 
 // Virtual table dimensions — defines the fixed aspect ratio (18:11)
-// Both TV and phone views use these to scale the table via CSS transform
+// Both watching and phone views use these to scale the table via CSS transform
 export const TABLE_VIRTUAL_W = 900;
 export const TABLE_VIRTUAL_H = 550;
 

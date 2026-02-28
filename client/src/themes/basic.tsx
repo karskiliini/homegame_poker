@@ -11,7 +11,7 @@ const basicWatermark = (
       userSelect: 'none' as const,
     }}
   >
-    POKER NIGHT
+    CCCPokeri
   </span>
 );
 

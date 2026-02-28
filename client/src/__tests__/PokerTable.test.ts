@@ -14,7 +14,7 @@ import { join } from 'path';
  * TABLE_VIRTUAL_H = 900x550) and CSS `transform: scale()` to fit the table
  * into the available space. This guarantees the aspect ratio is always preserved.
  *
- * - TV/watching view: scales to fit viewport with `contain` behavior (min of scaleX, scaleY)
+ * - Watching view: scales to fit viewport with `contain` behavior (min of scaleX, scaleY)
  * - Phone view: scales to fit wrapper width
  */
 
@@ -50,7 +50,7 @@ describe('PokerTable aspect ratio', () => {
     expect(rootClasses).not.toContain('h-full');
   });
 
-  it('WatchingScreen (TV view) uses scale-transform with contain behavior', () => {
+  it('WatchingScreen uses scale-transform with contain behavior', () => {
     const src = readFileSync(
       join(__dirname, '..', 'views', 'player', 'WatchingScreen.tsx'),
       'utf-8'
