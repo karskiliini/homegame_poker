@@ -1,31 +1,9 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PublicPlayerState } from '@poker/shared';
-import { DISCONNECT_TIMEOUT_MS, AVATAR_OPTIONS, AVATAR_BACKGROUNDS } from '@poker/shared';
-import type { AvatarId } from '@poker/shared';
+import { DISCONNECT_TIMEOUT_MS, AVATAR_OPTIONS } from '@poker/shared';
 import { CardComponent } from '../../components/Card.js';
 import { CardBack } from '../../components/CardBack.js';
-
-const AVATAR_COLORS_FALLBACK: [string, string][] = [
-  ['#DC2626', '#991B1B'],
-  ['#2563EB', '#1E40AF'],
-  ['#16A34A', '#15803D'],
-  ['#9333EA', '#7E22CE'],
-  ['#EA580C', '#C2410C'],
-  ['#DB2777', '#BE185D'],
-  ['#0D9488', '#0F766E'],
-  ['#4F46E5', '#4338CA'],
-  ['#D97706', '#B45309'],
-  ['#0891B2', '#0E7490'],
-];
-
-function getFallbackColors(name: string): [string, string] {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return AVATAR_COLORS_FALLBACK[Math.abs(hash) % AVATAR_COLORS_FALLBACK.length];
-}
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -33,15 +11,6 @@ function getInitials(name: string): string {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
   return name.slice(0, 2).toUpperCase();
-}
-
-function getAvatarEmoji(avatarId: string): string | null {
-  const opt = AVATAR_OPTIONS.find(a => a.id === avatarId);
-  return opt ? opt.emoji : null;
-}
-
-function getAvatarBg(avatarId: string): [string, string] | null {
-  return AVATAR_BACKGROUNDS[avatarId as AvatarId] ?? null;
 }
 
 interface PlayerSeatProps {
@@ -86,10 +55,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const isAllIn = player.status === 'all_in';
   const isDisconnected = !player.isConnected;
   const dcCountdown = useDcCountdown(player.disconnectedAt);
-  const avatarEmoji = getAvatarEmoji(player.avatarId);
-  const avatarBg = getAvatarBg(player.avatarId);
-  const [fallbackC1, fallbackC2] = getFallbackColors(player.name);
-  const [color1, color2] = avatarBg || [fallbackC1, fallbackC2];
+  const avatarImage = AVATAR_OPTIONS.find(a => a.id === player.avatarId)?.image ?? null;
   const initials = getInitials(player.name);
 
   // Timer bar color
@@ -142,13 +108,22 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             width: 48,
             height: 48,
             borderRadius: '50%',
-            background: `linear-gradient(135deg, ${color1}, ${color2})`,
-            fontSize: avatarEmoji ? 22 : 15,
+            overflow: 'hidden',
+            background: '#2C3E50',
             boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
             border: isActive ? '2px solid rgba(234, 179, 8, 0.7)' : '2px solid rgba(255,255,255,0.25)',
+            fontSize: 15,
           }}
         >
-          {avatarEmoji || initials}
+          {avatarImage ? (
+            <img
+              src={avatarImage}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            initials
+          )}
         </div>
 
         {/* Player panel (light background) */}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AVATAR_OPTIONS, AVATAR_BACKGROUNDS } from '@poker/shared';
+import { AVATAR_OPTIONS } from '@poker/shared';
 import type { AvatarId } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 
@@ -74,32 +74,36 @@ export function LoginScreen() {
             <label className="block mb-2" style={{ color: 'var(--ftp-text-muted)', fontSize: 12, fontWeight: 600 }}>
               AVATAR
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div
+              className="grid grid-cols-6 gap-2"
+              style={{ maxHeight: 200, overflowY: 'auto', padding: 2 }}
+            >
               {AVATAR_OPTIONS.map((avatar) => {
                 const isSelected = selectedAvatar === avatar.id;
-                const [bg1, bg2] = AVATAR_BACKGROUNDS[avatar.id];
                 return (
                   <button
                     key={avatar.id}
                     type="button"
                     onClick={() => setSelectedAvatar(avatar.id)}
                     style={{
-                      width: '100%',
-                      aspectRatio: '1',
+                      width: 56,
+                      height: 56,
                       borderRadius: '50%',
-                      background: `linear-gradient(135deg, ${bg1}, ${bg2})`,
+                      overflow: 'hidden',
+                      background: '#2C3E50',
                       border: isSelected ? '3px solid var(--ftp-red)' : '2px solid rgba(255,255,255,0.1)',
                       boxShadow: isSelected ? '0 0 12px rgba(196,30,42,0.5)' : 'none',
                       cursor: 'pointer',
-                      fontSize: 24,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      padding: 0,
                       transition: 'border-color 0.15s, box-shadow 0.15s',
                     }}
                     title={avatar.label}
                   >
-                    {avatar.emoji}
+                    <img
+                      src={avatar.image}
+                      alt={avatar.label}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                   </button>
                 );
               })}
