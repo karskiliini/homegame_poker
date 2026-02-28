@@ -138,6 +138,10 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
     }
   }, [socket, privateState?.stack]);
 
+  const handleSeatChange = useCallback((seatIndex: number) => {
+    socket.emit(C2S.CHANGE_SEAT, { seatIndex });
+  }, [socket]);
+
   const config = gameState?.config;
 
   return (
@@ -203,6 +207,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               equities={equities}
               dramaticRiver={dramaticRiver}
               badBeat={badBeat}
+              onSeatClick={(isSittingOut || isBusted) ? handleSeatChange : undefined}
               onMyAvatarClick={() => !isFolded && setShowAvatarPicker(true)}
               onMyAvatarHoverStart={() => isFolded && setPeekingFoldedCards(true)}
               onMyAvatarHoverEnd={() => setPeekingFoldedCards(false)}

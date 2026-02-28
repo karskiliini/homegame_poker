@@ -356,6 +356,16 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       gm.handleChipTrick(socket.id);
     });
 
+    socket.on(C2S.CHANGE_SEAT, (data: { seatIndex: number }) => {
+      if (!currentTableId) return;
+      const gm = tableManager.getTable(currentTableId);
+      if (!gm) return;
+      const result = gm.changeSeat(socket.id, data.seatIndex);
+      if (result.error) {
+        socket.emit(S2C_PLAYER.ERROR, { message: result.error });
+      }
+    });
+
     socket.on(C2S.REPORT_BUG, (data: { description: string }) => {
       if (!data.description || typeof data.description !== 'string') return;
       let name = 'Anonymous';

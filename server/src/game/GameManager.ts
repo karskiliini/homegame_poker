@@ -946,6 +946,41 @@ export class GameManager {
     this.broadcastTableState();
   }
 
+  changeSeat(socketId: string, newSeatIndex: number): { error?: string } {
+    const player = this.players.get(socketId);
+    if (!player) return { error: 'Player not found' };
+
+    if (player.status !== 'sitting_out' && player.status !== 'busted') {
+      return { error: 'You can only change seats while sitting out' };
+    }
+
+    if (newSeatIndex < 0 || newSeatIndex >= this.config.maxPlayers) {
+      return { error: 'Invalid seat number' };
+    }
+
+    if (newSeatIndex === player.seatIndex) {
+      return { error: 'Already at this seat' };
+    }
+
+    if (this.seatMap.has(newSeatIndex)) {
+      return { error: `Seat ${newSeatIndex} is already taken` };
+    }
+
+    // Move from old seat to new seat
+    const oldSeatIndex = player.seatIndex;
+    this.seatMap.delete(oldSeatIndex);
+    this.seatMap.set(newSeatIndex, socketId);
+    player.seatIndex = newSeatIndex;
+
+    console.log(`${player.name} changed seat from ${oldSeatIndex} to ${newSeatIndex} [${this.tableId}]`);
+
+    this.sendPrivateStateForPlayer(socketId);
+    this.broadcastLobbyState();
+    this.broadcastTableState();
+
+    return {};
+  }
+
   handlePlayerDisconnect(socketId: string) {
     const player = this.players.get(socketId);
     if (player) {

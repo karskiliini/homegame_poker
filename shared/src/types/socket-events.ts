@@ -15,6 +15,7 @@ export const C2S = {
   CHAT: 'player:chat',
   UPDATE_AVATAR: 'player:update_avatar',
   CHIP_TRICK: 'player:chip_trick',
+  CHANGE_SEAT: 'player:change_seat',
 } as const;
 
 export const S2C_PLAYER = {
