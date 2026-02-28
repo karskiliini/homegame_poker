@@ -758,15 +758,18 @@ export class GameManager {
     if (show) {
       const cards = this.currentPlayerCards.get(player.id);
       if (cards) {
-        // Broadcast shown cards to table
-        this.io.of('/table').emit(S2C_TABLE.SHOWDOWN, {
-          reveals: [{
-            seatIndex: player.seatIndex,
-            cards,
-            handName: 'Shown',
-            handDescription: '',
-          }],
+        // Add to showdown entries so getTableState() includes the cards
+        this.currentShowdownEntries.push({
+          playerId: player.id,
+          seatIndex: player.seatIndex,
+          holeCards: cards,
+          handName: 'Shown',
+          handDescription: '',
+          shown: true,
         });
+
+        // Broadcast updated game state so table displays the cards
+        this.broadcastTableState();
       }
     }
 
