@@ -477,6 +477,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
                     setPlayerAvatar(id);
                     setShowAvatarPicker(false);
                   }}
+                  className="flex items-center justify-center"
                   style={{
                     width: 56,
                     height: 56,
@@ -491,7 +492,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
                   <img
                     src={`${assets.avatarBasePath}/${avatarImageFile(id, assets.avatarNames)}`}
                     alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
                 </button>
               ))}
