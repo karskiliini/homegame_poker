@@ -98,16 +98,17 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
               key={`cardback-${i}`}
               initial={false}
               exit={{
-                x: (foldDirection?.x ?? 0) + (i === 0 ? -12 : 12),
-                y: foldDirection?.y ?? -40,
-                scale: 0.3,
-                rotate: i === 0 ? -15 : 25,
-                opacity: 0,
+                x: [0, (i === 0 ? -20 : 20), (foldDirection?.x ?? 0) + (i === 0 ? -30 : 30)],
+                y: [0, -35, foldDirection?.y ?? -40],
+                scale: [1, 1.1, 0.15],
+                rotate: [0, i === 0 ? -360 : 270, i === 0 ? -720 : 540],
+                opacity: [1, 1, 0],
               }}
               transition={{
-                duration: 0.45,
-                delay: i * 0.08,
-                ease: 'easeIn',
+                duration: 0.6,
+                delay: i * 0.1,
+                ease: [0.4, 0, 0.2, 1],
+                opacity: { times: [0, 0.7, 1] },
               }}
               style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : i > 0 ? { marginLeft: 2 } : undefined}
             >
