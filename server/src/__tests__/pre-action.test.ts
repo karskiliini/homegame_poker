@@ -3,14 +3,14 @@ import { resolvePreAction } from '@poker/shared';
 import type { ActionType } from '@poker/shared';
 
 describe('resolvePreAction', () => {
-  it('fold_to_bet: folds when must call (no check available)', () => {
+  it('check_fold: folds when must call (no check available)', () => {
     const actions: ActionType[] = ['fold', 'call', 'raise'];
-    expect(resolvePreAction('fold_to_bet', actions)).toBe('fold');
+    expect(resolvePreAction('check_fold', actions)).toBe('fold');
   });
 
-  it('fold_to_bet: cancels when check is available (nobody bet)', () => {
+  it('check_fold: checks when check is available (nobody bet)', () => {
     const actions: ActionType[] = ['check', 'bet'];
-    expect(resolvePreAction('fold_to_bet', actions)).toBeNull();
+    expect(resolvePreAction('check_fold', actions)).toBe('check');
   });
 
   it('auto_check: checks when check is available', () => {
@@ -18,9 +18,11 @@ describe('resolvePreAction', () => {
     expect(resolvePreAction('auto_check', actions)).toBe('check');
   });
 
-  it('auto_check: cancels when check is not available (must call)', () => {
+  it('auto_check: cancels when check is not available (must call) — never folds', () => {
     const actions: ActionType[] = ['fold', 'call', 'raise'];
-    expect(resolvePreAction('auto_check', actions)).toBeNull();
+    const result = resolvePreAction('auto_check', actions);
+    expect(result).toBeNull();
+    expect(result).not.toBe('fold');
   });
 
   it('returns null when no pre-action is set', () => {

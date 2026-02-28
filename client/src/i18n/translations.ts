@@ -67,7 +67,7 @@ const en = {
   action_all_in_preset: 'All-in',
 
   // Pre-action buttons
-  preaction_fold_to_bet: 'Fold to any bet',
+  preaction_check_fold: 'Check / Fold',
   preaction_check: 'Check',
 
   // Rebuy prompt
@@ -214,7 +214,7 @@ export const translations: Record<Language, Translations> = {
     action_all_in_preset: 'All-in',
 
     // Pre-action buttons
-    preaction_fold_to_bet: 'Fold mihin tahansa',
+    preaction_check_fold: 'Check / Fold',
     preaction_check: 'Check',
 
     // Rebuy prompt

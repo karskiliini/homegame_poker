@@ -1,6 +1,6 @@
 import type { ActionType } from './types/hand.js';
 
-export type PreActionType = 'fold_to_bet' | 'auto_check';
+export type PreActionType = 'check_fold' | 'auto_check';
 
 export function resolvePreAction(
   preAction: PreActionType | null,
@@ -8,12 +8,16 @@ export function resolvePreAction(
 ): ActionType | null {
   if (!preAction) return null;
 
-  if (preAction === 'fold_to_bet') {
-    return !availableActions.includes('check') ? 'fold' : null;
+  if (preAction === 'check_fold') {
+    // Check/Fold: check when possible, fold when someone bet/raised
+    if (availableActions.includes('check')) return 'check';
+    return 'fold';
   }
 
   if (preAction === 'auto_check') {
-    return availableActions.includes('check') ? 'check' : null;
+    // Auto-check: check when possible, cancel (do nothing) when someone bet/raised
+    if (availableActions.includes('check')) return 'check';
+    return null;
   }
 
   return null;

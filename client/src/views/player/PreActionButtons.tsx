@@ -16,10 +16,10 @@ export function PreActionButtons({ preAction, setPreAction }: PreActionButtonsPr
   return (
     <div className="flex gap-3 justify-center py-4">
       <PreActionToggle
-        label={t('preaction_fold_to_bet')}
-        active={preAction === 'fold_to_bet'}
+        label={t('preaction_check_fold')}
+        active={preAction === 'check_fold'}
         color="fold"
-        onClick={() => toggle('fold_to_bet')}
+        onClick={() => toggle('check_fold')}
       />
       <PreActionToggle
         label={t('preaction_check')}
