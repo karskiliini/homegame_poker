@@ -8,6 +8,7 @@ import { LoginScreen } from './LoginScreen.js';
 import { LobbyScreen } from './LobbyScreen.js';
 import { GameScreen } from './GameScreen.js';
 import { TableLobbyScreen } from './TableLobbyScreen.js';
+import { WatchingScreen } from './WatchingScreen.js';
 import { RunItTwicePrompt } from './RunItTwicePrompt.js';
 import { ShowCardsPrompt } from './ShowCardsPrompt.js';
 import { RebuyPrompt } from './RebuyPrompt.js';
@@ -124,7 +125,7 @@ export function PlayerView() {
     setCurrentTableId(null);
     setLobbyState(null);
     setPrivateState(null);
-    setScreen('table_lobby');
+    setScreen('watching');
   }, [setCurrentTableId, setLobbyState, setPrivateState, setScreen]);
 
   const toggleSound = useCallback(() => {
@@ -161,6 +162,8 @@ export function PlayerView() {
         return <LoginScreen />;
       case 'table_lobby':
         return <TableLobbyScreen socket={socketRef.current} />;
+      case 'watching':
+        return <WatchingScreen playerSocket={socketRef.current} />;
       case 'lobby':
         return <LobbyScreen />;
       case 'game':

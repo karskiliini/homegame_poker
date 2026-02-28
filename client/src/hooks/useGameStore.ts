@@ -51,9 +51,13 @@ interface GameStore {
   privateState: PrivatePlayerState | null;
   setPrivateState: (state: PrivatePlayerState) => void;
 
+  // Watching state
+  watchingTableId: string | null;
+  setWatchingTableId: (id: string | null) => void;
+
   // UI state
-  screen: 'login' | 'table_lobby' | 'lobby' | 'game';
-  setScreen: (screen: 'login' | 'table_lobby' | 'lobby' | 'game') => void;
+  screen: 'login' | 'table_lobby' | 'watching' | 'lobby' | 'game';
+  setScreen: (screen: 'login' | 'table_lobby' | 'watching' | 'lobby' | 'game') => void;
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -77,6 +81,9 @@ export const useGameStore = create<GameStore>((set) => ({
 
   lobbyState: null,
   setLobbyState: (lobbyState) => set({ lobbyState }),
+
+  watchingTableId: null,
+  setWatchingTableId: (watchingTableId) => set({ watchingTableId }),
 
   gameState: null,
   setGameState: (gameState) => set({ gameState }),
