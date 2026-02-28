@@ -111,9 +111,9 @@ export class GameManager {
 
     const player: Player = {
       id: uuidv4(), name: name.trim(), seatIndex, stack: buyIn,
-      status: 'waiting', isConnected: true, isReady: false,
+      status: 'waiting', isConnected: true, isReady: true,
       runItTwicePreference: 'ask', autoMuck: false, disconnectedAt: null,
-      avatarId: avatarId || 'ninja',
+      avatarId: avatarId || 'link',
     };
 
     this.players.set(socket.id, player);

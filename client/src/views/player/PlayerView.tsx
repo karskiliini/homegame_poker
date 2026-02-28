@@ -162,7 +162,7 @@ export function PlayerView() {
       case 'table_lobby':
         return <TableLobbyScreen socket={socketRef.current} />;
       case 'lobby':
-        return <LobbyScreen socket={socketRef.current} />;
+        return <LobbyScreen />;
       case 'game':
         return <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} />;
       default:

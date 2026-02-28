@@ -54,6 +54,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         gm.broadcastLobbyState();
         gm.broadcastTableState();
         tableManager.broadcastTableList();
+        gm.checkStartGame();
       }
     });
 
@@ -91,15 +92,6 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         currentTableId = targetTableId;
         socket.leave('lobby');
       }
-    });
-
-    socket.on(C2S.READY, () => {
-      if (!currentTableId) return;
-      const gm = tableManager.getTable(currentTableId);
-      if (!gm) return;
-      gm.setPlayerReady(socket.id);
-      gm.broadcastLobbyState();
-      gm.checkStartGame();
     });
 
     socket.on(C2S.ACTION, (data: { action: string; amount?: number }) => {

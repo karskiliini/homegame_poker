@@ -1,17 +1,10 @@
-import type { Socket } from 'socket.io-client';
-import { C2S } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 
-interface LobbyScreenProps {
-  socket: Socket;
-}
-
-export function LobbyScreen({ socket }: LobbyScreenProps) {
+export function LobbyScreen() {
   const { lobbyState, config } = useGameStore();
 
-  const handleReady = () => {
-    socket.emit(C2S.READY);
-  };
+  const playerCount = lobbyState?.players.length ?? 0;
+  const minPlayers = config?.minPlayers ?? 2;
 
   return (
     <div
@@ -33,10 +26,8 @@ export function LobbyScreen({ socket }: LobbyScreenProps) {
             className="flex items-center justify-between px-4 py-3"
             style={{
               borderRadius: 8,
-              background: p.isReady
-                ? 'rgba(22, 163, 74, 0.15)'
-                : 'rgba(0, 0, 0, 0.3)',
-              border: `1px solid ${p.isReady ? 'rgba(22, 163, 74, 0.3)' : 'rgba(255,255,255,0.08)'}`,
+              background: 'rgba(22, 163, 74, 0.15)',
+              border: '1px solid rgba(22, 163, 74, 0.3)',
             }}
           >
             <div className="flex items-center gap-2">
@@ -45,9 +36,7 @@ export function LobbyScreen({ socket }: LobbyScreenProps) {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: p.isConnected
-                    ? (p.isReady ? '#4ADE80' : '#FBBF24')
-                    : '#EF4444',
+                  background: p.isConnected ? '#4ADE80' : '#EF4444',
                 }}
               />
               <span className="font-semibold" style={{ color: '#FFFFFF', fontSize: 14 }}>
@@ -61,33 +50,12 @@ export function LobbyScreen({ socket }: LobbyScreenProps) {
         ))}
       </div>
 
-      {/* Ready status */}
+      {/* Status */}
       <div className="mb-4" style={{ color: 'var(--ftp-text-secondary)', fontSize: 13 }}>
-        {lobbyState
-          ? `${lobbyState.readyCount}/${lobbyState.neededCount} ready`
-          : 'Loading...'}
+        {playerCount < minPlayers
+          ? `Waiting for players... (${playerCount}/${minPlayers})`
+          : 'Starting...'}
       </div>
-
-      {/* Ready button */}
-      <button
-        onClick={handleReady}
-        className="w-full max-w-sm"
-        style={{
-          padding: '16px 24px',
-          borderRadius: 8,
-          background: 'linear-gradient(180deg, #16A34A, #15803D)',
-          color: 'white',
-          fontWeight: 700,
-          fontSize: 18,
-          border: 'none',
-          cursor: 'pointer',
-          boxShadow: '0 4px 0 #14532D, 0 6px 12px rgba(0,0,0,0.3)',
-          textTransform: 'uppercase',
-          letterSpacing: 1,
-        }}
-      >
-        Ready
-      </button>
     </div>
   );
 }

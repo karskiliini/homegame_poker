@@ -1,6 +1,5 @@
 export const C2S = {
   JOIN: 'player:join',
-  READY: 'player:ready',
   REBUY: 'player:rebuy',
   SIT_OUT: 'player:sit_out',
   ACTION: 'player:action',

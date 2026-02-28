@@ -69,8 +69,7 @@ describe('Rebuy prompt', () => {
     gm.addPlayer(sockAlice, 'Alice', 2);
     gm.addPlayer(sockBob, 'Bob', 200);
 
-    gm.setPlayerReady('sock-alice');
-    gm.setPlayerReady('sock-bob');
+    // Players are auto-ready on join, just start the game
     gm.checkStartGame();
 
     // Process card dealing + pre-action delay
