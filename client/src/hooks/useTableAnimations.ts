@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { S2C_TABLE } from '@poker/shared';
-import type { GameState, SoundType, CardString } from '@poker/shared';
+import { S2C_TABLE, CHIP_TRICK_DURATION_MS } from '@poker/shared';
+import type { GameState, SoundType, CardString, ChipTrickType } from '@poker/shared';
 import { SEAT_POSITIONS, BET_POSITIONS } from '../views/table/PokerTable.js';
 import type { BetChipAnimation, DealCardAnimation } from '../views/table/PokerTable.js';
 import { tableSoundManager } from '../audio/SoundManager.js';
@@ -36,6 +36,11 @@ export interface BadBeatData {
   playerName: string;
 }
 
+export interface ChipTrickData {
+  seatIndex: number;
+  trickType: ChipTrickType;
+}
+
 interface UseTableAnimationsResult {
   potAwards: PotAward[] | undefined;
   winnerSeats: number[];
@@ -48,6 +53,7 @@ interface UseTableAnimationsResult {
   equities: Record<number, number> | null;
   dramaticRiver: boolean;
   badBeat: BadBeatData | null;
+  chipTrick: ChipTrickData | null;
 }
 
 let animId = 0;
@@ -71,6 +77,7 @@ export function useTableAnimations({
   const [equities, setEquities] = useState<Record<number, number> | null>(null);
   const [dramaticRiver, setDramaticRiver] = useState(false);
   const [badBeat, setBadBeat] = useState<BadBeatData | null>(null);
+  const [chipTrick, setChipTrick] = useState<ChipTrickData | null>(null);
 
   // Helper: resolve display position for a seat index (respects rotation)
   const getSeatPos = (seatIndex: number) => {
@@ -205,10 +212,8 @@ export function useTableAnimations({
       setTimeout(() => {
         setPotAwards(undefined);
         setAwardingPotIndex(null);
-        if (data.isLastPot) {
-          setTimeout(() => setWinnerSeats([]), 500);
-        }
-      }, 1000);
+        // Winner glow stays until onHandResult clears it
+      }, 1500);
     };
 
     const onPlayerTimer = (data: { seatIndex: number; secondsRemaining: number }) => {
@@ -257,10 +262,16 @@ export function useTableAnimations({
       setTimeout(() => setBadBeat(null), 5000);
     };
 
+    const onChipTrick = (data: ChipTrickData) => {
+      setChipTrick(data);
+      setTimeout(() => setChipTrick(null), CHIP_TRICK_DURATION_MS);
+    };
+
     const onHandResult = () => {
-      // Clear equity display when hand completes
       setEquities(null);
       setDramaticRiver(false);
+      // Keep winner glow visible for 2s after hand result so players can see who won
+      setTimeout(() => setWinnerSeats([]), 2000);
     };
 
     socket.on(S2C_TABLE.GAME_STATE, onGameState);
@@ -275,6 +286,7 @@ export function useTableAnimations({
     socket.on(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
     socket.on(S2C_TABLE.STREET_DEAL, onStreetDeal);
     socket.on(S2C_TABLE.BAD_BEAT, onBadBeat);
+    socket.on(S2C_TABLE.CHIP_TRICK, onChipTrick);
     socket.on(S2C_TABLE.HAND_RESULT, onHandResult);
 
     return () => {
@@ -290,6 +302,7 @@ export function useTableAnimations({
       socket.off?.(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
       socket.off?.(S2C_TABLE.STREET_DEAL, onStreetDeal);
       socket.off?.(S2C_TABLE.BAD_BEAT, onBadBeat);
+      socket.off?.(S2C_TABLE.CHIP_TRICK, onChipTrick);
       socket.off?.(S2C_TABLE.HAND_RESULT, onHandResult);
     };
   }, [socket, enableSound, seatRotation]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -306,5 +319,6 @@ export function useTableAnimations({
     equities,
     dramaticRiver,
     badBeat,
+    chipTrick,
   };
 }

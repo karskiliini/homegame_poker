@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
-import { C2S, C2S_TABLE, resolvePreAction } from '@poker/shared';
+import { C2S, C2S_TABLE, resolvePreAction, CHIP_TRICK_MIN_STACK } from '@poker/shared';
 import type { PreActionType } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { useTableAnimations } from '../../hooks/useTableAnimations.js';
@@ -67,7 +67,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
     potAwards, winnerSeats, awardingPotIndex,
     timerData, collectingBets, potGrow,
     betChipAnimations, dealCardAnimations,
-    equities, dramaticRiver, badBeat,
+    equities, dramaticRiver, badBeat, chipTrick,
   } = useTableAnimations({
     socket: tableSocketRef.current,
     containerRef: tableContainerRef,
@@ -127,6 +127,12 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   const isHandActive = lobbyState?.phase === 'hand_in_progress';
   const showActions = privateState?.isMyTurn && isHandActive && (privateState?.availableActions.length ?? 0) > 0;
   const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && !isSittingOut && !isBusted && (privateState?.holeCards.length ?? 0) > 0;
+
+  const handleChipTrick = useCallback(() => {
+    if ((privateState?.stack ?? 0) >= CHIP_TRICK_MIN_STACK) {
+      socket.emit(C2S.CHIP_TRICK);
+    }
+  }, [socket, privateState?.stack]);
 
   const config = gameState?.config;
 
@@ -195,6 +201,8 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               onMyAvatarClick={() => setShowAvatarPicker(true)}
               speechBubble={speechBubble}
               onSpeechBubbleDone={onSpeechBubbleDone}
+              chipTrick={chipTrick}
+              onChipTrickClick={handleChipTrick}
             />
           </div>
         ) : (

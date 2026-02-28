@@ -14,6 +14,7 @@ export const C2S = {
   AUTO_MUCK: 'player:auto_muck',
   CHAT: 'player:chat',
   UPDATE_AVATAR: 'player:update_avatar',
+  CHIP_TRICK: 'player:chip_trick',
 } as const;
 
 export const S2C_PLAYER = {
@@ -83,4 +84,5 @@ export const S2C_TABLE = {
   EQUITY_UPDATE: 'table:equity_update',
   CHAT_MESSAGE: 'table:chat_message',
   BAD_BEAT: 'table:bad_beat',
+  CHIP_TRICK: 'table:chip_trick',
 } as const;

@@ -28,6 +28,8 @@ interface PlayerSeatProps {
   cardsBelow?: boolean;
   /** Called when this player's avatar is clicked (for avatar change). */
   onAvatarClick?: () => void;
+  /** Called when stack area is clicked (chip trick trigger) */
+  onChipTrickClick?: () => void;
 }
 
 function useDcCountdown(disconnectedAt: number | null): string | null {
@@ -58,7 +60,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardsBelow, onAvatarClick }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardsBelow, onAvatarClick, onChipTrickClick }: PlayerSeatProps) {
   const { gradients, assets } = useTheme();
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
@@ -205,10 +207,12 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         {/* Stack */}
         <div
           className="font-mono tabular-nums"
+          onClick={onChipTrickClick}
           style={{
             fontSize: 12,
             color: isActive ? '#8B6914' : '#555555',
             fontWeight: 600,
+            cursor: onChipTrickClick ? 'pointer' : 'default',
           }}
         >
           {player.stack.toLocaleString()}

@@ -12,6 +12,8 @@ import {
   DELAY_AFTER_PLAYER_ACTED_MS, DELAY_SHOWDOWN_TO_RESULT_MS,
   DELAY_POT_AWARD_MS, START_COUNTDOWN_MS,
   DELAY_AFTER_ALLIN_SHOWDOWN_MS, DELAY_ALLIN_RUNOUT_STREET_MS, DELAY_DRAMATIC_RIVER_MS,
+  DELAY_BAD_BEAT_TO_RESULT_MS, DELAY_BETWEEN_POT_AWARDS_MS,
+  CHIP_TRICK_COOLDOWN_MS, CHIP_TRICK_MIN_STACK, CHIP_TRICK_DURATION_MS, CHIP_TRICK_TYPES,
 } from '@poker/shared';
 import { HandEngine } from './HandEngine.js';
 import type { HandEngineEvent, HandResult, ShowdownEntry } from './HandEngine.js';
@@ -69,6 +71,9 @@ export class GameManager {
 
   private chatRateLimit: Map<string, number> = new Map();
   private chatMessageCounter = 0;
+
+  private lastChipTrickTime = 0;
+  private chipTrickActive = false;
 
   constructor(config: GameConfig, io: Server, tableId: string, onEmpty?: () => void) {
     this.config = config;
@@ -300,6 +305,7 @@ export class GameManager {
     }
     if (event.type === 'showdown' && (this.lastProcessedEventType === 'street_dealt' || this.lastProcessedEventType === 'second_board_dealt')) return DELAY_AFTER_STREET_DEALT_MS;
     if (event.type === 'hand_complete' && this.lastProcessedEventType === 'showdown') return DELAY_SHOWDOWN_TO_RESULT_MS;
+    if (event.type === 'hand_complete' && this.lastProcessedEventType === 'bad_beat') return DELAY_SHOWDOWN_TO_RESULT_MS + DELAY_BAD_BEAT_TO_RESULT_MS;
     return 0;
   }
 
@@ -528,36 +534,68 @@ export class GameManager {
     for (const pot of result.pots) { for (const w of pot.winners) console.log(`${w.playerName} wins ${w.amount} from ${pot.name}${pot.winningHand ? ' (' + pot.winningHand + ')' : ''}`); }
     console.log(`Final stacks: ${result.players.map(p => `${p.name}=${p.currentStack}(was ${p.startingStack})`).join(', ')}`);
     this.storeHandHistory(result);
-    const potAwards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string; winningHand?: string }[] = [];
+
+    // Build per-pot award groups for sequential emission
+    const potGroups: { potIndex: number; awards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string; winningHand?: string }[] }[] = [];
     for (let i = 0; i < result.pots.length; i++) {
       const pot = result.pots[i];
-      for (const winner of pot.winners) { const hp = result.players.find(p => p.playerId === winner.playerId); if (hp) potAwards.push({ potIndex: i, amount: winner.amount, winnerSeatIndex: hp.seatIndex, winnerName: winner.playerName, winningHand: pot.winningHand }); }
+      const awards: typeof potGroups[0]['awards'] = [];
+      for (const winner of pot.winners) {
+        const hp = result.players.find(p => p.playerId === winner.playerId);
+        if (hp) awards.push({ potIndex: i, amount: winner.amount, winnerSeatIndex: hp.seatIndex, winnerName: winner.playerName, winningHand: pot.winningHand });
+      }
+      if (awards.length > 0) potGroups.push({ potIndex: i, awards });
     }
-    this.emitToTableRoom(S2C_TABLE.POT_AWARD, { awards: potAwards });
-    this.emitSound('chip_win');
-    setTimeout(() => {
-      this.emitToTableRoom(S2C_TABLE.HAND_RESULT, { pots: result.pots });
-      for (const hp of result.players) {
-        const socketId = this.playerIdToSocketId.get(hp.playerId);
-        if (socketId) {
-          const socket = this.socketMap.get(socketId);
-          const player = this.players.get(socketId);
-          if (socket && player) {
-            socket.emit(S2C_PLAYER.HAND_RESULT, { pots: result.pots, netResult: hp.currentStack - hp.startingStack, finalStack: hp.currentStack });
-            if (hp.currentStack <= 0) {
-              const deadline = Date.now() + REBUY_PROMPT_MS;
-              socket.emit(S2C_PLAYER.REBUY_PROMPT, { maxBuyIn: this.config.maxBuyIn, deadline });
-              const timer = setTimeout(() => { this.pendingRebuyPrompts.delete(socketId); this.handleSitOut(socketId); }, REBUY_PROMPT_MS);
-              this.pendingRebuyPrompts.set(socketId, timer);
-            }
+
+    // Emit pot awards sequentially with delays between them
+    const emitPotAward = (groupIdx: number) => {
+      if (groupIdx >= potGroups.length) {
+        // All pots awarded — proceed to hand result after visibility delay
+        setTimeout(() => this.afterAllPotsAwarded(result), DELAY_POT_AWARD_MS);
+        return;
+      }
+      const group = potGroups[groupIdx];
+      const isLastPot = groupIdx === potGroups.length - 1;
+      this.emitToTableRoom(S2C_TABLE.POT_AWARD, {
+        awards: group.awards,
+        potIndex: group.potIndex,
+        isLastPot,
+        totalPots: potGroups.length,
+      });
+      this.emitSound('chip_win');
+
+      if (!isLastPot) {
+        setTimeout(() => emitPotAward(groupIdx + 1), DELAY_BETWEEN_POT_AWARDS_MS);
+      } else {
+        setTimeout(() => this.afterAllPotsAwarded(result), DELAY_POT_AWARD_MS);
+      }
+    };
+
+    emitPotAward(0);
+  }
+
+  private afterAllPotsAwarded(result: HandResult) {
+    this.emitToTableRoom(S2C_TABLE.HAND_RESULT, { pots: result.pots });
+    for (const hp of result.players) {
+      const socketId = this.playerIdToSocketId.get(hp.playerId);
+      if (socketId) {
+        const socket = this.socketMap.get(socketId);
+        const player = this.players.get(socketId);
+        if (socket && player) {
+          socket.emit(S2C_PLAYER.HAND_RESULT, { pots: result.pots, netResult: hp.currentStack - hp.startingStack, finalStack: hp.currentStack });
+          if (hp.currentStack <= 0) {
+            const deadline = Date.now() + REBUY_PROMPT_MS;
+            socket.emit(S2C_PLAYER.REBUY_PROMPT, { maxBuyIn: this.config.maxBuyIn, deadline });
+            const timer = setTimeout(() => { this.pendingRebuyPrompts.delete(socketId); this.handleSitOut(socketId); }, REBUY_PROMPT_MS);
+            this.pendingRebuyPrompts.set(socketId, timer);
           }
         }
       }
-      this.sendClearedPrivateStateToAll();
-      this.offerShowCards(result);
-      this.broadcastTableState();
-      if (this.pendingShowCards.size === 0) this.scheduleNextHand();
-    }, DELAY_POT_AWARD_MS);
+    }
+    this.sendClearedPrivateStateToAll();
+    this.offerShowCards(result);
+    this.broadcastTableState();
+    if (this.pendingShowCards.size === 0) this.scheduleNextHand();
   }
 
   private scheduleNextHand() {
@@ -795,6 +833,26 @@ export class GameManager {
     player.avatarId = avatarId;
     this.broadcastLobbyState();
     this.broadcastTableState();
+  }
+
+  handleChipTrick(socketId: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+    if (player.stack < CHIP_TRICK_MIN_STACK) return;
+    if (this.chipTrickActive) return;
+
+    const now = Date.now();
+    if (now - this.lastChipTrickTime < CHIP_TRICK_COOLDOWN_MS) return;
+
+    this.lastChipTrickTime = now;
+    this.chipTrickActive = true;
+
+    const trickType = CHIP_TRICK_TYPES[Math.floor(Math.random() * CHIP_TRICK_TYPES.length)];
+    this.emitToTableRoom(S2C_TABLE.CHIP_TRICK, { seatIndex: player.seatIndex, trickType });
+
+    setTimeout(() => {
+      this.chipTrickActive = false;
+    }, CHIP_TRICK_DURATION_MS);
   }
 
   handleSitOut(socketId: string) {

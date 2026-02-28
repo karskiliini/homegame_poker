@@ -21,6 +21,15 @@ export const START_COUNTDOWN_MS = 5000;
 export const DELAY_AFTER_ALLIN_SHOWDOWN_MS = 2000;
 export const DELAY_ALLIN_RUNOUT_STREET_MS = 2500; // Between streets during all-in runout (longer so players can see equity %)
 export const DELAY_DRAMATIC_RIVER_MS = 3500;
+export const DELAY_BAD_BEAT_TO_RESULT_MS = 3000; // Extra pause after bad beat animation before pot award
+export const DELAY_BETWEEN_POT_AWARDS_MS = 2000; // Pause between sequential side pot awards
 
 // Disconnect timeout: remove player from table after this duration
 export const DISCONNECT_TIMEOUT_MS = 30_000;
+
+// Chip trick animation
+export const CHIP_TRICK_COOLDOWN_MS = 3000;
+export const CHIP_TRICK_MIN_STACK = 100;
+export const CHIP_TRICK_DURATION_MS = 2500;
+export type ChipTrickType = 'riffle' | 'thumb_flip' | 'twirl' | 'knuckle_roll';
+export const CHIP_TRICK_TYPES: ChipTrickType[] = ['riffle', 'thumb_flip', 'twirl', 'knuckle_roll'];

@@ -12,7 +12,8 @@ import { SpeechBubble } from './SpeechBubble.js';
 import { useT } from '../../hooks/useT.js';
 import { useTheme } from '../../themes/useTheme.js';
 import { BadBeatBubble } from './BadBeatBubble.js';
-import type { BadBeatData } from '../../hooks/useTableAnimations.js';
+import { ChipTrickAnimation } from './ChipTrickAnimation.js';
+import type { BadBeatData, ChipTrickData } from '../../hooks/useTableAnimations.js';
 
 // Virtual table dimensions — defines the fixed aspect ratio (18:11)
 // Both TV and phone views use these to scale the table via CSS transform
@@ -116,6 +117,10 @@ interface PokerTableProps {
   speechBubble?: ChatMessage | null;
   /** Called when the speech bubble timer expires */
   onSpeechBubbleDone?: () => void;
+  /** Active chip trick animation */
+  chipTrick?: ChipTrickData | null;
+  /** Called when own chip stack is clicked (triggers chip trick) */
+  onChipTrickClick?: () => void;
 }
 
 // Table center in percentage coordinates
@@ -173,6 +178,7 @@ export function PokerTable({
   mySeatIndex, myPlayerId, myHoleCards, highlightMySeat,
   equities, dramaticRiver, badBeat, onSeatClick, onMyAvatarClick,
   speechBubble, onSpeechBubbleDone,
+  chipTrick, onChipTrickClick,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const numHoleCards = config.gameType === 'PLO' ? 4 : 2;
@@ -234,7 +240,7 @@ export function PokerTable({
 
     const timer = setTimeout(() => {
       setChipAnimations([]);
-    }, 800);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [potAwards, getDisplaySeatPos]);
@@ -784,6 +790,7 @@ export function PokerTable({
                   numHoleCards={numHoleCards}
                   cardsBelow={pos.y < 50}
                   onAvatarClick={myPlayerId && player && player.id === myPlayerId ? onMyAvatarClick : undefined}
+                  onChipTrickClick={myPlayerId && player?.id === myPlayerId ? onChipTrickClick : undefined}
                 />
                 {badBeat && badBeat.loserSeatIndex === seatIndex && (
                   <BadBeatBubble seatIndex={seatIndex} playerName={badBeat.playerName} />
@@ -847,6 +854,23 @@ export function PokerTable({
           D
         </div>
       )}
+
+      {/* Chip trick animation at seat */}
+      {chipTrick && (() => {
+        const pos = getDisplaySeatPos(chipTrick.seatIndex);
+        return (
+          <div
+            className="absolute -translate-x-1/2 pointer-events-none"
+            style={{
+              left: `${pos.x}%`,
+              top: `${pos.y - 14}%`,
+              zIndex: 55,
+            }}
+          >
+            <ChipTrickAnimation trickType={chipTrick.trickType} />
+          </div>
+        );
+      })()}
 
       {/* Speech bubble above active seat */}
       {speechBubble && onSpeechBubbleDone && (() => {
