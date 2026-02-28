@@ -13,6 +13,7 @@ export const DELAY_AFTER_STREET_DEALT_MS = 1500;
 export const DELAY_AFTER_PLAYER_ACTED_MS = 800;
 export const DELAY_SHOWDOWN_TO_RESULT_MS = 3000;
 export const DELAY_POT_AWARD_MS = 1500;
+export const DELAY_SHOWDOWN_REVEAL_INTERVAL_MS = 500;
 
 // Game start countdown (after min players ready)
 export const START_COUNTDOWN_MS = 5000;

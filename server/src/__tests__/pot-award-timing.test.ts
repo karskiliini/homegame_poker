@@ -8,6 +8,7 @@ import {
   DELAY_BETWEEN_POT_AWARDS_MS,
   DELAY_SHOWDOWN_TO_RESULT_MS,
   DELAY_BAD_BEAT_TO_RESULT_MS,
+  DELAY_SHOWDOWN_REVEAL_INTERVAL_MS,
 } from '@poker/shared';
 import type { HandResult } from '../game/HandEngine.js';
 
@@ -254,7 +255,7 @@ describe('Pot award timing', () => {
   it('calls scheduleNextHand after all pot awards and DELAY_POT_AWARD_MS', () => {
     const result = makeSinglePotResult();
     result.showdownResults = [
-      { playerId: 'p1', seatIndex: 0, holeCards: ['Ah', 'Kh'], handName: 'High Card', handDescription: 'Ace high', shown: true },
+      { playerId: 'p1', seatIndex: 0, holeCards: ['Ah', 'Kh'], handName: 'High Card', handDescription: 'Ace high', shown: true, handRank: 100, action: 'show' as const },
     ];
     (gm as any).phase = 'hand_in_progress';
     (gm as any).playerIdToSocketId.set('p1', 'sock-1');
@@ -273,21 +274,53 @@ describe('Pot award timing', () => {
 });
 
 describe('Bad beat delay', () => {
-  it('hand_complete after bad_beat gets DELAY_SHOWDOWN_TO_RESULT_MS + DELAY_BAD_BEAT_TO_RESULT_MS', () => {
+  it('hand_complete after bad_beat gets dynamic showdown delay + DELAY_BAD_BEAT_TO_RESULT_MS', () => {
     const io = createMockIo();
     const gm = new GameManager(makeConfig(), io, 'test-table');
     // Simulate that the last processed event was bad_beat
     (gm as any).lastProcessedEventType = 'bad_beat';
+    (gm as any).showdownEntryCount = 2;
     const delay = (gm as any).getEventDelay({ type: 'hand_complete', result: {} });
-    expect(delay).toBe(DELAY_SHOWDOWN_TO_RESULT_MS + DELAY_BAD_BEAT_TO_RESULT_MS);
+    const revealDuration = 2 * DELAY_SHOWDOWN_REVEAL_INTERVAL_MS + 1000;
+    expect(delay).toBe(Math.max(DELAY_SHOWDOWN_TO_RESULT_MS, revealDuration) + DELAY_BAD_BEAT_TO_RESULT_MS);
   });
 
-  it('hand_complete after showdown gets only DELAY_SHOWDOWN_TO_RESULT_MS', () => {
+  it('hand_complete after showdown gets dynamic delay based on entry count (2 players)', () => {
     const io = createMockIo();
     const gm = new GameManager(makeConfig(), io, 'test-table');
     (gm as any).lastProcessedEventType = 'showdown';
+    (gm as any).showdownEntryCount = 2;
+    const delay = (gm as any).getEventDelay({ type: 'hand_complete', result: {} });
+    const revealDuration = 2 * DELAY_SHOWDOWN_REVEAL_INTERVAL_MS + 1000;
+    expect(delay).toBe(Math.max(DELAY_SHOWDOWN_TO_RESULT_MS, revealDuration));
+  });
+
+  it('hand_complete after showdown uses DELAY_SHOWDOWN_TO_RESULT_MS as minimum', () => {
+    const io = createMockIo();
+    const gm = new GameManager(makeConfig(), io, 'test-table');
+    (gm as any).lastProcessedEventType = 'showdown';
+    (gm as any).showdownEntryCount = 2; // 2 * 500 + 1000 = 2000, less than 3000
     const delay = (gm as any).getEventDelay({ type: 'hand_complete', result: {} });
     expect(delay).toBe(DELAY_SHOWDOWN_TO_RESULT_MS);
+  });
+
+  it('hand_complete after showdown scales up with more players', () => {
+    const io = createMockIo();
+    const gm = new GameManager(makeConfig(), io, 'test-table');
+    (gm as any).lastProcessedEventType = 'showdown';
+    (gm as any).showdownEntryCount = 6; // 6 * 500 + 1000 = 4000, more than 3000
+    const delay = (gm as any).getEventDelay({ type: 'hand_complete', result: {} });
+    expect(delay).toBe(6 * DELAY_SHOWDOWN_REVEAL_INTERVAL_MS + 1000);
+  });
+
+  it('hand_complete after bad_beat includes reveal duration plus bad beat delay', () => {
+    const io = createMockIo();
+    const gm = new GameManager(makeConfig(), io, 'test-table');
+    (gm as any).lastProcessedEventType = 'bad_beat';
+    (gm as any).showdownEntryCount = 2;
+    const delay = (gm as any).getEventDelay({ type: 'hand_complete', result: {} });
+    const revealDuration = 2 * DELAY_SHOWDOWN_REVEAL_INTERVAL_MS + 1000;
+    expect(delay).toBe(Math.max(DELAY_SHOWDOWN_TO_RESULT_MS, revealDuration) + DELAY_BAD_BEAT_TO_RESULT_MS);
   });
 });
 

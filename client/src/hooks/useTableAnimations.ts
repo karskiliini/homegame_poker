@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { S2C_TABLE, CHIP_TRICK_DURATION_MS } from '@poker/shared';
+import { S2C_TABLE, CHIP_TRICK_DURATION_MS, DELAY_SHOWDOWN_REVEAL_INTERVAL_MS } from '@poker/shared';
 import type { GameState, SoundType, CardString, ChipTrickType } from '@poker/shared';
 import { SEAT_POSITIONS, BET_POSITIONS } from '../views/table/PokerTable.js';
 import type { BetChipAnimation, DealCardAnimation } from '../views/table/PokerTable.js';
@@ -254,6 +254,47 @@ export function useTableAnimations({
       }
     };
 
+    const onShowdown = (data: { reveals: { seatIndex: number; cards: CardString[]; handName: string; handDescription: string; action: 'show' | 'muck' }[] }) => {
+      const current = gameStateRef.current;
+      if (!current) return;
+
+      // If cards are already visible (all-in showdown), skip sequential reveal
+      const alreadyRevealed = current.players.some(p => p.holeCards && p.holeCards.length > 0);
+      if (alreadyRevealed) return;
+
+      data.reveals.forEach((entry, i) => {
+        setTimeout(() => {
+          const latest = gameStateRef.current;
+          if (!latest) return;
+
+          if (entry.action === 'show') {
+            const updated = {
+              ...latest,
+              players: latest.players.map(p =>
+                p.seatIndex === entry.seatIndex
+                  ? { ...p, holeCards: entry.cards }
+                  : p
+              ),
+            };
+            gameStateRef.current = updated;
+            setGameState(updated);
+          } else {
+            // Muck: remove cards (triggers fold exit animation via AnimatePresence)
+            const updated = {
+              ...latest,
+              players: latest.players.map(p =>
+                p.seatIndex === entry.seatIndex
+                  ? { ...p, hasCards: false, holeCards: [] }
+                  : p
+              ),
+            };
+            gameStateRef.current = updated;
+            setGameState(updated);
+          }
+        }, i * DELAY_SHOWDOWN_REVEAL_INTERVAL_MS);
+      });
+    };
+
     const onEquityUpdate = (data: { equities: Record<number, number> }) => {
       setEquities(data.equities);
     };
@@ -293,6 +334,7 @@ export function useTableAnimations({
     socket.on(S2C_TABLE.PLAYER_TIMER, onPlayerTimer);
     socket.on(S2C_TABLE.SECOND_BOARD_DEALT, onSecondBoardDealt);
     socket.on(S2C_TABLE.ALLIN_SHOWDOWN, onAllinShowdown);
+    socket.on(S2C_TABLE.SHOWDOWN, onShowdown);
     socket.on(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
     socket.on(S2C_TABLE.STREET_DEAL, onStreetDeal);
     socket.on(S2C_TABLE.BAD_BEAT, onBadBeat);
@@ -309,6 +351,7 @@ export function useTableAnimations({
       socket.off?.(S2C_TABLE.PLAYER_TIMER, onPlayerTimer);
       socket.off?.(S2C_TABLE.SECOND_BOARD_DEALT, onSecondBoardDealt);
       socket.off?.(S2C_TABLE.ALLIN_SHOWDOWN, onAllinShowdown);
+      socket.off?.(S2C_TABLE.SHOWDOWN, onShowdown);
       socket.off?.(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
       socket.off?.(S2C_TABLE.STREET_DEAL, onStreetDeal);
       socket.off?.(S2C_TABLE.BAD_BEAT, onBadBeat);

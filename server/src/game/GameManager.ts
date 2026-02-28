@@ -12,7 +12,7 @@ import {
   DELAY_AFTER_PLAYER_ACTED_MS, DELAY_SHOWDOWN_TO_RESULT_MS,
   DELAY_POT_AWARD_MS, START_COUNTDOWN_MS,
   DELAY_AFTER_ALLIN_SHOWDOWN_MS, DELAY_ALLIN_RUNOUT_STREET_MS, DELAY_DRAMATIC_RIVER_MS,
-  DELAY_BAD_BEAT_TO_RESULT_MS, DELAY_BETWEEN_POT_AWARDS_MS,
+  DELAY_BAD_BEAT_TO_RESULT_MS, DELAY_BETWEEN_POT_AWARDS_MS, DELAY_SHOWDOWN_REVEAL_INTERVAL_MS,
   CHIP_TRICK_COOLDOWN_MS, CHIP_TRICK_MIN_STACK, CHIP_TRICK_DURATION_MS, CHIP_TRICK_TYPES,
 } from '@poker/shared';
 import { HandEngine } from './HandEngine.js';
@@ -206,6 +206,7 @@ export class GameManager {
     this.lastProcessedEventType = '';
     this.lastStreetWasDramatic = false;
     this.isAllInRunout = false;
+    this.showdownEntryCount = 0;
     if (this.queueTimer) { clearTimeout(this.queueTimer); this.queueTimer = null; }
     if (this.handCompleteWatchdog) { clearTimeout(this.handCompleteWatchdog); this.handCompleteWatchdog = null; }
 
@@ -271,6 +272,7 @@ export class GameManager {
 
   private lastStreetWasDramatic = false;
   private isAllInRunout = false;
+  private showdownEntryCount = 0;
 
   private getEventDelay(event: HandEngineEvent): number {
     if (event.type === 'player_turn') {
@@ -309,8 +311,14 @@ export class GameManager {
       return delay;
     }
     if (event.type === 'showdown' && (this.lastProcessedEventType === 'street_dealt' || this.lastProcessedEventType === 'second_board_dealt')) return DELAY_AFTER_STREET_DEALT_MS;
-    if (event.type === 'hand_complete' && this.lastProcessedEventType === 'showdown') return DELAY_SHOWDOWN_TO_RESULT_MS;
-    if (event.type === 'hand_complete' && this.lastProcessedEventType === 'bad_beat') return DELAY_SHOWDOWN_TO_RESULT_MS + DELAY_BAD_BEAT_TO_RESULT_MS;
+    if (event.type === 'hand_complete' && this.lastProcessedEventType === 'showdown') {
+      const revealDuration = this.showdownEntryCount * DELAY_SHOWDOWN_REVEAL_INTERVAL_MS + 1000;
+      return Math.max(DELAY_SHOWDOWN_TO_RESULT_MS, revealDuration);
+    }
+    if (event.type === 'hand_complete' && this.lastProcessedEventType === 'bad_beat') {
+      const revealDuration = this.showdownEntryCount * DELAY_SHOWDOWN_REVEAL_INTERVAL_MS + 1000;
+      return Math.max(DELAY_SHOWDOWN_TO_RESULT_MS, revealDuration) + DELAY_BAD_BEAT_TO_RESULT_MS;
+    }
     return 0;
   }
 
@@ -381,6 +389,7 @@ export class GameManager {
             this.currentShowdownEntries.push({
               playerId: entry.playerId, seatIndex: entry.seatIndex,
               holeCards: entry.holeCards, handName: '', handDescription: '', shown: true,
+              handRank: 0, action: 'show',
             });
           }
         }
@@ -431,7 +440,8 @@ export class GameManager {
 
       case 'showdown':
         this.currentShowdownEntries = event.entries;
-        this.emitToTableRoom(S2C_TABLE.SHOWDOWN, { reveals: event.entries.map(e => ({ seatIndex: e.seatIndex, cards: e.holeCards, handName: e.handName, handDescription: e.handDescription })) });
+        this.showdownEntryCount = event.entries.length;
+        this.emitToTableRoom(S2C_TABLE.SHOWDOWN, { reveals: event.entries.map(e => ({ seatIndex: e.seatIndex, cards: e.holeCards, handName: e.handName, handDescription: e.handDescription, action: e.action })) });
         break;
 
       case 'bad_beat': {
@@ -660,7 +670,7 @@ export class GameManager {
     if (show) {
       const cards = this.currentPlayerCards.get(player.id);
       if (cards) {
-        this.currentShowdownEntries.push({ playerId: player.id, seatIndex: player.seatIndex, holeCards: cards, handName: 'Shown', handDescription: '', shown: true });
+        this.currentShowdownEntries.push({ playerId: player.id, seatIndex: player.seatIndex, holeCards: cards, handName: 'Shown', handDescription: '', shown: true, handRank: 0, action: 'show' });
         this.broadcastTableState();
         // Send shown cards back to the player so their phone displays them
         const socket = this.socketMap.get(socketId);

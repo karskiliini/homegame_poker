@@ -37,6 +37,8 @@ export interface ShowdownEntry {
   handName: string;
   handDescription: string;
   shown: boolean;
+  handRank: number;
+  action: 'show' | 'muck';
 }
 
 export type HandEngineEvent =
@@ -694,6 +696,8 @@ export class HandEngine {
 
     // Award each pot
     const potResults: PotResult[] = [];
+    const allWinnerPlayerIds = new Set<string>();
+
     for (let i = 0; i < this.pots.length; i++) {
       const pot = this.pots[i];
       const potName = i === 0 ? 'Main Pot' : `Side Pot ${i}`;
@@ -709,6 +713,7 @@ export class HandEngine {
           amount: pot.amount,
           winners: [{ playerId: eligible[0].playerId, playerName: eligible[0].name, amount: pot.amount }],
         });
+        allWinnerPlayerIds.add(eligible[0].playerId);
         continue;
       }
 
@@ -747,6 +752,7 @@ export class HandEngine {
           const player = this.players.find(p => p.playerId === playerId)!;
           player.currentStack += amount;
           winnerResults.push({ playerId, playerName: player.name, amount });
+          allWinnerPlayerIds.add(playerId);
         }
 
         // Combine bestCards from both boards (deduplicated)
@@ -773,6 +779,8 @@ export class HandEngine {
               handName: evalResult.handName,
               handDescription: evalResult.description,
               shown: true,
+              handRank: evalResult.rank,
+              action: 'show', // will be set below
             });
           }
         }
@@ -791,6 +799,7 @@ export class HandEngine {
           const amount = share + (idx === 0 ? remainder : 0);
           const player = this.players.find(p => p.playerId === w.playerId)!;
           player.currentStack += amount;
+          allWinnerPlayerIds.add(w.playerId);
           return { playerId: w.playerId, playerName: player.name, amount };
         });
 
@@ -813,16 +822,42 @@ export class HandEngine {
               handName: evalResult.handName,
               handDescription: evalResult.description,
               shown: true,
+              handRank: evalResult.rank,
+              action: 'show', // will be set below
             });
           }
         }
       }
     }
 
-    this.onEvent({ type: 'showdown', entries: showdownEntries });
+    // Order showdown entries: start from lastAggressorIndex (or first active after dealer), clockwise
+    const startPlayerIndex = this.lastAggressorIndex >= 0
+      ? this.lastAggressorIndex
+      : this.findFirstPostflopActor();
+    const n = this.players.length;
+    const orderedEntries: ShowdownEntry[] = [];
+    for (let i = 0; i < n; i++) {
+      const idx = (startPlayerIndex + i) % n;
+      const entry = showdownEntries.find(e => e.seatIndex === this.players[idx].seatIndex);
+      if (entry) orderedEntries.push(entry);
+    }
+
+    // Assign show/muck actions
+    let bestShownRank = -1;
+    for (let i = 0; i < orderedEntries.length; i++) {
+      const entry = orderedEntries[i];
+      if (i === 0 || allWinnerPlayerIds.has(entry.playerId) || entry.handRank >= bestShownRank) {
+        entry.action = 'show';
+        if (entry.handRank > bestShownRank) bestShownRank = entry.handRank;
+      } else {
+        entry.action = 'muck';
+      }
+    }
+
+    this.onEvent({ type: 'showdown', entries: orderedEntries });
 
     // Check for bad beat: hand-strength detection + equity-based detection
-    const allWinnerIds = [...new Set(potResults.flatMap(p => p.winners.map(w => w.playerId)))];
+    const allWinnerIds = [...allWinnerPlayerIds];
     const badBeatPlayerIds: string[] = [];
 
     // 1) Hand-strength: loser had two pair or better
@@ -849,13 +884,13 @@ export class HandEngine {
     // 2) Equity-based: turn equity >70% but lost in all-in runout
     if (this.turnEquities.size > 0) {
       for (const player of activePlayers) {
-        if (!allWinnerIds.includes(player.playerId) && !badBeatPlayerIds.includes(player.playerId)) {
+        if (!allWinnerPlayerIds.has(player.playerId) && !badBeatPlayerIds.includes(player.playerId)) {
           const turnEq = this.turnEquities.get(player.playerId);
           if (turnEq != null && turnEq > 70) {
             badBeatPlayerIds.push(player.playerId);
             // Emit bad_beat event for equity-based detection too
             const evalResult = evaluateHand(this.gameType, player.holeCards, this.communityCards);
-            const winner = activePlayers.find(p => allWinnerIds.includes(p.playerId));
+            const winner = activePlayers.find(p => allWinnerPlayerIds.has(p.playerId));
             if (winner) {
               const winnerEval = evaluateHand(this.gameType, winner.holeCards, this.communityCards);
               this.onEvent({
@@ -890,7 +925,7 @@ export class HandEngine {
       secondBoard: this.secondBoard ? [...this.secondBoard] : undefined,
       pots: potResults,
       streets: this.streets.map(s => ({ ...s, actions: [...s.actions] })),
-      showdownResults: showdownEntries,
+      showdownResults: orderedEntries,
       badBeatPlayerIds: badBeatPlayerIds.length > 0 ? badBeatPlayerIds : undefined,
     };
 
