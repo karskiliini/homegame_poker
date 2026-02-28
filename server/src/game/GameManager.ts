@@ -109,9 +109,12 @@ export class GameManager {
     }
     if (seatIndex === -1) return { error: 'Table is full' };
 
+    // First player at the table auto-sits-in, others sit out
+    const isFirstPlayer = this.players.size === 0;
     const player: Player = {
       id: uuidv4(), name: name.trim(), seatIndex, stack: buyIn,
-      status: 'sitting_out', isConnected: true, isReady: false,
+      status: isFirstPlayer ? 'waiting' : 'sitting_out',
+      isConnected: true, isReady: isFirstPlayer,
       runItTwicePreference: 'ask', autoMuck: false, disconnectedAt: null,
       avatarId: avatarId || 'link',
     };
@@ -125,7 +128,7 @@ export class GameManager {
     // Send initial private state so client can render immediately
     const initialState: PrivatePlayerState = {
       id: player.id, name: player.name, seatIndex: player.seatIndex, stack: player.stack,
-      status: 'sitting_out', holeCards: [], currentBet: 0, availableActions: [],
+      status: player.status as any, holeCards: [], currentBet: 0, availableActions: [],
       minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
       showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
     };

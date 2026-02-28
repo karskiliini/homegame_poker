@@ -190,6 +190,8 @@ describe('Rebuy prompt', () => {
     gm.handleSitIn('sock-2');
 
     const alice = getPlayer(gm, 'sock-1');
+    alice.status = 'sitting_out';
+    alice.isReady = false;
     alice.stack = 0; // busted scenario
 
     // Simulate what scheduleNextHand does:
