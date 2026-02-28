@@ -5,6 +5,7 @@ import type { StakeLevel } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { VersionInfo } from '../../components/VersionInfo.js';
 import { useT } from '../../hooks/useT.js';
+import { LanguageToggle } from '../../components/LanguageToggle.js';
 
 interface TableLobbyScreenProps {
   socket: Socket;
@@ -65,46 +66,49 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
             {isConnected
               ? `${t('table_lobby_playing_as')} ${playerName}`
-              : 'No server connection'}
+              : t('table_lobby_no_connection')}
           </p>
         </div>
-        {tables.length > 0 && (
-          <button
-            onClick={() => isConnected && !creating && setShowCreateModal(true)}
-            disabled={!isConnected || creating}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              background: !isConnected || creating
-                ? '#555'
-                : 'linear-gradient(180deg, #16A34A, #15803D)',
-              color: 'white',
-              fontWeight: 700,
-              fontSize: 14,
-              border: 'none',
-              cursor: !isConnected || creating ? 'not-allowed' : 'pointer',
-              boxShadow: !isConnected || creating
-                ? 'none'
-                : '0 3px 0 #14532D, 0 4px 8px rgba(0,0,0,0.3)',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              opacity: !isConnected || creating ? 0.5 : 1,
-            }}
-          >
-            {creating ? 'Creating...' : t('table_lobby_create')}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          {tables.length > 0 && (
+            <button
+              onClick={() => isConnected && !creating && setShowCreateModal(true)}
+              disabled={!isConnected || creating}
+              style={{
+                padding: '10px 20px',
+                borderRadius: 8,
+                background: !isConnected || creating
+                  ? '#555'
+                  : 'linear-gradient(180deg, #16A34A, #15803D)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: 14,
+                border: 'none',
+                cursor: !isConnected || creating ? 'not-allowed' : 'pointer',
+                boxShadow: !isConnected || creating
+                  ? 'none'
+                  : '0 3px 0 #14532D, 0 4px 8px rgba(0,0,0,0.3)',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                opacity: !isConnected || creating ? 0.5 : 1,
+              }}
+            >
+              {creating ? t('table_lobby_creating') : t('table_lobby_create')}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table list */}
       {tables.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-4">
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>
-            {isConnected ? t('table_lobby_no_tables') : 'Connecting to server...'}
+            {isConnected ? t('table_lobby_no_tables') : t('table_lobby_connecting')}
           </div>
           {!isConnected && (
             <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', maxWidth: 260 }}>
-              Server is not reachable. Start the server or check your network.
+              {t('table_lobby_server_unreachable')}
             </div>
           )}
           <button
@@ -129,7 +133,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
               opacity: !isConnected || creating ? 0.5 : 1,
             }}
           >
-            {creating ? 'Creating...' : t('table_lobby_create_table')}
+            {creating ? t('table_lobby_creating') : t('table_lobby_create_table')}
           </button>
         </div>
       ) : (
