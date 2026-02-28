@@ -42,6 +42,7 @@ export class GameManager {
   private currentActorSeatIndex: number | null = null;
   private currentPots: { amount: number; eligible: string[] }[] = [];
   private currentShowdownEntries: ShowdownEntry[] = [];
+  private currentSecondBoard: CardString[] = [];
 
   // Show cards tracking
   private pendingShowCards: Set<string> = new Set(); // playerIds offered to show
@@ -170,6 +171,7 @@ export class GameManager {
     this.currentActorSeatIndex = null;
     this.currentPots = [];
     this.currentShowdownEntries = [];
+    this.currentSecondBoard = [];
     this.currentHandPlayers.clear();
     this.lastTurnEvent = null;
 
@@ -287,8 +289,13 @@ export class GameManager {
       return DELAY_AFTER_STREET_DEALT_MS;
     }
 
-    // Delay showdown after street_dealt (all-in runout → showdown)
-    if (event.type === 'showdown' && this.lastProcessedEventType === 'street_dealt') {
+    // Delay second_board_dealt after street_dealt
+    if (event.type === 'second_board_dealt' && this.lastProcessedEventType === 'street_dealt') {
+      return DELAY_AFTER_STREET_DEALT_MS;
+    }
+
+    // Delay showdown after street_dealt or second_board_dealt
+    if (event.type === 'showdown' && (this.lastProcessedEventType === 'street_dealt' || this.lastProcessedEventType === 'second_board_dealt')) {
       return DELAY_AFTER_STREET_DEALT_MS;
     }
 
@@ -445,6 +452,13 @@ export class GameManager {
         }));
         this.currentBets.clear();
         this.io.of('/table').emit(S2C_TABLE.POT_UPDATE, this.currentPots);
+        break;
+
+      case 'second_board_dealt':
+        this.currentSecondBoard = event.cards;
+        this.io.of('/table').emit(S2C_TABLE.SECOND_BOARD_DEALT, { cards: event.cards });
+        this.emitSound('card_flip');
+        this.broadcastTableState();
         break;
 
       case 'rit_eligible':
@@ -1069,6 +1083,7 @@ export class GameManager {
       handNumber: this.handNumber,
       players,
       communityCards: this.handEngine?.getCommunityCards() ?? [],
+      secondBoard: this.currentSecondBoard.length > 0 ? this.currentSecondBoard : undefined,
       pots: this.currentPots,
       currentStreet: null,
       dealerSeatIndex: this.dealerSeatIndex,

@@ -283,12 +283,30 @@ export function PokerTable({
         )}
       </div>
 
-      {/* Community cards */}
+      {/* Community cards — Board 1 (shifts up when two boards) */}
       {communityCards.length > 0 && (
-        <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 ${secondBoard && secondBoard.length > 0 ? 'top-[37%]' : 'top-[42%]'}`}>
+          {secondBoard && secondBoard.length > 0 && (
+            <div className="text-center mb-0.5" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 600 }}>
+              Board 1
+            </div>
+          )}
           <CommunityCards
             cards={communityCards}
             winningCards={winnerSeats.length > 0 ? communityCards : undefined}
+          />
+        </div>
+      )}
+
+      {/* Community cards — Board 2 (RIT) */}
+      {secondBoard && secondBoard.length > 0 && (
+        <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="text-center mb-0.5" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 600 }}>
+            Board 2
+          </div>
+          <CommunityCards
+            cards={secondBoard}
+            winningCards={winnerSeats.length > 0 ? secondBoard : undefined}
           />
         </div>
       )}

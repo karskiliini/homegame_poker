@@ -39,5 +39,6 @@ export const S2C_TABLE = {
   POT_AWARD: 'table:pot_award',
   PLAYER_TIMER: 'table:player_timer',
   RIT_ACTIVE: 'table:rit_active',
+  SECOND_BOARD_DEALT: 'table:second_board_dealt',
   SOUND: 'table:sound',
 } as const;

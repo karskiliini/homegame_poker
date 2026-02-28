@@ -102,14 +102,14 @@ export function HandHistoryDetail({ hand, onBack, onNext, onPrev }: HandHistoryD
         {/* Board */}
         {hand.communityCards.length > 0 && (
           <div className="text-white mb-3">
-            Board: [{hand.communityCards.map(formatCard).join(' ')}]
+            {hand.secondBoard && hand.secondBoard.length > 0 ? 'Board 1' : 'Board'}: [{hand.communityCards.map(formatCard).join(' ')}]
           </div>
         )}
 
         {/* Second board (RIT) */}
         {hand.secondBoard && hand.secondBoard.length > 0 && (
           <div className="text-white mb-3">
-            Second Board: [{hand.secondBoard.map(formatCard).join(' ')}]
+            Board 2: [{hand.secondBoard.map(formatCard).join(' ')}]
           </div>
         )}
 
