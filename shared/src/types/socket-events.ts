@@ -73,4 +73,6 @@ export const S2C_TABLE = {
   HISTORY_LIST: 'table:history_list',
   HAND_DETAIL: 'table:hand_detail',
   SOUND: 'table:sound',
+  ALLIN_SHOWDOWN: 'table:allin_showdown',
+  EQUITY_UPDATE: 'table:equity_update',
 } as const;

@@ -57,6 +57,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     potAwards, winnerSeats, awardingPotIndex,
     timerData, collectingBets, potGrow,
     betChipAnimations, dealCardAnimations,
+    equities, dramaticRiver,
   } = useTableAnimations({
     socket: tableSocketRef.current,
     containerRef: tableContainerRef,
@@ -131,6 +132,8 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
           potGrow={potGrow}
           betChipAnimations={betChipAnimations}
           dealCardAnimations={dealCardAnimations}
+          equities={equities}
+          dramaticRiver={dramaticRiver}
         />
       ) : (
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22 }}>Connecting...</div>

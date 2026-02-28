@@ -6,6 +6,7 @@ import { CardBack } from '../../components/CardBack.js';
 interface CommunityCardsProps {
   cards: CardString[];
   winningCards?: CardString[];
+  dramaticRiver?: boolean;
 }
 
 /** Single community card with slide-in + 3D flip animation */
@@ -70,7 +71,47 @@ function FlippingCard({ card, isNew, staggerIndex, isWinner }: {
   );
 }
 
-export function CommunityCards({ cards, winningCards = [] }: CommunityCardsProps) {
+/** Dramatic river card: slow peel from left to right revealing the card underneath */
+function DramaticRiverCard({ card, isWinner }: {
+  card: CardString;
+  isWinner: boolean;
+}) {
+  const [phase, setPhase] = useState<'peel' | 'done'>('peel');
+
+  useEffect(() => {
+    // Total animation: 2500ms
+    const timer = setTimeout(() => setPhase('done'), 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (phase === 'done') {
+    return <CardComponent card={card} size="md" isWinner={isWinner} />;
+  }
+
+  return (
+    <div className="animate-community-deal" style={{ position: 'relative' }}>
+      {/* The actual card underneath */}
+      <CardComponent card={card} size="md" isWinner={isWinner} />
+
+      {/* Card back overlay that peels away */}
+      <div
+        className="animate-river-peel"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+        }}
+      >
+        <CardBack size="md" />
+      </div>
+    </div>
+  );
+}
+
+export function CommunityCards({ cards, winningCards = [], dramaticRiver }: CommunityCardsProps) {
   const prevCountRef = useRef(0);
   const animatedFromRef = useRef(0);
 
@@ -88,6 +129,17 @@ export function CommunityCards({ cards, winningCards = [] }: CommunityCardsProps
       {cards.map((card, i) => {
         const isNew = i >= animateFrom;
         const staggerIndex = isNew ? i - animateFrom : 0;
+
+        // Use dramatic river animation for the 5th card (index 4) when dramatic
+        if (dramaticRiver && i === 4 && isNew) {
+          return (
+            <DramaticRiverCard
+              key={`${card}-${i}`}
+              card={card}
+              isWinner={winningCards.includes(card)}
+            />
+          );
+        }
 
         return (
           <FlippingCard

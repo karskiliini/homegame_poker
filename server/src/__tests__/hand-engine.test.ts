@@ -776,3 +776,151 @@ describe('HandEngine - Bet/raise with specific amounts', () => {
     h.assertTotalChipsConserved(players);
   });
 });
+
+describe('HandEngine - All-in showdown events', () => {
+  it('emits allin_showdown before street_dealt during runout', () => {
+    const config = makeConfig();
+    const h = new HandTestHarness();
+    const players = makePlayers(2, 100);
+
+    const deck = buildDeck(
+      [['Ah', 'As'], ['Kh', 'Ks']],
+      ['Qd', 'Jc', '5h', '3d', '8c'],
+    );
+    h.start(config, players, 0, deck);
+
+    // Preflop: SB goes all-in, BB calls
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    // Find the allin_showdown event
+    const allinShowdownIdx = h.events.findIndex(e => e.type === 'allin_showdown');
+    expect(allinShowdownIdx).toBeGreaterThan(-1);
+
+    // Find first street_dealt after the all_in_runout
+    const allInRunoutIdx = h.events.findIndex(e => e.type === 'all_in_runout');
+    const firstStreetDealtAfterRunout = h.events.findIndex((e, i) =>
+      i > allInRunoutIdx && e.type === 'street_dealt'
+    );
+
+    // allin_showdown should come before the first street_dealt
+    expect(allinShowdownIdx).toBeLessThan(firstStreetDealtAfterRunout);
+
+    // allin_showdown should contain both players' hole cards
+    const showdownEvent = h.events[allinShowdownIdx] as Extract<HandEngineEvent, { type: 'allin_showdown' }>;
+    expect(showdownEvent.entries).toHaveLength(2);
+    expect(showdownEvent.entries[0].holeCards).toEqual(['Ah', 'As']);
+    expect(showdownEvent.entries[1].holeCards).toEqual(['Kh', 'Ks']);
+  });
+
+  it('emits equity_update after each street_dealt during runout', () => {
+    const config = makeConfig();
+    const h = new HandTestHarness();
+    const players = makePlayers(2, 100);
+
+    const deck = buildDeck(
+      [['Ah', 'As'], ['Kh', 'Ks']],
+      ['Qd', 'Jc', '5h', '3d', '8c'],
+    );
+    h.start(config, players, 0, deck);
+
+    // Preflop all-in
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    const equityUpdates = h.events.filter(e => e.type === 'equity_update');
+    const streetDeals = h.events.filter((e, i) => {
+      const allInRunoutIdx = h.events.findIndex(ev => ev.type === 'all_in_runout');
+      return i > allInRunoutIdx && e.type === 'street_dealt';
+    });
+
+    // Should have initial equity + one equity_update per street dealt
+    // Streets: flop, turn, river = 3 street deals, so 4 equity updates (1 initial + 3 after streets)
+    expect(equityUpdates.length).toBe(4);
+    expect(streetDeals.length).toBe(3);
+
+    // Each equity_update should have equities for both players
+    for (const eu of equityUpdates) {
+      const event = eu as Extract<HandEngineEvent, { type: 'equity_update' }>;
+      expect(event.equities.size).toBe(2);
+      expect(event.equities.has('player-0')).toBe(true);
+      expect(event.equities.has('player-1')).toBe(true);
+    }
+  });
+
+  it('marks river as dramatic when outcome is uncertain', () => {
+    const config = makeConfig();
+    const h = new HandTestHarness();
+    const players = makePlayers(2, 100);
+
+    // AA vs KK on board Qd Jc 5h 3d: KK needs a K on river to win
+    // Pre-river equity: AA ~95%, KK ~5% → maxEquity < 100 → dramatic
+    const deck = buildDeck(
+      [['Ah', 'As'], ['Kh', 'Ks']],
+      ['Qd', 'Jc', '5h', '3d', '8c'],
+    );
+    h.start(config, players, 0, deck);
+
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    // Find the river street_dealt event
+    const riverEvent = h.events.find(
+      e => e.type === 'street_dealt' && (e as any).street === 'river'
+    ) as Extract<HandEngineEvent, { type: 'street_dealt' }>;
+
+    expect(riverEvent).toBeDefined();
+    expect(riverEvent.dramatic).toBe(true);
+  });
+
+  it('marks river as not dramatic when outcome is certain', () => {
+    const config = makeConfig();
+    const h = new HandTestHarness();
+    const players = makePlayers(2, 100);
+
+    // AA vs 72o on board AAK5: AA has quad aces after turn. No card can save 72o.
+    const deck = buildDeck(
+      [['Ah', 'As'], ['7d', '2c']],
+      ['Ac', 'Ad', 'Kh', '5s', '3d'],
+    );
+    h.start(config, players, 0, deck);
+
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    const riverEvent = h.events.find(
+      e => e.type === 'street_dealt' && (e as any).street === 'river'
+    ) as Extract<HandEngineEvent, { type: 'street_dealt' }>;
+
+    expect(riverEvent).toBeDefined();
+    expect(riverEvent.dramatic).toBe(false);
+  });
+
+  it('does not emit allin_showdown when already on river', () => {
+    const config = makeConfig();
+    const h = new HandTestHarness();
+    const players = makePlayers(2, 100);
+
+    const deck = buildDeck(
+      [['Ah', 'As'], ['Kh', 'Ks']],
+      ['Qd', 'Jc', '5h', '3d', '8c'],
+    );
+    h.start(config, players, 0, deck);
+
+    // Play to river normally
+    h.actCurrent('call'); // preflop
+    h.actCurrent('check'); // preflop BB
+    h.actCurrent('check'); // flop
+    h.actCurrent('check');
+    h.actCurrent('check'); // turn
+    h.actCurrent('check');
+
+    // River: all-in
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    // No allin_showdown because there are no remaining streets to deal
+    const allinShowdowns = h.events.filter(e => e.type === 'allin_showdown');
+    expect(allinShowdowns).toHaveLength(0);
+  });
+});

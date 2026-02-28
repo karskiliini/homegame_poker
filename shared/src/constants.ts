@@ -17,5 +17,9 @@ export const DELAY_POT_AWARD_MS = 1500;
 // Game start countdown (after min players ready)
 export const START_COUNTDOWN_MS = 5000;
 
+// All-in showdown timing
+export const DELAY_AFTER_ALLIN_SHOWDOWN_MS = 2000;
+export const DELAY_DRAMATIC_RIVER_MS = 3500;
+
 // Disconnect timeout: remove player from table after this duration
 export const DISCONNECT_TIMEOUT_MS = 180_000;
