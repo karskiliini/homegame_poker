@@ -75,8 +75,8 @@ export function LoginScreen() {
               AVATAR
             </label>
             <div
-              className="grid grid-cols-6 gap-2"
-              style={{ maxHeight: 200, overflowY: 'auto', padding: 2 }}
+              className="grid grid-cols-4 gap-2"
+              style={{ maxHeight: 240, overflowY: 'auto', padding: 2 }}
             >
               {AVATAR_OPTIONS.map((avatar) => {
                 const isSelected = selectedAvatar === avatar.id;
