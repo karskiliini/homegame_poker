@@ -8,9 +8,11 @@ interface PotDisplayProps {
   bigBlind: number;
   playerNames?: Record<string, string>; // playerId -> name
   potGrow?: boolean;
+  /** Index of the pot currently being awarded (highlighted) */
+  awardingPotIndex?: number | null;
 }
 
-export function PotDisplay({ pots, bigBlind, playerNames, potGrow }: PotDisplayProps) {
+export function PotDisplay({ pots, bigBlind, playerNames, potGrow, awardingPotIndex }: PotDisplayProps) {
   const t = useT();
   if (pots.length === 0) return null;
 
@@ -25,21 +27,28 @@ export function PotDisplay({ pots, bigBlind, playerNames, potGrow }: PotDisplayP
           : [];
 
         const breakdown = breakdownChips(pot.amount, bigBlind);
+        const isAwarding = awardingPotIndex === i;
 
         return (
           <div
             key={i}
-            className={`flex items-center gap-1 animate-fade-in-up ${potGrow ? 'animate-pot-grow' : ''}`}
-            style={{ animationDelay: `${i * 100}ms` }}
+            className={`flex items-center gap-1 animate-fade-in-up ${potGrow ? 'animate-pot-grow' : ''} ${isAwarding ? 'animate-pot-pulse' : ''}`}
+            style={{
+              animationDelay: `${i * 100}ms`,
+              ...(isAwarding ? { filter: 'brightness(1.2)' } : {}),
+            }}
           >
             <ChipStack breakdown={breakdown} size="md" />
             <div className="text-center">
               <div
                 className="font-bold font-mono tabular-nums"
                 style={{
-                  color: '#FFFFFF',
+                  color: isAwarding ? '#EAB308' : '#FFFFFF',
                   fontSize: 16,
-                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                  textShadow: isAwarding
+                    ? '0 0 8px rgba(234,179,8,0.5), 0 1px 3px rgba(0,0,0,0.5)'
+                    : '0 1px 3px rgba(0,0,0,0.5)',
+                  transition: 'color 200ms ease',
                 }}
               >
                 {pot.amount.toLocaleString()}

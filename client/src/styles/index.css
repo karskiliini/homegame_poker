@@ -185,18 +185,22 @@ html, body {
     opacity: 1;
     transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(1);
   }
-  80% {
+  70% {
     opacity: 1;
-    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.8);
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(1.1);
   }
   100% {
     opacity: 0;
-    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.3);
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.8);
   }
 }
 
 .animate-chip-fly {
-  animation: chip-fly 600ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation: chip-fly var(--ftp-anim-chip-win) var(--ftp-ease-chip-win) forwards;
 }
 
 /* Pot number pulse */
@@ -240,12 +244,13 @@ input[type="range"].ftp-slider::-webkit-slider-thumb:hover {
 /* Bet chips collect to pot */
 @keyframes bet-collect {
   0%   { transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(1); opacity: 1; }
-  70%  { transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.9); opacity: 1; }
-  100% { transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.5); opacity: 0; }
+  60%  { transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.95); opacity: 1; }
+  85%  { transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.85); opacity: 0.8; }
+  100% { transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.7); opacity: 0; }
 }
 
 .animate-bet-collect {
-  animation: bet-collect 500ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+  animation: bet-collect 500ms var(--ftp-ease-chip-bet) forwards;
 }
 
 /* Pot grows when chips arrive */
@@ -279,24 +284,28 @@ input[type="range"].ftp-slider::-webkit-slider-thumb:hover {
   animation: community-card-deal 350ms var(--ftp-ease-deal) both;
 }
 
-/* Bet chip fly: from seat position to pot center */
+/* Bet chip fly: from seat position to bet position */
 @keyframes chip-bet-fly {
   0% {
+    opacity: 0;
+    transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(0.6);
+  }
+  15% {
     opacity: 1;
     transform: translate(var(--start-x, 0), var(--start-y, 0)) scale(1);
   }
-  70% {
+  85% {
     opacity: 1;
-    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.9);
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(0.5);
+    transform: translate(var(--end-x, 0), var(--end-y, 0)) scale(1);
   }
 }
 
 .animate-chip-bet-fly {
-  animation: chip-bet-fly 500ms var(--ftp-ease-chip-bet) forwards;
+  animation: chip-bet-fly var(--ftp-anim-chip-bet) var(--ftp-ease-chip-bet) forwards;
 }
 
 /* Card deal fly: from dealer to seat position */

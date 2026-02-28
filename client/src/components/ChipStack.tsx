@@ -1,16 +1,16 @@
 import type { ChipBreakdown, ChipDenomination } from '@poker/shared';
 
-const CHIP_COLORS: Record<ChipDenomination, { surface: string; edge: string; stripe: string }> = {
-  white: { surface: '#E0E0E0', edge: '#B0B0B0', stripe: 'rgba(180,180,180,0.6)' },
-  red:   { surface: '#CC2222', edge: '#991818', stripe: 'rgba(255,255,255,0.35)' },
-  green: { surface: '#228B22', edge: '#186618', stripe: 'rgba(255,255,255,0.3)' },
-  black: { surface: '#333333', edge: '#111111', stripe: 'rgba(255,255,255,0.25)' },
-  blue:  { surface: '#2244AA', edge: '#1A3388', stripe: 'rgba(255,255,255,0.3)' },
+const CHIP_COLORS: Record<ChipDenomination, { surface: string; edge: string; stripe: string; edgeDark: string }> = {
+  white: { surface: '#E8E8E8', edge: '#C8C8C8', stripe: 'rgba(160,160,160,0.5)', edgeDark: '#A0A0A0' },
+  red:   { surface: '#D42828', edge: '#AA1C1C', stripe: 'rgba(255,255,255,0.4)', edgeDark: '#881414' },
+  green: { surface: '#2E9B2E', edge: '#1E7A1E', stripe: 'rgba(255,255,255,0.35)', edgeDark: '#155A15' },
+  black: { surface: '#3A3A3A', edge: '#222222', stripe: 'rgba(255,255,255,0.2)', edgeDark: '#111111' },
+  blue:  { surface: '#2850B8', edge: '#1C3C8C', stripe: 'rgba(255,255,255,0.3)', edgeDark: '#142A66' },
 };
 
 const SIZES = {
-  sm: { width: 22, height: 14, stackOffset: -11 },
-  md: { width: 28, height: 18, stackOffset: -14 },
+  sm: { width: 24, height: 16, edgeHeight: 4, stackOffset: 5 },
+  md: { width: 30, height: 20, edgeHeight: 5, stackOffset: 6 },
 } as const;
 
 interface ChipStackProps {
@@ -19,7 +19,7 @@ interface ChipStackProps {
 }
 
 export function ChipStack({ breakdown, size }: ChipStackProps) {
-  const { width, height, stackOffset } = SIZES[size];
+  const { width, height, edgeHeight, stackOffset } = SIZES[size];
 
   // Flatten breakdown into individual chips for stacking
   const chips: ChipDenomination[] = [];
@@ -35,28 +35,67 @@ export function ChipStack({ breakdown, size }: ChipStackProps) {
   // Reverse so smallest (last in breakdown) is at the bottom
   const stackedChips = [...chips].reverse();
 
+  // Total height: each chip contributes stackOffset except the last which shows full chip+edge
+  const totalHeight = (stackedChips.length - 1) * stackOffset + height + edgeHeight;
+
   return (
     <div
       className="inline-flex flex-col items-center"
-      style={{ position: 'relative', height: height + (stackedChips.length - 1) * -stackOffset }}
+      style={{ position: 'relative', width, height: totalHeight }}
     >
       {stackedChips.map((denom, i) => {
         const colors = CHIP_COLORS[denom];
+        // Position from bottom: first chip (i=0) at bottom, last at top
+        const bottomOffset = i * stackOffset;
+
         return (
           <div
             key={i}
             style={{
+              position: 'absolute',
+              bottom: bottomOffset,
+              left: 0,
               width,
-              height,
-              borderRadius: '50%',
-              background: `radial-gradient(ellipse at 40% 38%, ${colors.surface}, ${colors.edge})`,
-              border: `1.5px dashed ${colors.stripe}`,
-              boxShadow: `0 1px 3px rgba(0,0,0,0.4)`,
-              marginTop: i > 0 ? stackOffset : 0,
-              position: 'relative',
-              zIndex: stackedChips.length - i,
+              zIndex: i + 1,
             }}
-          />
+          >
+            {/* Chip edge (visible thickness) */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width,
+                height: height / 2 + edgeHeight,
+                borderRadius: `0 0 ${width / 2}px ${width / 2}px / 0 0 ${height / 2}px ${height / 2}px`,
+                background: `linear-gradient(180deg, ${colors.edge} 0%, ${colors.edgeDark} 100%)`,
+                boxShadow: `0 1px 2px rgba(0,0,0,0.5)`,
+              }}
+            />
+            {/* Chip face (top surface) */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: edgeHeight,
+                left: 0,
+                width,
+                height,
+                borderRadius: '50%',
+                background: `radial-gradient(ellipse at 45% 40%, ${colors.surface}, ${colors.edge})`,
+                boxShadow: `inset 0 1px 2px rgba(255,255,255,0.25), inset 0 -1px 1px rgba(0,0,0,0.15)`,
+              }}
+            >
+              {/* Inner stripe ring */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: '20%',
+                  borderRadius: '50%',
+                  border: `1.5px solid ${colors.stripe}`,
+                }}
+              />
+            </div>
+          </div>
         );
       })}
     </div>
