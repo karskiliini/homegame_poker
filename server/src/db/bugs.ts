@@ -27,9 +27,15 @@ function getDb(): Database.Database {
         description TEXT NOT NULL,
         reporter_name TEXT NOT NULL,
         table_id TEXT,
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now')),
+        archived INTEGER DEFAULT 0
       )
     `);
+    // Migration: add archived column if table already exists without it
+    const cols = db.prepare("PRAGMA table_info(bug_reports)").all() as { name: string }[];
+    if (!cols.some(c => c.name === 'archived')) {
+      db.exec('ALTER TABLE bug_reports ADD COLUMN archived INTEGER DEFAULT 0');
+    }
   }
   return db;
 }
@@ -48,9 +54,13 @@ export function insertBugReport(description: string, reporterName: string, table
 }
 
 export function getAllBugReports(): BugReport[] {
-  return getDb().prepare('SELECT * FROM bug_reports ORDER BY id DESC').all() as BugReport[];
+  return getDb().prepare('SELECT * FROM bug_reports WHERE archived = 0 ORDER BY id DESC').all() as BugReport[];
 }
 
-export function getNewBugReports(): BugReport[] {
-  return getDb().prepare('SELECT * FROM bug_reports ORDER BY id DESC').all() as BugReport[];
+export function archiveBugReports(ids: number[]): number {
+  if (ids.length === 0) return 0;
+  const placeholders = ids.map(() => '?').join(',');
+  const stmt = getDb().prepare(`UPDATE bug_reports SET archived = 1 WHERE id IN (${placeholders}) AND archived = 0`);
+  const result = stmt.run(...ids);
+  return result.changes;
 }

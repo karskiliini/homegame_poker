@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { insertBugReport, getAllBugReports, getNewBugReports, _setDb } from '../db/bugs.js';
+import { insertBugReport, getAllBugReports, archiveBugReports, _setDb } from '../db/bugs.js';
 
 // Use in-memory database for tests
 let db: Database.Database;
@@ -13,7 +13,8 @@ beforeEach(() => {
       description TEXT NOT NULL,
       reporter_name TEXT NOT NULL,
       table_id TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
+      created_at TEXT DEFAULT (datetime('now')),
+      archived INTEGER DEFAULT 0
     )
   `);
   _setDb(db);
@@ -51,12 +52,32 @@ describe('Bug report DB', () => {
     expect(reports[2].description).toBe('Bug 1');
   });
 
-  it('getNewBugReports() returns reports not yet fetched', () => {
-    insertBugReport('Old bug', 'Player1');
-    insertBugReport('New bug', 'Player2');
+  it('archiveBugReports() marks bugs as archived and hides them from getAllBugReports()', () => {
+    insertBugReport('Bug 1', 'Player1');
+    insertBugReport('Bug 2', 'Player2');
+    insertBugReport('Bug 3', 'Player3');
 
-    const all = getNewBugReports();
-    expect(all).toHaveLength(2);
+    const before = getAllBugReports();
+    expect(before).toHaveLength(3);
+
+    const archived = archiveBugReports([before[0].id, before[1].id]);
+    expect(archived).toBe(2);
+
+    const after = getAllBugReports();
+    expect(after).toHaveLength(1);
+    expect(after[0].description).toBe('Bug 1');
+  });
+
+  it('archiveBugReports() with empty array returns 0', () => {
+    expect(archiveBugReports([])).toBe(0);
+  });
+
+  it('archiveBugReports() ignores already-archived bugs', () => {
+    insertBugReport('Bug 1', 'Player1');
+    const reports = getAllBugReports();
+    archiveBugReports([reports[0].id]);
+    const result = archiveBugReports([reports[0].id]);
+    expect(result).toBe(0);
   });
 
   it('insertBugReport() sanitizes description (strips HTML)', () => {
