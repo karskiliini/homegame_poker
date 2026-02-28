@@ -242,11 +242,11 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       gm.handlePlayerAction(socket.id, data.action, data.amount);
     });
 
-    socket.on(C2S.RIT_RESPONSE, (data: { accept: boolean; alwaysNo?: boolean }) => {
+    socket.on(C2S.RIT_RESPONSE, (data: { accept: boolean; alwaysNo?: boolean; alwaysYes?: boolean }) => {
       if (!currentTableId) return;
       const gm = tableManager.getTable(currentTableId);
       if (!gm) return;
-      gm.handleRitResponse(socket.id, data.accept, data.alwaysNo ?? false);
+      gm.handleRitResponse(socket.id, data.accept, data.alwaysNo ?? false, data.alwaysYes ?? false);
     });
 
     socket.on(C2S.SHOW_CARDS, (data: { show: boolean }) => {

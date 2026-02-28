@@ -17,7 +17,7 @@ export interface Player {
   status: PlayerStatus;
   isConnected: boolean;
   isReady: boolean;
-  runItTwicePreference: 'ask' | 'always_no';
+  runItTwicePreference: 'ask' | 'always_yes' | 'always_no';
   autoMuck: boolean;
   disconnectedAt: number | null;
   avatarId: string;

@@ -13,6 +13,7 @@ export function RunItTwicePrompt({ socket, deadline, onClose }: RunItTwicePrompt
   const [remaining, setRemaining] = useState(
     Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
   );
+  const [alwaysYes, setAlwaysYes] = useState(false);
   const t = useT();
 
   useEffect(() => {
@@ -28,7 +29,11 @@ export function RunItTwicePrompt({ socket, deadline, onClose }: RunItTwicePrompt
   }, [deadline, onClose]);
 
   const respond = (accept: boolean, alwaysNo = false) => {
-    socket.emit(C2S.RIT_RESPONSE, { accept, alwaysNo });
+    socket.emit(C2S.RIT_RESPONSE, {
+      accept,
+      alwaysNo,
+      alwaysYes: accept && alwaysYes,
+    });
     onClose();
   };
 
@@ -45,6 +50,17 @@ export function RunItTwicePrompt({ socket, deadline, onClose }: RunItTwicePrompt
         <div className="text-center text-yellow-400 text-2xl font-mono mb-6">
           {remaining}s
         </div>
+
+        {/* Always Run It Twice checkbox */}
+        <label className="flex items-center gap-2 mb-4 cursor-pointer justify-center">
+          <input
+            type="checkbox"
+            checked={alwaysYes}
+            onChange={(e) => setAlwaysYes(e.target.checked)}
+            className="w-5 h-5 rounded accent-green-500"
+          />
+          <span className="text-gray-300 text-sm">{t('rit_always_yes')}</span>
+        </label>
 
         <div className="space-y-3">
           <button

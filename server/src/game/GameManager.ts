@@ -483,12 +483,37 @@ export class GameManager {
   private handleRitOffer(playerIds: string[]) {
     this.ritPlayerIds = playerIds;
     this.ritResponses.clear();
+
+    // Check for always_no first (takes priority — any player declining cancels RIT)
     for (const pid of playerIds) {
       const socketId = this.playerIdToSocketId.get(pid);
       if (socketId) { const player = this.players.get(socketId); if (player?.runItTwicePreference === 'always_no') { this.handEngine?.setRunItTwice(false); return; } }
     }
-    const deadline = Date.now() + RIT_TIMEOUT_MS;
+
+    // Auto-accept for always_yes players, track who still needs to be asked
+    const playersToAsk: string[] = [];
     for (const pid of playerIds) {
+      const socketId = this.playerIdToSocketId.get(pid);
+      if (socketId) {
+        const player = this.players.get(socketId);
+        if (player?.runItTwicePreference === 'always_yes') {
+          this.ritResponses.set(pid, true);
+        } else {
+          playersToAsk.push(pid);
+        }
+      }
+    }
+
+    // If all players auto-accepted, resolve immediately
+    if (playersToAsk.length === 0) {
+      this.emitToTableRoom(S2C_TABLE.RIT_ACTIVE, { offered: true });
+      this.resolveRit();
+      return;
+    }
+
+    // Send RIT offer only to players who need to be asked
+    const deadline = Date.now() + RIT_TIMEOUT_MS;
+    for (const pid of playersToAsk) {
       const socketId = this.playerIdToSocketId.get(pid);
       if (socketId) { const socket = this.socketMap.get(socketId); socket?.emit(S2C_PLAYER.RIT_OFFER, { deadline }); }
     }
@@ -496,10 +521,11 @@ export class GameManager {
     this.ritTimer = setTimeout(() => this.resolveRit(), RIT_TIMEOUT_MS);
   }
 
-  handleRitResponse(socketId: string, accept: boolean, alwaysNo: boolean) {
+  handleRitResponse(socketId: string, accept: boolean, alwaysNo: boolean, alwaysYes: boolean = false) {
     const player = this.players.get(socketId);
     if (!player) return;
     if (alwaysNo) player.runItTwicePreference = 'always_no';
+    if (alwaysYes && accept) player.runItTwicePreference = 'always_yes';
     this.ritResponses.set(player.id, accept);
     if (!accept) { this.resolveRit(); return; }
     if (this.ritResponses.size === this.ritPlayerIds.length) this.resolveRit();

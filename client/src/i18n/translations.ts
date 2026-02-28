@@ -86,6 +86,7 @@ const en = {
   rit_description: 'All players are all-in. Deal the remaining cards twice and split the pot?',
   rit_yes: 'Yes',
   rit_no: 'No',
+  rit_always_yes: 'Always Run It Twice',
   rit_always_no: "Always No (don't ask again)",
 
   // Hand history
@@ -259,6 +260,7 @@ export const translations: Record<Language, Translations> = {
     rit_description: 'Kaikki ovat all-in. Jaetaanko loput kortit kahdesti ja jaetaan potti?',
     rit_yes: 'Kylla',
     rit_no: 'Ei',
+    rit_always_yes: 'Aina Run It Twice',
     rit_always_no: 'Aina ei (ala kysy uudelleen)',
 
     // Hand history
