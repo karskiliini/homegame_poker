@@ -179,7 +179,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
             style={{
               width: TABLE_W,
               height: TABLE_H,
-              transform: `scale(${scale})`,
+              transform: `translateY(30px) scale(${scale})`,
               transformOrigin: 'top center',
             }}
           >
