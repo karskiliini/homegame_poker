@@ -13,4 +13,5 @@ COPY --from=builder /app/server/package.json server/
 COPY --from=builder /app/node_modules/ node_modules/
 COPY --from=builder /app/shared/dist/ shared/dist/
 COPY --from=builder /app/server/dist/ server/dist/
+RUN mkdir -p /app/data
 CMD ["node", "server/dist/index.js"]
