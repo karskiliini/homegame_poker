@@ -64,6 +64,7 @@ export class GameManager {
   private disconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private pendingRemovals: Set<string> = new Set();
   private pendingSitOutNextHand: Set<string> = new Set();
+  private playerIdToToken: Map<string, string> = new Map();
 
   constructor(config: GameConfig, io: Server, tableId: string, onEmpty?: () => void) {
     this.config = config;
@@ -100,7 +101,7 @@ export class GameManager {
     this.io.of('/player').to(this.roomId).emit(event, data);
   }
 
-  addPlayer(socket: Socket, name: string, buyIn: number, avatarId?: string, preferredSeat?: number): { playerId?: string; error?: string } {
+  addPlayer(socket: Socket, name: string, buyIn: number, avatarId?: string, preferredSeat?: number): { playerId?: string; playerToken?: string; error?: string } {
     if (buyIn > this.config.maxBuyIn) return { error: `Maximum buy-in is ${this.config.maxBuyIn}` };
     if (buyIn <= 0) return { error: 'Buy-in must be positive' };
     if (!name.trim()) return { error: 'Name is required' };
@@ -127,10 +128,12 @@ export class GameManager {
       avatarId: avatarId || 'link',
     };
 
+    const playerToken = uuidv4();
     this.players.set(socket.id, player);
     this.seatMap.set(seatIndex, socket.id);
     this.socketMap.set(socket.id, socket);
     this.playerIdToSocketId.set(player.id, socket.id);
+    this.playerIdToToken.set(player.id, playerToken);
     socket.join(this.roomId);
 
     // Send initial private state so client can render immediately
@@ -144,7 +147,7 @@ export class GameManager {
     socket.emit(S2C_PLAYER.PRIVATE_STATE, initialState);
 
     console.log(`${player.name} joined at seat ${seatIndex} with ${buyIn} chips [${this.tableId}]`);
-    return { playerId: player.id };
+    return { playerId: player.id, playerToken };
   }
 
   setPlayerReady(socketId: string) {
@@ -754,11 +757,18 @@ export class GameManager {
     if (player) { player.disconnectedAt = null; this.cancelDisconnectTimer(socketId); }
   }
 
-  reconnectPlayer(playerId: string, newSocket: Socket): { error?: string; playerName?: string } {
+  reconnectPlayer(playerId: string, newSocket: Socket, playerToken?: string): { error?: string; playerName?: string } {
     const oldSocketId = this.playerIdToSocketId.get(playerId);
     if (!oldSocketId) return { error: 'Player not found' };
     const player = this.players.get(oldSocketId);
     if (!player) return { error: 'Player not found' };
+
+    // Validate token for secure reconnection
+    const storedToken = this.playerIdToToken.get(playerId);
+    if (!playerToken || playerToken !== storedToken) {
+      return { error: 'Invalid reconnect token' };
+    }
+
     const newSocketId = newSocket.id;
     this.players.delete(oldSocketId);
     this.players.set(newSocketId, player);
@@ -777,9 +787,25 @@ export class GameManager {
     player.isConnected = true;
     player.disconnectedAt = null;
     newSocket.join(this.roomId);
+
+    // Send private state to the reconnected player
+    if (this.phase === 'hand_in_progress' && this.currentPlayerCards.has(playerId)) {
+      this.sendPrivateStateToAll();
+    } else {
+      // Send cleared private state for the reconnected player
+      const state: PrivatePlayerState = {
+        id: player.id, name: player.name, seatIndex: player.seatIndex, stack: player.stack,
+        status: player.status as any, holeCards: [], currentBet: 0, availableActions: [],
+        minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
+        showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+        sitOutNextHand: this.pendingSitOutNextHand.has(newSocketId),
+        autoMuck: player.autoMuck ?? false,
+      };
+      newSocket.emit(S2C_PLAYER.PRIVATE_STATE, state);
+    }
+
     this.broadcastLobbyState();
     this.broadcastTableState();
-    if (this.phase === 'hand_in_progress' && this.currentPlayerCards.has(playerId)) this.sendPrivateStateToAll();
     console.log(`${player.name} reconnected (${oldSocketId} → ${newSocketId})`);
     return { playerName: player.name };
   }
@@ -813,6 +839,7 @@ export class GameManager {
     console.log(`${player.name} removed from table [${this.tableId}]`);
     this.seatMap.delete(player.seatIndex);
     this.playerIdToSocketId.delete(player.id);
+    this.playerIdToToken.delete(player.id);
     this.socketMap.delete(socketId);
     this.players.delete(socketId);
     this.pendingRemovals.delete(socketId);

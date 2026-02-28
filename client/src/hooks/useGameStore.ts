@@ -6,6 +6,18 @@ import { detectLanguage } from '../i18n/translations.js';
 import type { ThemeId } from '../themes/types.js';
 import { DEFAULT_THEME } from '../themes/index.js';
 
+// Check if a reconnect session exists
+function hasStoredSession(): boolean {
+  try {
+    const raw = localStorage.getItem('ftp-session');
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return !!(parsed.playerId && parsed.playerToken && parsed.tableId);
+  } catch {
+    return false;
+  }
+}
+
 interface LobbyPlayer {
   id: string;
   name: string;
@@ -64,6 +76,8 @@ interface GameStore {
   // UI state
   screen: 'login' | 'table_lobby' | 'watching' | 'lobby' | 'game';
   setScreen: (screen: 'login' | 'table_lobby' | 'watching' | 'lobby' | 'game') => void;
+  reconnecting: boolean;
+  setReconnecting: (reconnecting: boolean) => void;
 
   // Language
   language: Language;
@@ -109,6 +123,8 @@ export const useGameStore = create<GameStore>((set) => ({
 
   screen: 'login',
   setScreen: (screen) => set({ screen }),
+  reconnecting: hasStoredSession(),
+  setReconnecting: (reconnecting) => set({ reconnecting }),
 
   language: detectLanguage(),
   setLanguage: (language) => {

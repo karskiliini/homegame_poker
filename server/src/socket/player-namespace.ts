@@ -62,7 +62,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         // Leave lobby room, join table room (addPlayer already does socket.join)
         socket.leave('lobby');
 
-        socket.emit(S2C_PLAYER.JOINED, { playerId: result.playerId, tableId: data.tableId });
+        socket.emit(S2C_PLAYER.JOINED, { playerId: result.playerId, playerToken: result.playerToken, tableId: data.tableId });
         gm.broadcastLobbyState();
         gm.broadcastTableState();
         tableManager.broadcastTableList();
@@ -85,7 +85,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
 
     // === Per-table game events (only work if player is at a table) ===
 
-    socket.on(C2S.RECONNECT, (data: { playerId: string; tableId?: string }) => {
+    socket.on(C2S.RECONNECT, (data: { playerId: string; tableId?: string; playerToken?: string }) => {
       // Try to find which table has this player
       const targetTableId = data.tableId;
       if (!targetTableId) {
@@ -97,12 +97,13 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         socket.emit(S2C_PLAYER.ERROR, { message: 'Table not found' });
         return;
       }
-      const result = gm.reconnectPlayer(data.playerId, socket);
+      const result = gm.reconnectPlayer(data.playerId, socket, data.playerToken);
       if (result.error) {
-        socket.emit(S2C_PLAYER.ERROR, { message: result.error });
+        socket.emit(S2C_PLAYER.RECONNECT_FAILED, { message: result.error });
       } else {
         currentTableId = targetTableId;
         socket.leave('lobby');
+        socket.emit(S2C_PLAYER.RECONNECTED, { playerId: data.playerId, tableId: targetTableId });
       }
     });
 

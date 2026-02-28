@@ -32,6 +32,8 @@ export const S2C_PLAYER = {
   SOUND: 'player:sound',
   JOINED: 'player:joined',
   BUG_REPORTED: 'player:bug_reported',
+  RECONNECTED: 'player:reconnected',
+  RECONNECT_FAILED: 'player:reconnect_failed',
 } as const;
 
 export const C2S_LOBBY = {
