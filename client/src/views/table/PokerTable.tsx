@@ -248,6 +248,17 @@ export function PokerTable({
     return () => clearTimeout(timer);
   }, [potAwards, getDisplaySeatPos]);
 
+  // Calculate card offset: direction from seat toward table center, in pixels
+  const getCardOffset = useCallback((physicalSeatIndex: number): { x: number; y: number } => {
+    const pos = getDisplaySeatPos(physicalSeatIndex);
+    const dx = (TABLE_CENTER.x - pos.x) / 100 * TABLE_VIRTUAL_W;
+    const dy = (TABLE_CENTER.y - pos.y) / 100 * TABLE_VIRTUAL_H;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len === 0) return { x: 0, y: -65 };
+    const dist = 65;
+    return { x: Math.round((dx / len) * dist), y: Math.round((dy / len) * dist) };
+  }, [getDisplaySeatPos]);
+
   // Calculate fold direction vectors (from display seat toward table center)
   const getFoldDirection = useCallback((physicalSeatIndex: number) => {
     const seat = getDisplaySeatPos(physicalSeatIndex);
@@ -555,16 +566,19 @@ export function PokerTable({
         );
       })}
 
-      {/* Deal card animations (flying from dealer to seats) */}
+      {/* Deal card animations (flying from dealer to seats' card positions) */}
       {dealCardAnimations.map(anim => {
         const seatPos = getDisplaySeatPos(anim.seatIndex);
+        const cardOff = getCardOffset(anim.seatIndex);
+        const cardTargetX = seatPos.x + (cardOff.x / TABLE_VIRTUAL_W) * 100;
+        const cardTargetY = seatPos.y + (cardOff.y / TABLE_VIRTUAL_H) * 100;
         return (
           <div
             key={anim.id}
             className="absolute pointer-events-none"
             style={{
-              left: `${seatPos.x}%`,
-              top: `${seatPos.y}%`,
+              left: `${cardTargetX}%`,
+              top: `${cardTargetY}%`,
               transform: 'translate(-50%, -50%)',
               zIndex: 45,
             }}
@@ -797,7 +811,7 @@ export function PokerTable({
                   foldDirection={getFoldDirection(seatIndex)}
                   equity={equities?.[seatIndex]}
                   numHoleCards={numHoleCards}
-                  cardsBelow={pos.y < 50}
+                  cardOffset={getCardOffset(seatIndex)}
                   onAvatarClick={myPlayerId && player && player.id === myPlayerId ? onMyAvatarClick : undefined}
                   onChipTrickClick={myPlayerId && player?.id === myPlayerId ? onChipTrickClick : undefined}
                   winningCards={winningCards}

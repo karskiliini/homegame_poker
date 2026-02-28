@@ -24,8 +24,8 @@ interface PlayerSeatProps {
   equity?: number;
   /** Number of hole cards (2 for NLHE, 4 for PLO). Defaults to 2. */
   numHoleCards?: number;
-  /** Render cards below the avatar (for top-half seats, so cards stay on the felt). */
-  cardsBelow?: boolean;
+  /** Pixel offset from avatar center toward the table center, to position cards "in front" of the player. */
+  cardOffset: { x: number; y: number };
   /** Called when this player's avatar is clicked (for avatar change). */
   onAvatarClick?: () => void;
   /** Called when stack area is clicked (chip trick trigger) */
@@ -64,7 +64,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardsBelow, onAvatarClick, onChipTrickClick, winningCards, showdownActive }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardOffset, onAvatarClick, onChipTrickClick, winningCards, showdownActive }: PlayerSeatProps) {
   const { gradients, assets } = useTheme();
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
@@ -86,7 +86,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const showCardBacks = player.hasCards && !player.holeCards && !isFolded;
 
   const cardsElement = (
-    <div className={`flex ${cardsBelow ? 'mt-1' : 'mb-1'}`} style={{ minHeight: 52, gap: numHoleCards > 2 ? 0 : 2 }}>
+    <div className="flex" style={{ gap: numHoleCards > 2 ? 0 : 2 }}>
       {player.holeCards ? (
         player.holeCards.map((card, i) => {
           const cardIsWinning = isWinner && winningCards?.includes(card);
@@ -135,9 +135,6 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
       className={`relative flex flex-col items-center ${isFolded || isInactive ? 'opacity-40' : ''}`}
       style={isInactive ? { filter: 'grayscale(0.6)' } : undefined}
     >
-      {/* Cards above avatar for bottom-half seats */}
-      {!cardsBelow && cardsElement}
-
       {/* Large avatar (Full Tilt style) */}
       <div
         className={`
@@ -329,24 +326,34 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         </div>
       )}
 
-      {/* Cards below avatar for top-half seats */}
-      {cardsBelow && cardsElement}
-
-      {/* Equity percentage */}
-      {equity != null && (
-        <div
-          className="font-mono font-bold mt-1 px-2 py-0.5 rounded animate-fade-in-up"
-          style={{
-            fontSize: 14,
-            color: '#FFFFFF',
-            background: 'rgba(0,0,0,0.7)',
-            textAlign: 'center',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-          }}
-        >
-          {equity}%
+      {/* Cards — absolutely positioned toward table center ("in front" of the player) */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: 40,
+          transform: `translate(calc(-50% + ${cardOffset.x}px), calc(-50% + ${cardOffset.y}px))`,
+          zIndex: 2,
+        }}
+      >
+        <div className="flex flex-col items-center">
+          {cardsElement}
+          {equity != null && (
+            <div
+              className="font-mono font-bold mt-1 px-2 py-0.5 rounded animate-fade-in-up"
+              style={{
+                fontSize: 14,
+                color: '#FFFFFF',
+                background: 'rgba(0,0,0,0.7)',
+                textAlign: 'center',
+                textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+              }}
+            >
+              {equity}%
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
     </div>
   );
