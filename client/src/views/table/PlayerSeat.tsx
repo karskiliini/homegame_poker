@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PublicPlayerState, CardString } from '@poker/shared';
 import { DISCONNECT_TIMEOUT_MS } from '@poker/shared';
@@ -6,6 +6,143 @@ import { avatarImageFile } from '../../utils/avatarImageFile.js';
 import { CardComponent } from '../../components/Card.js';
 import { CardBack } from '../../components/CardBack.js';
 import { useTheme } from '../../themes/useTheme.js';
+
+// ── Fold animation variants ──────────────────────────────────────────
+// Each variant returns { exit, transition } for a given card index and foldDirection.
+type FoldDir = { x: number; y: number };
+type FoldVariant = (i: number, fd: FoldDir) => {
+  exit: Record<string, number[]>;
+  transition: Record<string, unknown>;
+};
+
+// 0 — Classic slide: cards push straight toward the center, no spin
+const foldClassic: FoldVariant = (i, fd) => ({
+  exit: {
+    x: [0, fd.x * 0.5, fd.x],
+    y: [0, fd.y * 0.5, fd.y],
+    scale: [1, 0.85, 0.3],
+    rotate: [0, i === 0 ? -8 : 8, i === 0 ? -15 : 15],
+    opacity: [1, 1, 0],
+  },
+  transition: {
+    duration: 0.5,
+    delay: i * 0.05,
+    ease: [0.4, 0, 0.2, 1] as number[],
+    opacity: { times: [0, 0.7, 1] },
+  },
+});
+
+// 1 — Spinning throw: the original dramatic double-spin throw
+const foldSpinThrow: FoldVariant = (i, fd) => ({
+  exit: {
+    x: [0, (i === 0 ? -20 : 20), fd.x + (i === 0 ? -30 : 30)],
+    y: [0, -35, fd.y],
+    scale: [1, 1.1, 0.15],
+    rotate: [0, i === 0 ? -360 : 270, i === 0 ? -720 : 540],
+    opacity: [1, 1, 0],
+  },
+  transition: {
+    duration: 0.6,
+    delay: i * 0.1,
+    ease: [0.4, 0, 0.2, 1] as number[],
+    opacity: { times: [0, 0.7, 1] },
+  },
+});
+
+// 2 — Helicopter: cards rise up, then spin flat like a frisbee toward center
+const foldHelicopter: FoldVariant = (i, fd) => ({
+  exit: {
+    x: [0, 0, fd.x * 1.2],
+    y: [0, -50, fd.y],
+    scale: [1, 1.15, 0.1],
+    rotate: [0, i === 0 ? -180 : 180, i === 0 ? -1080 : 1080],
+    opacity: [1, 1, 0],
+  },
+  transition: {
+    duration: 0.7,
+    delay: i * 0.08,
+    ease: [0.2, 0, 0.2, 1] as number[],
+    opacity: { times: [0, 0.75, 1] },
+  },
+});
+
+// 3 — Flick: quick wrist flick — cards snap to the side then curve in
+const foldFlick: FoldVariant = (i, fd) => ({
+  exit: {
+    x: [0, (i === 0 ? -45 : 45), fd.x],
+    y: [0, -10, fd.y],
+    scale: [1, 1.05, 0.2],
+    rotate: [0, i === 0 ? -25 : 25, i === 0 ? -90 : 90],
+    opacity: [1, 1, 0],
+  },
+  transition: {
+    duration: 0.4,
+    delay: i * 0.06,
+    ease: [0.6, 0, 0.2, 1] as number[],
+    opacity: { times: [0, 0.6, 1] },
+  },
+});
+
+// 4 — Lob arc: cards arc high like a basketball shot, gentle spin
+const foldLob: FoldVariant = (i, fd) => ({
+  exit: {
+    x: [0, fd.x * 0.3, fd.x],
+    y: [0, -70, fd.y],
+    scale: [1, 1.2, 0.15],
+    rotate: [0, i === 0 ? -45 : 45, i === 0 ? -180 : 180],
+    opacity: [1, 1, 0],
+  },
+  transition: {
+    duration: 0.65,
+    delay: i * 0.12,
+    ease: [0.25, 0, 0.35, 1] as number[],
+    opacity: { times: [0, 0.7, 1] },
+  },
+});
+
+// 5 — Scatter: cards split wide apart then converge to center
+const foldScatter: FoldVariant = (i, fd) => ({
+  exit: {
+    x: [0, (i === 0 ? -60 : 60), fd.x],
+    y: [0, (i === 0 ? -30 : 10), fd.y],
+    scale: [1, 1.0, 0.2],
+    rotate: [0, i === 0 ? -200 : 150, i === 0 ? -450 : 400],
+    opacity: [1, 1, 0],
+  },
+  transition: {
+    duration: 0.55,
+    delay: i * 0.15,
+    ease: [0.3, 0, 0.2, 1] as number[],
+    opacity: { times: [0, 0.65, 1] },
+  },
+});
+
+// 6 — Backhand: cards flick backward first, then snap forward to center
+const foldBackhand: FoldVariant = (i, fd) => ({
+  exit: {
+    x: [0, -fd.x * 0.3, fd.x * 1.1],
+    y: [0, -fd.y * 0.3, fd.y],
+    scale: [1, 1.1, 0.15],
+    rotate: [0, i === 0 ? 45 : -45, i === 0 ? -540 : 540],
+    opacity: [1, 1, 0],
+  },
+  transition: {
+    duration: 0.6,
+    delay: i * 0.08,
+    ease: [0.5, 0, 0.15, 1] as number[],
+    opacity: { times: [0, 0.7, 1] },
+  },
+});
+
+const FOLD_VARIANTS: FoldVariant[] = [
+  foldClassic,     // 0 — straight push
+  foldSpinThrow,   // 1 — dramatic double spin
+  foldHelicopter,  // 2 — rising frisbee spin
+  foldFlick,       // 3 — quick wrist flick
+  foldLob,         // 4 — high arc lob
+  foldScatter,     // 5 — split wide then converge
+  foldBackhand,    // 6 — backward snap forward
+];
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -28,6 +165,10 @@ interface PlayerSeatProps {
   cardOffset: { x: number; y: number };
   /** Called when this player's avatar is clicked (for avatar change). */
   onAvatarClick?: () => void;
+  /** Called when mouse enters the avatar area */
+  onAvatarHoverStart?: () => void;
+  /** Called when mouse leaves the avatar area */
+  onAvatarHoverEnd?: () => void;
   /** Called when stack area is clicked (chip trick trigger) */
   onChipTrickClick?: () => void;
   /** The 5 cards that make up the winning hand (for glow/dim logic) */
@@ -64,7 +205,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardOffset, onAvatarClick, onChipTrickClick, winningCards, showdownActive }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardOffset, onAvatarClick, onAvatarHoverStart, onAvatarHoverEnd, onChipTrickClick, winningCards, showdownActive }: PlayerSeatProps) {
   const { gradients, assets } = useTheme();
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
@@ -85,6 +226,17 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   // Show card backs when player has cards but they're not revealed
   const showCardBacks = player.hasCards && !player.holeCards && !isFolded;
 
+  // Pick a random fold animation variant when cards are dealt (showCardBacks becomes true)
+  const foldVariantRef = useRef(0);
+  useEffect(() => {
+    if (showCardBacks) {
+      foldVariantRef.current = Math.floor(Math.random() * FOLD_VARIANTS.length);
+    }
+  }, [showCardBacks]);
+
+  const fd: FoldDir = foldDirection ?? { x: 0, y: -40 };
+  const getCardFoldAnim = (i: number) => FOLD_VARIANTS[foldVariantRef.current](i, fd);
+
   const cardsElement = (
     <div className="flex" style={{ gap: numHoleCards > 2 ? 0 : 2 }}>
       {player.holeCards ? (
@@ -103,28 +255,20 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         })
       ) : (
         <AnimatePresence>
-          {showCardBacks && Array.from({ length: numHoleCards }, (_, i) => (
-            <motion.div
-              key={`cardback-${i}`}
-              initial={false}
-              exit={{
-                x: [0, (i === 0 ? -20 : 20), (foldDirection?.x ?? 0) + (i === 0 ? -30 : 30)],
-                y: [0, -35, foldDirection?.y ?? -40],
-                scale: [1, 1.1, 0.15],
-                rotate: [0, i === 0 ? -360 : 270, i === 0 ? -720 : 540],
-                opacity: [1, 1, 0],
-              }}
-              transition={{
-                duration: 0.6,
-                delay: i * 0.1,
-                ease: [0.4, 0, 0.2, 1],
-                opacity: { times: [0, 0.7, 1] },
-              }}
-              style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : i > 0 ? { marginLeft: 2 } : undefined}
-            >
-              <CardBack size="sm" />
-            </motion.div>
-          ))}
+          {showCardBacks && Array.from({ length: numHoleCards }, (_, i) => {
+            const anim = getCardFoldAnim(i);
+            return (
+              <motion.div
+                key={`cardback-${i}`}
+                initial={false}
+                exit={anim.exit}
+                transition={anim.transition}
+                style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : i > 0 ? { marginLeft: 2 } : undefined}
+              >
+                <CardBack size="sm" />
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       )}
     </div>
@@ -157,6 +301,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
           cursor: onAvatarClick ? 'pointer' : undefined,
         }}
         onClick={onAvatarClick}
+        onMouseEnter={onAvatarHoverStart}
+        onMouseLeave={onAvatarHoverEnd}
       >
         {avatarImage ? (
           <img

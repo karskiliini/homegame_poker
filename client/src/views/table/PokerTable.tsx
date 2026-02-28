@@ -113,6 +113,10 @@ interface PokerTableProps {
   onSeatClick?: (seatIndex: number) => void;
   /** Called when the player clicks their own avatar */
   onMyAvatarClick?: () => void;
+  /** Called when mouse enters the player's own avatar */
+  onMyAvatarHoverStart?: () => void;
+  /** Called when mouse leaves the player's own avatar */
+  onMyAvatarHoverEnd?: () => void;
   /** Active speech bubble to render above a seat */
   speechBubble?: ChatMessage | null;
   /** Called when the speech bubble timer expires */
@@ -178,7 +182,7 @@ export function PokerTable({
   timerData, collectingBets, potGrow,
   betChipAnimations = [], dealCardAnimations = [],
   mySeatIndex, myPlayerId, myHoleCards, highlightMySeat,
-  equities, dramaticRiver, badBeat, onSeatClick, onMyAvatarClick,
+  equities, dramaticRiver, badBeat, onSeatClick, onMyAvatarClick, onMyAvatarHoverStart, onMyAvatarHoverEnd,
   speechBubble, onSpeechBubbleDone,
   chipTrick, onChipTrickClick,
   winningCards = [],
@@ -813,6 +817,8 @@ export function PokerTable({
                   numHoleCards={numHoleCards}
                   cardOffset={getCardOffset(seatIndex)}
                   onAvatarClick={myPlayerId && player && player.id === myPlayerId ? onMyAvatarClick : undefined}
+                  onAvatarHoverStart={myPlayerId && player && player.id === myPlayerId ? onMyAvatarHoverStart : undefined}
+                  onAvatarHoverEnd={myPlayerId && player && player.id === myPlayerId ? onMyAvatarHoverEnd : undefined}
                   onChipTrickClick={myPlayerId && player?.id === myPlayerId ? onChipTrickClick : undefined}
                   winningCards={winningCards}
                   showdownActive={winnerSeats.length > 0}

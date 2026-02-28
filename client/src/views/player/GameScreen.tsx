@@ -36,6 +36,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   const [scale, setScale] = useState(1);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [chatMinimized, setChatMinimized] = useState(true);
+  const [peekingFoldedCards, setPeekingFoldedCards] = useState(false);
   const t = useT();
   const { gradients, assets } = useTheme();
   const avatarIds = useMemo(() => Array.from({ length: assets.avatarCount }, (_, i) => String(i + 1)), [assets.avatarCount]);
@@ -121,6 +122,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   }, [privateState?.holeCards.length]);
 
   const isFolded = privateState?.status === 'folded';
+  const showFoldedCards = isFolded && peekingFoldedCards;
   const isSittingOut = privateState?.status === 'sitting_out';
   const isBusted = privateState?.status === 'busted';
   const isAllIn = privateState?.status === 'all_in';
@@ -201,7 +203,9 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               equities={equities}
               dramaticRiver={dramaticRiver}
               badBeat={badBeat}
-              onMyAvatarClick={() => setShowAvatarPicker(true)}
+              onMyAvatarClick={() => !isFolded && setShowAvatarPicker(true)}
+              onMyAvatarHoverStart={() => isFolded && setPeekingFoldedCards(true)}
+              onMyAvatarHoverEnd={() => setPeekingFoldedCards(false)}
               speechBubble={speechBubble}
               onSpeechBubbleDone={onSpeechBubbleDone}
               chipTrick={chipTrick}
@@ -222,24 +226,20 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
         className="flex flex-col px-3 pt-1 pb-1"
         style={{
           background: 'rgba(0,0,0,0.5)',
-          opacity: isFolded ? 0.6 : 1,
-          transition: 'opacity 0.3s ease',
           paddingBottom: 'max(4px, env(safe-area-inset-bottom))',
         }}
       >
         {/* Cards + stack row */}
         <div className="flex items-center justify-center gap-4">
-          {privateState && privateState.holeCards.length > 0 ? (
+          {privateState && privateState.holeCards.length > 0 && (!isFolded || showFoldedCards) ? (
             <>
               <div className="flex" style={{ gap: privateState.holeCards.length > 2 ? 4 : 8 }}>
                 {privateState.holeCards.map((card, i) => (
                   <div
                     key={i}
-                    className="animate-card-flip"
+                    className={showFoldedCards ? 'animate-card-peek' : 'animate-card-flip'}
                     style={{
                       animationDelay: `${i * 120}ms`,
-                      opacity: isFolded ? 0.35 : 1,
-                      transition: 'opacity 0.3s ease',
                     }}
                   >
                     <CardComponent card={card} size={privateState.holeCards.length > 2 ? 'md' : 'lg'} />
@@ -264,6 +264,10 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
                 )}
               </div>
             </>
+          ) : isFolded && privateState && privateState.holeCards.length > 0 ? (
+            <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13, padding: 8 }}>
+              {t('game_folded')}
+            </div>
           ) : (
             <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, padding: 8 }}>
               {t('game_waiting_cards')}
