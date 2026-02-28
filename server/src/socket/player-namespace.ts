@@ -10,8 +10,8 @@ export function setupPlayerNamespace(nsp: Namespace, gameManager: GameManager) {
       config: gameManager.getConfig(),
     });
 
-    socket.on(C2S.JOIN, (data: { name: string; buyIn: number }) => {
-      const result = gameManager.addPlayer(socket, data.name, data.buyIn);
+    socket.on(C2S.JOIN, (data: { name: string; buyIn: number; avatarId?: string }) => {
+      const result = gameManager.addPlayer(socket, data.name, data.buyIn, data.avatarId);
       if (result.error) {
         socket.emit(S2C_PLAYER.ERROR, { message: result.error });
       } else {

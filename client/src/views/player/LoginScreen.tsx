@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import { C2S } from '@poker/shared';
+import { C2S, AVATAR_OPTIONS, AVATAR_BACKGROUNDS } from '@poker/shared';
+import type { AvatarId } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 
 interface LoginScreenProps {
   socket: Socket;
 }
 
+function getRandomAvatar(): AvatarId {
+  const idx = Math.floor(Math.random() * AVATAR_OPTIONS.length);
+  return AVATAR_OPTIONS[idx].id;
+}
+
 export function LoginScreen({ socket }: LoginScreenProps) {
   const { config, previousName, previousBuyIn, setScreen, setPlayerName } = useGameStore();
   const [name, setName] = useState(previousName || '');
   const [buyIn, setBuyIn] = useState(previousBuyIn || config?.maxBuyIn || 200);
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>(getRandomAvatar);
 
   const maxBuyIn = config?.maxBuyIn || 200;
 
@@ -18,7 +25,7 @@ export function LoginScreen({ socket }: LoginScreenProps) {
     if (!name.trim()) return;
     if (buyIn <= 0 || buyIn > maxBuyIn) return;
 
-    socket.emit(C2S.JOIN, { name: name.trim(), buyIn });
+    socket.emit(C2S.JOIN, { name: name.trim(), buyIn, avatarId: selectedAvatar });
     setPlayerName(name.trim());
     setScreen('lobby');
   };
@@ -69,6 +76,43 @@ export function LoginScreen({ socket }: LoginScreenProps) {
               }}
               autoFocus
             />
+          </div>
+
+          {/* Avatar picker */}
+          <div>
+            <label className="block mb-2" style={{ color: 'var(--ftp-text-muted)', fontSize: 12, fontWeight: 600 }}>
+              AVATAR
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {AVATAR_OPTIONS.map((avatar) => {
+                const isSelected = selectedAvatar === avatar.id;
+                const [bg1, bg2] = AVATAR_BACKGROUNDS[avatar.id];
+                return (
+                  <button
+                    key={avatar.id}
+                    type="button"
+                    onClick={() => setSelectedAvatar(avatar.id)}
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1',
+                      borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${bg1}, ${bg2})`,
+                      border: isSelected ? '3px solid var(--ftp-red)' : '2px solid rgba(255,255,255,0.1)',
+                      boxShadow: isSelected ? '0 0 12px rgba(196,30,42,0.5)' : 'none',
+                      cursor: 'pointer',
+                      fontSize: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                    }}
+                    title={avatar.label}
+                  >
+                    {avatar.emoji}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div>

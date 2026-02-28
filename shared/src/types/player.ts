@@ -20,6 +20,7 @@ export interface Player {
   runItTwicePreference: 'ask' | 'always_no';
   autoMuck: boolean;
   disconnectedAt: number | null;
+  avatarId: string;
 }
 
 export interface PublicPlayerState {
@@ -37,6 +38,7 @@ export interface PublicPlayerState {
   isCurrentActor: boolean;
   holeCards: CardString[] | null;
   hasCards: boolean;
+  avatarId: string;
 }
 
 export interface PrivatePlayerState {
