@@ -18,6 +18,7 @@ import { playerSoundManager } from '../../audio/SoundManager.js';
 import { SoundToggle } from '../../components/SoundToggle.js';
 import { BugReportButton } from '../../components/BugReportButton.js';
 import { LanguageToggle } from '../../components/LanguageToggle.js';
+import { ThemeToggle } from '../../components/ThemeToggle.js';
 import { useT } from '../../hooks/useT.js';
 
 export function PlayerView() {
@@ -262,6 +263,7 @@ function TopRightControls({ soundEnabled, toggleSound, openHistory }: {
   const t = useT();
   return (
     <div className="fixed top-4 right-4 z-40 flex items-center gap-3">
+      <ThemeToggle />
       <LanguageToggle />
       <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
       <button

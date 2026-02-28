@@ -9,6 +9,7 @@ import { CardBack } from '../../components/CardBack.js';
 import { CardComponent } from '../../components/Card.js';
 import { ChipStack } from '../../components/ChipStack.js';
 import { useT } from '../../hooks/useT.js';
+import { useTheme } from '../../themes/useTheme.js';
 
 // Virtual table dimensions — defines the fixed aspect ratio (18:11)
 // Both TV and phone views use these to scale the table via CSS transform
@@ -114,6 +115,7 @@ let chipAnimId = 0;
 function EmptySeat({ seatIndex, onClick }: { seatIndex: number; onClick?: (seatIndex: number) => void }) {
   const [hovered, setHovered] = useState(false);
   const t = useT();
+  const { gradients } = useTheme();
   const isClickable = !!onClick;
 
   return (
@@ -127,8 +129,8 @@ function EmptySeat({ seatIndex, onClick }: { seatIndex: number; onClick?: (seatI
           ? '1px solid rgba(74, 222, 128, 0.5)'
           : '1px solid rgba(255,255,255,0.08)',
         background: hovered
-          ? 'linear-gradient(180deg, rgba(34, 197, 94, 0.35), rgba(22, 163, 74, 0.25))'
-          : 'linear-gradient(180deg, rgba(30,58,95,0.3), rgba(15,30,51,0.3))',
+          ? gradients.emptySeatHover
+          : gradients.emptySeatDefault,
         color: hovered ? '#4ADE80' : 'rgba(255,255,255,0.2)',
         fontSize: hovered ? 14 : 11,
         fontWeight: hovered ? 700 : 400,
@@ -165,6 +167,7 @@ export function PokerTable({
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
   const t = useT();
+  const { gradients } = useTheme();
 
   // Position lookup that respects seat rotation
   const getDisplaySeatPos = useCallback((physicalSeatIndex: number) => {
@@ -241,7 +244,7 @@ export function PokerTable({
         style={{
           inset: '5.5%',
           borderRadius: '50%',
-          background: 'linear-gradient(180deg, #7A4F2B 0%, #5C3A1E 20%, #4A2E16 60%, #3D2510 100%)',
+          background: gradients.tableRail,
           boxShadow: '0 4px 20px rgba(0,0,0,0.6), inset 0 3px 8px rgba(255,220,160,0.15), inset 0 -3px 6px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.25)',
         }}
       />
@@ -252,7 +255,7 @@ export function PokerTable({
         style={{
           inset: '5.5%',
           borderRadius: '50%',
-          background: 'linear-gradient(180deg, rgba(255,220,160,0.10) 0%, transparent 10%, transparent 100%)',
+          background: gradients.tableRailHighlight,
         }}
       />
 
@@ -265,7 +268,7 @@ export function PokerTable({
           width: 6,
           height: 40,
           borderRadius: 3,
-          background: 'linear-gradient(180deg, rgba(255,220,160,0.15), rgba(255,220,160,0.03))',
+          background: gradients.tableRailEdge,
         }}
       />
 
@@ -278,7 +281,7 @@ export function PokerTable({
           width: 6,
           height: 40,
           borderRadius: 3,
-          background: 'linear-gradient(180deg, rgba(255,220,160,0.15), rgba(255,220,160,0.03))',
+          background: gradients.tableRailEdge,
         }}
       />
 
@@ -288,7 +291,7 @@ export function PokerTable({
         style={{
           inset: '7%',
           borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 50% 45%, #52B86E 0%, #3A9D56 40%, #267A3C 100%)',
+          background: gradients.tableFelt,
           boxShadow: 'inset 0 2px 25px rgba(0,0,0,0.35)',
         }}
       />

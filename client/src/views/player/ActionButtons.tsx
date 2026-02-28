@@ -3,6 +3,7 @@ import type { Socket } from 'socket.io-client';
 import type { ActionType } from '@poker/shared';
 import { C2S, calcPotSizedBet, calcHalfPotBet } from '@poker/shared';
 import { useT } from '../../hooks/useT.js';
+import { useTheme } from '../../themes/useTheme.js';
 
 interface ActionButtonsProps {
   socket: Socket;
@@ -143,11 +144,12 @@ function FTPButton({
   children: React.ReactNode;
   className?: string;
 }) {
+  const { cssVars } = useTheme();
   const styles: Record<string, { bg1: string; bg2: string; shadow: string }> = {
-    fold: { bg1: '#DC2626', bg2: '#B91C1C', shadow: '#7F1D1D' },
-    check: { bg1: '#2563EB', bg2: '#1D4ED8', shadow: '#1E3A8A' },
-    call: { bg1: '#16A34A', bg2: '#15803D', shadow: '#14532D' },
-    raise: { bg1: '#D97706', bg2: '#B45309', shadow: '#78350F' },
+    fold: { bg1: cssVars.btnFold, bg2: cssVars.btnFoldDark, shadow: cssVars.btnFoldShadow },
+    check: { bg1: cssVars.btnCheck, bg2: cssVars.btnCheckDark, shadow: cssVars.btnCheckShadow },
+    call: { bg1: cssVars.btnCall, bg2: cssVars.btnCallDark, shadow: cssVars.btnCallShadow },
+    raise: { bg1: cssVars.btnRaise, bg2: cssVars.btnRaiseDark, shadow: cssVars.btnRaiseShadow },
   };
 
   const s = styles[color];

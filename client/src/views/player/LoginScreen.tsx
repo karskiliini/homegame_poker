@@ -5,6 +5,8 @@ import { useGameStore } from '../../hooks/useGameStore.js';
 import { VersionInfo } from '../../components/VersionInfo.js';
 import { useT } from '../../hooks/useT.js';
 import { LanguageToggle } from '../../components/LanguageToggle.js';
+import { ThemeToggle } from '../../components/ThemeToggle.js';
+import { useTheme } from '../../themes/useTheme.js';
 
 function getRandomAvatar(): AvatarId {
   const idx = Math.floor(Math.random() * AVATAR_OPTIONS.length);
@@ -16,6 +18,7 @@ export function LoginScreen() {
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>(getRandomAvatar);
   const t = useT();
+  const { gradients, assets } = useTheme();
 
   const handleJoin = () => {
     if (!name.trim()) return;
@@ -27,7 +30,7 @@ export function LoginScreen() {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(180deg, #0F1E33, #162D50)' }}
+      style={{ background: gradients.loginBackground }}
     >
       <div
         className="w-full max-w-sm p-6"
@@ -38,7 +41,8 @@ export function LoginScreen() {
           boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
         }}
       >
-        <div className="flex justify-end mb-2">
+        <div className="flex justify-end mb-2 gap-2">
+          <ThemeToggle />
           <LanguageToggle />
         </div>
         <h1
@@ -107,7 +111,7 @@ export function LoginScreen() {
                     title={avatar.label}
                   >
                     <img
-                      src={avatar.image}
+                      src={`${assets.avatarBasePath}/${avatar.image}`}
                       alt={avatar.label}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

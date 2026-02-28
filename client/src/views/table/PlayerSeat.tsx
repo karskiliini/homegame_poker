@@ -4,6 +4,7 @@ import type { PublicPlayerState } from '@poker/shared';
 import { DISCONNECT_TIMEOUT_MS, AVATAR_OPTIONS } from '@poker/shared';
 import { CardComponent } from '../../components/Card.js';
 import { CardBack } from '../../components/CardBack.js';
+import { useTheme } from '../../themes/useTheme.js';
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -53,6 +54,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
 }
 
 export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2 }: PlayerSeatProps) {
+  const { gradients, assets } = useTheme();
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
   const isAllIn = player.status === 'all_in';
@@ -61,7 +63,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const isInactive = isSittingOut || isBusted;
   const isDisconnected = !player.isConnected;
   const dcCountdown = useDcCountdown(player.disconnectedAt);
-  const avatarImage = AVATAR_OPTIONS.find(a => a.id === player.avatarId)?.image ?? null;
+  const avatarOption = AVATAR_OPTIONS.find(a => a.id === player.avatarId);
+  const avatarImage = avatarOption ? `${assets.avatarBasePath}/${avatarOption.image}` : null;
   const initials = getInitials(player.name);
 
   // Timer bar color
@@ -158,8 +161,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
           minWidth: 90,
           textAlign: 'center',
           background: isActive
-            ? 'linear-gradient(180deg, #FFFDE7, #FFF9C4, #FFF176)'
-            : 'linear-gradient(180deg, #F0F0F0, #D8D8D8, #C8C8C8)',
+            ? gradients.namePlateActive
+            : gradients.namePlate,
           border: isAllIn
             ? '2px solid #EAB308'
             : `1px solid ${isActive ? 'rgba(234, 179, 8, 0.8)' : 'rgba(0,0,0,0.3)'}`,
@@ -206,7 +209,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 animate-allin-label px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
             style={{
               fontSize: 11,
-              background: 'linear-gradient(135deg, #DC2626, #991B1B)',
+              background: gradients.badgeAllIn,
               boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
               whiteSpace: 'nowrap',
             }}
@@ -221,7 +224,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
             style={{
               fontSize: 11,
-              background: 'linear-gradient(135deg, #7F1D1D, #991B1B)',
+              background: gradients.badgeBusted,
               boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
               whiteSpace: 'nowrap',
             }}
@@ -236,7 +239,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-white font-bold uppercase tracking-wider"
             style={{
               fontSize: 11,
-              background: 'linear-gradient(135deg, #6B7280, #4B5563)',
+              background: gradients.badgeAway,
               boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
               whiteSpace: 'nowrap',
             }}
@@ -275,7 +278,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             width: 24,
             height: 24,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #FFFDE7, #FFD54F)',
+            background: gradients.dealerButton,
             border: '2px solid #F9A825',
             color: '#5D4037',
             fontSize: 11,
@@ -297,7 +300,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             width: 24,
             height: 24,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+            background: gradients.sbButton,
             fontSize: 9,
             boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
             zIndex: 2,
@@ -315,7 +318,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             width: 24,
             height: 24,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+            background: gradients.bbButton,
             fontSize: 9,
             boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
             zIndex: 2,

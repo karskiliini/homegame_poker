@@ -1,11 +1,15 @@
 import type { SoundType } from '@poker/shared';
+import type { SoundParams } from '../themes/types.js';
+import { basicTheme } from '../themes/basic.js';
 
 class SoundManager {
   private ctx: AudioContext | null = null;
   private _enabled: boolean;
+  private params: SoundParams;
 
   constructor(defaultEnabled: boolean) {
     this._enabled = defaultEnabled;
+    this.params = basicTheme.soundParams;
   }
 
   get enabled(): boolean {
@@ -14,6 +18,10 @@ class SoundManager {
 
   setEnabled(enabled: boolean) {
     this._enabled = enabled;
+  }
+
+  setParams(params: SoundParams) {
+    this.params = params;
   }
 
   private getCtx(): AudioContext {
@@ -46,9 +54,9 @@ class SoundManager {
   private playCardDeal() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
-    const duration = 0.12;
+    const p = this.params.cardDeal;
 
-    const bufferSize = Math.floor(ctx.sampleRate * duration);
+    const bufferSize = Math.floor(ctx.sampleRate * p.duration);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
@@ -61,25 +69,26 @@ class SoundManager {
 
     const filter = ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.value = 3000;
-    filter.Q.value = 1.5;
+    filter.frequency.value = p.filterFreq;
+    filter.Q.value = p.filterQ;
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.35, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    gain.gain.setValueAtTime(p.gain, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + p.duration);
 
     source.connect(filter).connect(gain).connect(ctx.destination);
     source.start(now);
-    source.stop(now + duration);
+    source.stop(now + p.duration);
   }
 
   // Card flip with body
   private playCardFlip() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
+    const p = this.params.cardFlip;
 
     // Snap
-    const bufferSize = Math.floor(ctx.sampleRate * 0.05);
+    const bufferSize = Math.floor(ctx.sampleRate * p.snapDuration);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
@@ -89,52 +98,52 @@ class SoundManager {
     source.buffer = buffer;
     const filter = ctx.createBiquadFilter();
     filter.type = 'highpass';
-    filter.frequency.value = 1500;
+    filter.frequency.value = p.snapFilterFreq;
     const gain = ctx.createGain();
-    gain.gain.value = 0.3;
+    gain.gain.value = p.snapGain;
     source.connect(filter).connect(gain).connect(ctx.destination);
     source.start(now);
-    source.stop(now + 0.05);
+    source.stop(now + p.snapDuration);
 
     // Thud
     const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(200, now + 0.02);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+    osc.frequency.setValueAtTime(p.thudFreqStart, now + 0.02);
+    osc.frequency.exponentialRampToValueAtTime(p.thudFreqEnd, now + p.thudDuration);
     const gain2 = ctx.createGain();
-    gain2.gain.setValueAtTime(0.15, now + 0.02);
-    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+    gain2.gain.setValueAtTime(p.thudGain, now + 0.02);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + p.thudDuration);
     osc.connect(gain2).connect(ctx.destination);
     osc.start(now + 0.02);
-    osc.stop(now + 0.12);
+    osc.stop(now + p.thudDuration);
   }
 
   // Metallic chip clink
   private playChipBet() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
+    const p = this.params.chipBet;
 
     // Multiple metallic clicks
-    const freqs = [4000, 3200, 2800];
-    freqs.forEach((freq, i) => {
+    p.freqs.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       osc.type = 'sine';
       osc.frequency.value = freq;
       const gain = ctx.createGain();
-      const start = now + i * 0.03;
-      gain.gain.setValueAtTime(0.2, start);
-      gain.gain.exponentialRampToValueAtTime(0.01, start + 0.06);
+      const start = now + i * p.freqGap;
+      gain.gain.setValueAtTime(p.freqGain, start);
+      gain.gain.exponentialRampToValueAtTime(0.01, start + p.freqDuration);
       osc.connect(gain).connect(ctx.destination);
       osc.start(start);
-      osc.stop(start + 0.06);
+      osc.stop(start + p.freqDuration);
     });
 
     // Low body
     const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.value = 300;
+    osc.frequency.value = p.bodyFreq;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.setValueAtTime(p.bodyGain, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
     osc.connect(gain).connect(ctx.destination);
     osc.start(now);
@@ -145,31 +154,31 @@ class SoundManager {
   private playChipWin() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
+    const p = this.params.chipWin;
 
     // Ascending chip cascade
-    const notes = [523, 659, 784, 988, 1047];
-    notes.forEach((freq, i) => {
+    p.notes.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       osc.type = 'sine';
       osc.frequency.value = freq;
       const gain = ctx.createGain();
-      const start = now + i * 0.08;
-      gain.gain.setValueAtTime(0.2, start);
-      gain.gain.exponentialRampToValueAtTime(0.01, start + 0.15);
+      const start = now + i * p.noteGap;
+      gain.gain.setValueAtTime(p.noteGain, start);
+      gain.gain.exponentialRampToValueAtTime(0.01, start + p.noteDuration);
       osc.connect(gain).connect(ctx.destination);
       osc.start(start);
-      osc.stop(start + 0.15);
+      osc.stop(start + p.noteDuration);
 
       // Metallic overtone
       const osc2 = ctx.createOscillator();
       osc2.type = 'sine';
-      osc2.frequency.value = freq * 2.5;
+      osc2.frequency.value = freq * p.overtoneMultiplier;
       const gain2 = ctx.createGain();
-      gain2.gain.setValueAtTime(0.08, start);
-      gain2.gain.exponentialRampToValueAtTime(0.01, start + 0.08);
+      gain2.gain.setValueAtTime(p.overtoneGain, start);
+      gain2.gain.exponentialRampToValueAtTime(0.01, start + p.noteGap);
       osc2.connect(gain2).connect(ctx.destination);
       osc2.start(start);
-      osc2.stop(start + 0.08);
+      osc2.stop(start + p.noteGap);
     });
   }
 
@@ -177,24 +186,25 @@ class SoundManager {
   private playCheck() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
+    const p = this.params.check;
 
     const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(400, now);
-    osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+    osc.frequency.setValueAtTime(p.freqStart, now);
+    osc.frequency.exponentialRampToValueAtTime(p.freqEnd, now + p.duration);
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    gain.gain.setValueAtTime(p.gain, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + p.duration);
     osc.connect(gain).connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.08);
+    osc.stop(now + p.duration);
 
     // Wooden knock body
     const osc2 = ctx.createOscillator();
     osc2.type = 'triangle';
-    osc2.frequency.value = 150;
+    osc2.frequency.value = p.bodyFreq;
     const gain2 = ctx.createGain();
-    gain2.gain.setValueAtTime(0.12, now);
+    gain2.gain.setValueAtTime(p.bodyGain, now);
     gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
     osc2.connect(gain2).connect(ctx.destination);
     osc2.start(now);
@@ -205,9 +215,9 @@ class SoundManager {
   private playFold() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
-    const duration = 0.15;
+    const p = this.params.fold;
 
-    const bufferSize = Math.floor(ctx.sampleRate * duration);
+    const bufferSize = Math.floor(ctx.sampleRate * p.duration);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
@@ -220,97 +230,99 @@ class SoundManager {
 
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(2000, now);
-    filter.frequency.exponentialRampToValueAtTime(400, now + duration);
+    filter.frequency.setValueAtTime(p.filterStart, now);
+    filter.frequency.exponentialRampToValueAtTime(p.filterEnd, now + p.duration);
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    gain.gain.setValueAtTime(p.gain, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + p.duration);
 
     source.connect(filter).connect(gain).connect(ctx.destination);
     source.start(now);
-    source.stop(now + duration);
+    source.stop(now + p.duration);
   }
 
   // Dramatic all-in sound
   private playAllIn() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
+    const p = this.params.allIn;
 
     // Rising sweep
     const osc = ctx.createOscillator();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(150, now);
-    osc.frequency.exponentialRampToValueAtTime(800, now + 0.25);
+    osc.frequency.setValueAtTime(p.sweepFreqStart, now);
+    osc.frequency.exponentialRampToValueAtTime(p.sweepFreqEnd, now + p.sweepDuration);
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.setValueAtTime(0.18, now + 0.15);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    gain.gain.setValueAtTime(p.sweepGain, now);
+    gain.gain.setValueAtTime(p.sweepGain * 1.2, now + p.sweepDuration * 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + p.sweepDuration + 0.05);
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(1000, now);
-    filter.frequency.linearRampToValueAtTime(3000, now + 0.25);
+    filter.frequency.linearRampToValueAtTime(3000, now + p.sweepDuration);
     osc.connect(filter).connect(gain).connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.3);
+    osc.stop(now + p.sweepDuration + 0.05);
 
     // Impact
     const osc2 = ctx.createOscillator();
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(200, now + 0.25);
-    osc2.frequency.exponentialRampToValueAtTime(60, now + 0.5);
+    osc2.frequency.setValueAtTime(p.impactFreqStart, now + p.sweepDuration);
+    osc2.frequency.exponentialRampToValueAtTime(p.impactFreqEnd, now + p.sweepDuration + p.impactDuration);
     const gain2 = ctx.createGain();
-    gain2.gain.setValueAtTime(0.25, now + 0.25);
-    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    gain2.gain.setValueAtTime(p.impactGain, now + p.sweepDuration);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + p.sweepDuration + p.impactDuration);
     osc2.connect(gain2).connect(ctx.destination);
-    osc2.start(now + 0.25);
-    osc2.stop(now + 0.5);
+    osc2.start(now + p.sweepDuration);
+    osc2.stop(now + p.sweepDuration + p.impactDuration);
   }
 
   // Urgent tick
   private playTimerWarning() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
+    const p = this.params.timerWarning;
 
     const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.value = 1200;
+    osc.frequency.value = p.freq;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+    gain.gain.setValueAtTime(p.gain, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + p.tickDuration);
     osc.connect(gain).connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.04);
+    osc.stop(now + p.tickDuration);
 
     // Second tick
     const osc2 = ctx.createOscillator();
     osc2.type = 'sine';
-    osc2.frequency.value = 1200;
+    osc2.frequency.value = p.freq;
     const gain2 = ctx.createGain();
-    gain2.gain.setValueAtTime(0.2, now + 0.08);
-    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+    gain2.gain.setValueAtTime(p.gain, now + p.tickGap);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + p.tickGap + p.tickDuration);
     osc2.connect(gain2).connect(ctx.destination);
-    osc2.start(now + 0.08);
-    osc2.stop(now + 0.12);
+    osc2.start(now + p.tickGap);
+    osc2.stop(now + p.tickGap + p.tickDuration);
   }
 
   // Two-tone notification
   private playYourTurn() {
     const ctx = this.getCtx();
     const now = ctx.currentTime;
+    const p = this.params.yourTurn;
 
-    const notes = [660, 880];
-    notes.forEach((freq, i) => {
+    p.notes.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       osc.type = 'sine';
       osc.frequency.value = freq;
       const gain = ctx.createGain();
-      const start = now + i * 0.15;
-      gain.gain.setValueAtTime(0.2, start);
-      gain.gain.exponentialRampToValueAtTime(0.01, start + 0.12);
+      const start = now + i * p.noteGap;
+      gain.gain.setValueAtTime(p.gain, start);
+      gain.gain.exponentialRampToValueAtTime(0.01, start + p.noteDuration);
       osc.connect(gain).connect(ctx.destination);
       osc.start(start);
-      osc.stop(start + 0.12);
+      osc.stop(start + p.noteDuration);
     });
   }
 }

@@ -10,6 +10,8 @@ import { tableSoundManager } from '../../audio/SoundManager.js';
 import { SoundToggle } from '../../components/SoundToggle.js';
 import { BugReportButton } from '../../components/BugReportButton.js';
 import { LanguageToggle } from '../../components/LanguageToggle.js';
+import { ThemeToggle } from '../../components/ThemeToggle.js';
+import { useTheme } from '../../themes/useTheme.js';
 
 interface WatchingScreenProps {
   playerSocket: Socket;
@@ -22,6 +24,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     playerName, playerAvatar,
   } = useGameStore();
   const t = useT();
+  const { gradients } = useTheme();
 
   const tableSocketRef = useRef(createTableSocket());
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -131,7 +134,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     <div
       ref={wrapperRef}
       className="w-screen h-screen overflow-hidden flex items-center justify-center"
-      style={{ background: 'radial-gradient(ellipse at 50% 80%, #1A1208, #12100C, #0A0A0F, #050508)' }}
+      style={{ background: gradients.tvBackground }}
     >
       {/* Top controls */}
       <div className="fixed top-4 left-4 z-50">
@@ -152,6 +155,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
         </button>
       </div>
       <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+        <ThemeToggle />
         <LanguageToggle />
         <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
       </div>

@@ -1,5 +1,6 @@
 import type { CardString, Suit, Rank } from '@poker/shared';
 import { SUIT_SYMBOLS } from '@poker/shared';
+import { useTheme } from '../themes/useTheme.js';
 
 interface CardComponentProps {
   card: CardString;
@@ -13,20 +14,13 @@ const SIZE_STYLES = {
   lg: { width: 68, height: 96, fontSize: 18, suitSize: 16, centerSuit: 32 },
 };
 
-// FTP 4-color deck
-const SUIT_COLORS: Record<Suit, string> = {
-  s: '#000000', // Spades - black
-  h: '#CC0000', // Hearts - red
-  d: '#0066CC', // Diamonds - blue
-  c: '#008800', // Clubs - green
-};
-
 export function CardComponent({ card, size = 'md', isWinner }: CardComponentProps) {
+  const theme = useTheme();
   const rank = card[0] as Rank;
   const suit = card[1] as Suit;
   const displayRank = rank === 'T' ? '10' : rank;
   const s = SIZE_STYLES[size];
-  const color = SUIT_COLORS[suit];
+  const color = theme.suitColors[suit];
 
   return (
     <div

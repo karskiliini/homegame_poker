@@ -1,12 +1,5 @@
 import type { ChipBreakdown, ChipDenomination } from '@poker/shared';
-
-const CHIP_COLORS: Record<ChipDenomination, { surface: string; edge: string; stripe: string; edgeDark: string }> = {
-  white: { surface: '#E8E8E8', edge: '#C8C8C8', stripe: 'rgba(160,160,160,0.5)', edgeDark: '#A0A0A0' },
-  red:   { surface: '#D42828', edge: '#AA1C1C', stripe: 'rgba(255,255,255,0.4)', edgeDark: '#881414' },
-  green: { surface: '#2E9B2E', edge: '#1E7A1E', stripe: 'rgba(255,255,255,0.35)', edgeDark: '#155A15' },
-  black: { surface: '#3A3A3A', edge: '#222222', stripe: 'rgba(255,255,255,0.2)', edgeDark: '#111111' },
-  blue:  { surface: '#2850B8', edge: '#1C3C8C', stripe: 'rgba(255,255,255,0.3)', edgeDark: '#142A66' },
-};
+import { useTheme } from '../themes/useTheme.js';
 
 const SIZES = {
   sm: { width: 24, height: 16, edgeHeight: 4, stackOffset: 5 },
@@ -19,6 +12,7 @@ interface ChipStackProps {
 }
 
 export function ChipStack({ breakdown, size }: ChipStackProps) {
+  const { chipColors } = useTheme();
   const { width, height, edgeHeight, stackOffset } = SIZES[size];
 
   // Flatten breakdown into individual chips for stacking
@@ -44,7 +38,7 @@ export function ChipStack({ breakdown, size }: ChipStackProps) {
       style={{ position: 'relative', width, height: totalHeight }}
     >
       {stackedChips.map((denom, i) => {
-        const colors = CHIP_COLORS[denom];
+        const colors = chipColors[denom];
         // Position from bottom: first chip (i=0) at bottom, last at top
         const bottomOffset = i * stackOffset;
 

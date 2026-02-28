@@ -6,6 +6,7 @@ import { useGameStore } from '../../hooks/useGameStore.js';
 import { VersionInfo } from '../../components/VersionInfo.js';
 import { useT } from '../../hooks/useT.js';
 import { LanguageToggle } from '../../components/LanguageToggle.js';
+import { ThemeToggle } from '../../components/ThemeToggle.js';
 
 interface TableLobbyScreenProps {
   socket: Socket;
@@ -70,6 +71,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <LanguageToggle />
           {tables.length > 0 && (
             <button

@@ -3,6 +3,8 @@ import type { GameState, PrivatePlayerState, TableInfo, StakeLevel } from '@poke
 import type { AvatarId } from '@poker/shared';
 import type { Language } from '../i18n/translations.js';
 import { detectLanguage } from '../i18n/translations.js';
+import type { ThemeId } from '../themes/types.js';
+import { DEFAULT_THEME } from '../themes/index.js';
 
 interface LobbyPlayer {
   id: string;
@@ -66,6 +68,10 @@ interface GameStore {
   // Language
   language: Language;
   setLanguage: (lang: Language) => void;
+
+  // Theme
+  theme: ThemeId;
+  setTheme: (theme: ThemeId) => void;
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -108,5 +114,11 @@ export const useGameStore = create<GameStore>((set) => ({
   setLanguage: (language) => {
     localStorage.setItem('ftp-language', language);
     set({ language });
+  },
+
+  theme: (localStorage.getItem('ftp-theme') as ThemeId) || DEFAULT_THEME,
+  setTheme: (theme) => {
+    localStorage.setItem('ftp-theme', theme);
+    set({ theme });
   },
 }));

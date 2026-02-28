@@ -10,6 +10,7 @@ import { PokerTable, TABLE_VIRTUAL_W, TABLE_VIRTUAL_H } from '../table/PokerTabl
 import { CardComponent } from '../../components/Card.js';
 import { ActionButtons } from './ActionButtons.js';
 import { PreActionButtons } from './PreActionButtons.js';
+import { useTheme } from '../../themes/useTheme.js';
 
 // Use canonical virtual table dimensions from PokerTable
 const TABLE_W = TABLE_VIRTUAL_W;
@@ -28,6 +29,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const t = useT();
+  const { gradients } = useTheme();
 
   // Connect table socket and watch the current table
   useEffect(() => {
@@ -123,7 +125,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: 'linear-gradient(180deg, #0D1526 0%, #0F1828 100%)' }}
+      style={{ background: gradients.phoneBackground }}
     >
       {/* Top: Mini poker table (~60vh) */}
       <div
@@ -131,7 +133,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
         className="relative w-full overflow-hidden"
         style={{
           height: '79vh',
-          background: 'radial-gradient(ellipse at 50% 80%, #1A2744, #141E33, #0D1526)',
+          background: gradients.phoneRadialBackground,
         }}
       >
         {/* Top-left buttons: Leave Table + Sit Out */}

@@ -1,3 +1,5 @@
+import { useTheme } from '../themes/useTheme.js';
+
 interface CardBackProps {
   size?: 'sm' | 'md' | 'lg';
 }
@@ -10,6 +12,7 @@ const SIZE_STYLES = {
 
 export function CardBack({ size = 'md' }: CardBackProps) {
   const s = SIZE_STYLES[size];
+  const { gradients } = useTheme();
 
   return (
     <div
@@ -17,7 +20,7 @@ export function CardBack({ size = 'md' }: CardBackProps) {
       style={{
         width: s.width,
         height: s.height,
-        background: 'linear-gradient(135deg, #C41E2A, #8B1520)',
+        background: gradients.cardBack,
         border: '2px solid #FFFFFF',
         borderRadius: 4,
         boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
@@ -30,7 +33,7 @@ export function CardBack({ size = 'md' }: CardBackProps) {
           inset: 4,
           border: '1px solid rgba(255,255,255,0.3)',
           borderRadius: 2,
-          background: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 8px)',
+          background: gradients.cardBackPattern,
         }}
       />
       {/* Center diamond */}
