@@ -811,6 +811,19 @@ export class GameManager {
     player.status = 'waiting';
     player.isReady = true;
     console.log(`${player.name} sat in`);
+    // Send updated private state directly — sendPrivateStateToAll only covers hand players
+    const socket = this.socketMap.get(socketId);
+    if (socket) {
+      const state: PrivatePlayerState = {
+        id: player.id, name: player.name, seatIndex: player.seatIndex, stack: player.stack,
+        status: 'waiting', holeCards: [], currentBet: 0, availableActions: [],
+        minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
+        showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+        sitOutNextHand: false,
+        autoMuck: player.autoMuck ?? false,
+      };
+      socket.emit(S2C_PLAYER.PRIVATE_STATE, state);
+    }
     this.broadcastLobbyState();
     this.broadcastTableState();
   }
