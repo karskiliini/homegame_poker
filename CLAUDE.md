@@ -14,6 +14,9 @@ Use Test-Driven Development. For use-case testing:
 3. Verify the implementation matches the test
 4. If it doesn't match, fix until it does
 
+## Starting a New Task
+Always fetch and check out the latest `main` before starting any new task: `git fetch origin && git checkout main && git pull origin main`. This ensures you're building on the most up-to-date code and avoids unnecessary merge conflicts.
+
 ## Worktree
 Always use a git worktree when working on bugs or features. This keeps the main workspace clean and runnable for the user at all times. Merge changes back to main only when the work is complete, tested, and committed.
 

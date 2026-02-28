@@ -47,6 +47,7 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Custom table felt & card backs — admin valitsee ulkoasun, pelaajat voivat valita oman card backin
 
 ### 1.2 Avataarijärjestelmän uudistus
+- [ ] **BUG:** Avatar-kuvat eivät ole keskitetty valintapallossa puhelinnäkymässä
 - [ ] Siirtyminen emoji-avatareista kustomoituihin piirrettyihin hahmoihin (Full Tilt -tyyli)
   - Ninja, Cowgirl, Robot, Pirate, Wizard, Alien, Viking, Detective, Astronaut, Chef, Samurai, Vampire
   - Lisää uusia: Panda, Penguin, Shark, Lion, Phoenix, Dragon, Jester, Gladiator
@@ -70,6 +71,9 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Bad beat -animaatio: erikoisefekti suck-outille (Full Tilt -tyylinen räjähdys)
 - [ ] "The Nuts" -ilmoitus: erikoisefekti showdownissa kun pelaajalla on paras mahdollinen käsi
 
+### 1.5 Use caset
+ - [ ] Jos pöytä on jo täynnä, mutta käyttäjä haluaa tulla katselijaksi, niin hänellä on mahdollisuus painaa nappia "JOIN WAITING LIST". Hän pääsee jonoon, ja heti kun yksi pelaaja poistuu pöydästä, ensimmäinen waiting list jonosta päätyy automaattisesti istumaan hänen paikalleen. Pelaaja poistetaan waiting list jonosta.
+ 
 ---
 
 ## Vaihe 2 — Äänimaailma
