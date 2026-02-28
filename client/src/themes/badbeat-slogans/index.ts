@@ -1,0 +1,10 @@
+import { basicSlogans } from './basic.js';
+import { cccpSlogans } from './cccp.js';
+import type { ThemeId } from '../types.js';
+
+const slogans: Record<ThemeId, string[]> = { basic: basicSlogans, cccp: cccpSlogans };
+
+export function getBadBeatSlogan(themeId: ThemeId): string {
+  const list = slogans[themeId];
+  return list[Math.floor(Math.random() * list.length)];
+}

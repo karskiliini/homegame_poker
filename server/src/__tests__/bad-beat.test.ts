@@ -1,13 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { HandEngine } from '../game/HandEngine.js';
 import type { HandEngineEvent, HandResult } from '../game/HandEngine.js';
 import type { GameConfig, CardString, ActionType } from '@poker/shared';
 import { isBadBeat, BAD_BEAT_MIN_HAND_CATEGORY } from '../evaluation/bad-beat.js';
 import { evaluateHand } from '../evaluation/hand-rank.js';
-
-// ============================================================================
-// Test harness (same as hand-engine.test.ts)
-// ============================================================================
 
 function makeConfig(overrides: Partial<GameConfig> = {}): GameConfig {
   return {
@@ -50,6 +46,11 @@ function buildFullDeck(): CardString[] {
   return cards;
 }
 
+/**
+ * Build a predetermined deck for a multi-player hand.
+ * @param holeCards Array of hole card arrays, one per player
+ * @param board 5 community cards [flop0, flop1, flop2, turn, river]
+ */
 function buildDeck(
   holeCards: CardString[][],
   board: CardString[],
@@ -91,6 +92,7 @@ class HandTestHarness {
       this.events.push(e);
       if (e.type === 'hand_complete') this.result = e.result;
       if (e.type === 'player_turn') this.turnEvents.push(e);
+      // Decline RIT so runout proceeds immediately
       if (e.type === 'rit_eligible') this.engine.setRunItTwice(false);
     }, deck);
     this.engine.startHand(1, players, dealerSeat);
@@ -112,22 +114,19 @@ class HandTestHarness {
 }
 
 // ============================================================================
-// Unit tests for isBadBeat detection
+// Unit tests for isBadBeat detection (hand-strength based)
 // ============================================================================
 
 describe('isBadBeat', () => {
   it('should return bad beat info when loser had two pair or better', () => {
-    // Player 0 has two pair (Aces and Kings), Player 1 has trips (three Jacks)
-    // Player 0 loses with two pair => bad beat
-    const gameType = 'NLHE' as const;
     const communityCards: CardString[] = ['Ah', 'Kd', 'Jc', '7s', '2h'] as CardString[];
     const showdownPlayers = [
       { playerId: 'p0', seatIndex: 0, holeCards: ['Ac', 'Ks'] as CardString[] },
       { playerId: 'p1', seatIndex: 1, holeCards: ['Jh', 'Jd'] as CardString[] },
     ];
-    const winnerIds = ['p1']; // p1 wins with trips
+    const winnerIds = ['p1'];
 
-    const result = isBadBeat(gameType, showdownPlayers, communityCards, winnerIds);
+    const result = isBadBeat('NLHE', showdownPlayers, communityCards, winnerIds);
     expect(result).not.toBeNull();
     expect(result!.loserPlayerId).toBe('p0');
     expect(result!.loserSeatIndex).toBe(0);
@@ -135,16 +134,10 @@ describe('isBadBeat', () => {
   });
 
   it('should return bad beat when loser had full house but winner had quads', () => {
-    // Board: Ah Kh Kd 3h 3d
-    // p0: Kc 3c => KKK 33 = Full house (Kings full of Threes)
-    // p1: Ac As => AAA KK = nah, need quads. Let me set up properly:
-    // Board: Jh Jd 8h 8d 2c
-    // p0: Jc 9s => JJJ 88 = Full house (Jacks full of Eights)
-    // p1: 8c 8s => 8888 J = Four of a kind (Eights)
     const communityCards: CardString[] = ['Jh', 'Jd', '8h', '8d', '2c'] as CardString[];
     const showdownPlayers = [
-      { playerId: 'p0', seatIndex: 0, holeCards: ['Jc', '9s'] as CardString[] },  // Full house JJJ 88
-      { playerId: 'p1', seatIndex: 1, holeCards: ['8c', '8s'] as CardString[] },  // Four of a kind 8888
+      { playerId: 'p0', seatIndex: 0, holeCards: ['Jc', '9s'] as CardString[] },
+      { playerId: 'p1', seatIndex: 1, holeCards: ['8c', '8s'] as CardString[] },
     ];
     const winnerIds = ['p1'];
 
@@ -155,71 +148,64 @@ describe('isBadBeat', () => {
   });
 
   it('should NOT return bad beat when loser had only a pair', () => {
-    const gameType = 'NLHE' as const;
     const communityCards: CardString[] = ['Ah', '7d', '3c', '9s', '2h'] as CardString[];
     const showdownPlayers = [
-      { playerId: 'p0', seatIndex: 0, holeCards: ['7c', 'Qs'] as CardString[] }, // Pair of 7s
-      { playerId: 'p1', seatIndex: 1, holeCards: ['Ad', 'Kd'] as CardString[] }, // Pair of Aces
+      { playerId: 'p0', seatIndex: 0, holeCards: ['7c', 'Qs'] as CardString[] },
+      { playerId: 'p1', seatIndex: 1, holeCards: ['Ad', 'Kd'] as CardString[] },
     ];
     const winnerIds = ['p1'];
 
-    const result = isBadBeat(gameType, showdownPlayers, communityCards, winnerIds);
+    const result = isBadBeat('NLHE', showdownPlayers, communityCards, winnerIds);
     expect(result).toBeNull();
   });
 
   it('should NOT return bad beat when loser had only high card', () => {
-    const gameType = 'NLHE' as const;
     const communityCards: CardString[] = ['2h', '5d', '8c', 'Ts', '3h'] as CardString[];
     const showdownPlayers = [
-      { playerId: 'p0', seatIndex: 0, holeCards: ['Jc', '9s'] as CardString[] }, // High card J
-      { playerId: 'p1', seatIndex: 1, holeCards: ['Ad', 'Kd'] as CardString[] }, // High card A
+      { playerId: 'p0', seatIndex: 0, holeCards: ['Jc', '9s'] as CardString[] },
+      { playerId: 'p1', seatIndex: 1, holeCards: ['Ad', 'Kd'] as CardString[] },
     ];
     const winnerIds = ['p1'];
 
-    const result = isBadBeat(gameType, showdownPlayers, communityCards, winnerIds);
+    const result = isBadBeat('NLHE', showdownPlayers, communityCards, winnerIds);
     expect(result).toBeNull();
   });
 
   it('should NOT return bad beat when there is no loser (single winner/no showdown)', () => {
-    const gameType = 'NLHE' as const;
     const communityCards: CardString[] = ['2h', '5d', '8c', 'Ts', '3h'] as CardString[];
     const showdownPlayers = [
       { playerId: 'p0', seatIndex: 0, holeCards: ['Ad', 'Kd'] as CardString[] },
     ];
     const winnerIds = ['p0'];
 
-    const result = isBadBeat(gameType, showdownPlayers, communityCards, winnerIds);
+    const result = isBadBeat('NLHE', showdownPlayers, communityCards, winnerIds);
     expect(result).toBeNull();
   });
 
   it('should pick the strongest losing hand as the bad beat victim', () => {
-    // Three players: p0 has trips, p1 has two pair, p2 has straight (wins)
-    // p0 (trips) is the "worst" bad beat = strongest loser
-    const gameType = 'NLHE' as const;
     const communityCards: CardString[] = ['Jh', 'Td', '9c', '3s', '2h'] as CardString[];
     const showdownPlayers = [
-      { playerId: 'p0', seatIndex: 0, holeCards: ['Jd', 'Jc'] as CardString[] },  // Three jacks
-      { playerId: 'p1', seatIndex: 1, holeCards: ['Th', '9h'] as CardString[] },   // Two pair T and 9
-      { playerId: 'p2', seatIndex: 2, holeCards: ['Qh', '8h'] as CardString[] },   // Straight Q-high (Q-J-T-9-8)
+      { playerId: 'p0', seatIndex: 0, holeCards: ['Jd', 'Jc'] as CardString[] },
+      { playerId: 'p1', seatIndex: 1, holeCards: ['Th', '9h'] as CardString[] },
+      { playerId: 'p2', seatIndex: 2, holeCards: ['Qh', '8h'] as CardString[] },
     ];
     const winnerIds = ['p2'];
 
-    const result = isBadBeat(gameType, showdownPlayers, communityCards, winnerIds);
+    const result = isBadBeat('NLHE', showdownPlayers, communityCards, winnerIds);
     expect(result).not.toBeNull();
     expect(result!.loserPlayerId).toBe('p0');
     expect(result!.loserHandName).toBe('Three of a Kind');
   });
 
   it('should return bad beat when loser had trips', () => {
-    const gameType = 'NLHE' as const;
     const communityCards: CardString[] = ['7h', '7d', '3c', '9s', 'Ah'] as CardString[];
     const showdownPlayers = [
-      { playerId: 'p0', seatIndex: 0, holeCards: ['7c', '5s'] as CardString[] },  // Trip 7s
-      { playerId: 'p1', seatIndex: 1, holeCards: ['9d', '9c'] as CardString[] },   // Full house 9s full of 7s
+      { playerId: 'p0', seatIndex: 0, holeCards: ['7c', '5s'] as CardString[] },
+      { playerId: 'p1', seatIndex: 1, holeCards: ['9d', '9c'] as CardString[] },
     ];
     const winnerIds = ['p1'];
 
-    const result = isBadBeat(gameType, showdownPlayers, communityCards, winnerIds);
+    const result = isBadBeat('NLHE', showdownPlayers, communityCards, winnerIds);
     expect(result).not.toBeNull();
     expect(result!.loserPlayerId).toBe('p0');
     expect(result!.loserHandName).toBe('Three of a Kind');
@@ -227,7 +213,7 @@ describe('isBadBeat', () => {
 });
 
 // ============================================================================
-// Integration test: HandEngine emits bad_beat event during showdown
+// Integration: HandEngine emits bad_beat event (hand-strength based)
 // ============================================================================
 
 describe('HandEngine bad beat event', () => {
@@ -236,41 +222,21 @@ describe('HandEngine bad beat event', () => {
     const config = makeConfig();
     const players = makePlayers(2);
 
-    // Player 0 (SB/dealer in HU): Ac Kh → two pair
-    // Player 1 (BB): Jh Jd → three jacks
-    // Board: Ah Kd Jc 7s 2s
     const deck = buildDeck(
       [['Ac', 'Kh'] as CardString[], ['Jh', 'Jd'] as CardString[]],
       ['Ah', 'Kd', 'Jc', '7s', '2s'] as CardString[],
     );
 
     harness.start(config, players, 0, deck);
+    harness.actCurrent('call');
+    harness.actCurrent('check');
+    for (let i = 0; i < 6; i++) harness.actCurrent('check');
 
-    // Preflop: SB calls, BB checks
-    harness.actCurrent('call');  // p0 (SB/dealer) calls
-    harness.actCurrent('check'); // p1 (BB) checks
-
-    // Flop: p1 checks, p0 checks
-    harness.actCurrent('check'); // p1
-    harness.actCurrent('check'); // p0
-
-    // Turn: p1 checks, p0 checks
-    harness.actCurrent('check'); // p1
-    harness.actCurrent('check'); // p0
-
-    // River: p1 checks, p0 checks
-    harness.actCurrent('check'); // p1
-    harness.actCurrent('check'); // p0
-
-    // Hand should be complete
     expect(harness.result).not.toBeNull();
-
-    // Check that bad_beat event was emitted
     const badBeatEvent = harness.events.find(e => e.type === 'bad_beat');
     expect(badBeatEvent).toBeDefined();
-    expect(badBeatEvent!.type).toBe('bad_beat');
     if (badBeatEvent!.type === 'bad_beat') {
-      expect(badBeatEvent!.loserSeatIndex).toBe(0); // Player 0 lost with two pair
+      expect(badBeatEvent!.loserSeatIndex).toBe(0);
       expect(badBeatEvent!.loserHandName).toBe('Two Pair');
     }
   });
@@ -280,21 +246,14 @@ describe('HandEngine bad beat event', () => {
     const config = makeConfig();
     const players = makePlayers(2);
 
-    // Player 0: 7c Qs → pair of 7s on board
-    // Player 1: Ad Kd → pair of Aces on board
-    // Board: Ah 7d 3c 9s 2h
     const deck = buildDeck(
       [['7c', 'Qs'] as CardString[], ['Ad', 'Kd'] as CardString[]],
       ['Ah', '7d', '3c', '9s', '2h'] as CardString[],
     );
 
     harness.start(config, players, 0, deck);
-
-    // Preflop: SB calls, BB checks
     harness.actCurrent('call');
     harness.actCurrent('check');
-
-    // Flop through river: all checks
     for (let i = 0; i < 6; i++) harness.actCurrent('check');
 
     expect(harness.result).not.toBeNull();
@@ -308,12 +267,96 @@ describe('HandEngine bad beat event', () => {
     const players = makePlayers(2);
 
     harness.start(config, players, 0);
-
-    // Preflop: SB folds
     harness.actCurrent('fold');
 
     expect(harness.result).not.toBeNull();
     const badBeatEvent = harness.events.find(e => e.type === 'bad_beat');
     expect(badBeatEvent).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// Integration: equity-based bad beat detection (all-in runout)
+// ============================================================================
+
+describe('Bad Beat Detection (equity-based)', () => {
+  it('detects bad beat when turn equity >70% loser gets rivered', () => {
+    const h = new HandTestHarness();
+    const config = makeConfig();
+
+    // AK makes top two pair on flop, 77 hits set on river
+    const deck = buildDeck(
+      [['Ac', 'Kc'] as CardString[], ['7s', '7h'] as CardString[]],
+      ['As', 'Kd', '3h', '9c', '7d'] as CardString[],
+    );
+
+    h.start(config, makePlayers(2, 100), 0, deck);
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    expect(h.result).not.toBeNull();
+    expect(h.result!.pots[0].winners[0].playerId).toBe('player-1');
+    expect(h.result!.badBeatPlayerIds).toBeDefined();
+    expect(h.result!.badBeatPlayerIds).toContain('player-0');
+  });
+
+  it('does not flag bad beat when favorite wins (loser had low equity)', () => {
+    const h = new HandTestHarness();
+    const config = makeConfig();
+
+    const deck = buildDeck(
+      [['Ah', 'Ad'] as CardString[], ['7c', '2d'] as CardString[]],
+      ['3s', '5d', '9h', 'Jc', '8h'] as CardString[],
+    );
+
+    h.start(config, makePlayers(2, 100), 0, deck);
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    expect(h.result).not.toBeNull();
+    expect(h.result!.pots[0].winners[0].playerId).toBe('player-0');
+    expect(h.result!.badBeatPlayerIds).toBeUndefined();
+  });
+
+  it('does not flag bad beat for non-runout showdown (river all-in)', () => {
+    const h = new HandTestHarness();
+    const config = makeConfig();
+
+    const deck = buildDeck(
+      [['Ah', 'Ad'] as CardString[], ['Kh', 'Ks'] as CardString[]],
+      ['2c', '5d', '8s', 'Jc', 'Kd'] as CardString[],
+    );
+
+    h.start(config, makePlayers(2, 100), 0, deck);
+    h.actCurrent('call');
+    h.actCurrent('check');
+    h.actCurrent('check');
+    h.actCurrent('check');
+    h.actCurrent('check');
+    h.actCurrent('check');
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    expect(h.result).not.toBeNull();
+    expect(h.result!.pots[0].winners[0].playerId).toBe('player-1');
+    expect(h.result!.badBeatPlayerIds).toBeUndefined();
+  });
+
+  it('winner with high turn equity who wins is not flagged', () => {
+    const h = new HandTestHarness();
+    const config = makeConfig();
+
+    const deck = buildDeck(
+      [['Ah', 'Ad'] as CardString[], ['7c', '2d'] as CardString[]],
+      ['3s', '5d', '9h', 'Jc', '8h'] as CardString[],
+    );
+
+    h.start(config, makePlayers(2, 100), 0, deck);
+    h.actCurrent('all_in');
+    h.actCurrent('call');
+
+    expect(h.result).not.toBeNull();
+    expect(h.result!.pots[0].winners[0].playerId).toBe('player-0');
+    expect(h.result!.badBeatPlayerIds).toBeUndefined();
   });
 });

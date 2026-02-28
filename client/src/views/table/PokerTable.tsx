@@ -11,6 +11,8 @@ import { ChipStack } from '../../components/ChipStack.js';
 import { SpeechBubble } from './SpeechBubble.js';
 import { useT } from '../../hooks/useT.js';
 import { useTheme } from '../../themes/useTheme.js';
+import { BadBeatBubble } from './BadBeatBubble.js';
+import type { BadBeatData } from '../../hooks/useTableAnimations.js';
 
 // Virtual table dimensions — defines the fixed aspect ratio (18:11)
 // Both TV and phone views use these to scale the table via CSS transform
@@ -104,8 +106,8 @@ interface PokerTableProps {
   equities?: Record<number, number> | null;
   /** Whether the river card should use dramatic peel animation */
   dramaticRiver?: boolean;
-  /** Bad beat data: when set, renders explosion + text overlay */
-  badBeat?: { loserSeatIndex: number; loserHandName: string; winnerHandName: string } | null;
+  /** Bad beat data: renders explosion + slogan bubble at loser's seat */
+  badBeat?: BadBeatData | null;
   /** Called when an empty seat is clicked (for seat selection) */
   onSeatClick?: (seatIndex: number) => void;
   /** Active speech bubble to render above a seat */
@@ -745,15 +747,20 @@ export function PokerTable({
             }}
           >
             {displayPlayer ? (
-              <PlayerSeat
-                player={displayPlayer}
-                isWinner={winnerSeats.includes(seatIndex)}
-                timerSeconds={timerData?.seatIndex === seatIndex ? timerData.secondsRemaining : undefined}
-                timerMax={config.actionTimeSeconds}
-                foldDirection={getFoldDirection(seatIndex)}
-                equity={equities?.[seatIndex]}
-                numHoleCards={numHoleCards}
-              />
+              <>
+                <PlayerSeat
+                  player={displayPlayer}
+                  isWinner={winnerSeats.includes(seatIndex)}
+                  timerSeconds={timerData?.seatIndex === seatIndex ? timerData.secondsRemaining : undefined}
+                  timerMax={config.actionTimeSeconds}
+                  foldDirection={getFoldDirection(seatIndex)}
+                  equity={equities?.[seatIndex]}
+                  numHoleCards={numHoleCards}
+                />
+                {badBeat && badBeat.loserSeatIndex === seatIndex && (
+                  <BadBeatBubble seatIndex={seatIndex} playerName={badBeat.playerName} />
+                )}
+              </>
             ) : (
               <EmptySeat
                 seatIndex={seatIndex}

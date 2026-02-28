@@ -26,12 +26,13 @@ interface UseTableAnimationsOptions {
   seatRotation?: number;
 }
 
-interface BadBeatData {
+export interface BadBeatData {
   loserSeatIndex: number;
   loserHandName: string;
   loserHandDescription: string;
   winnerSeatIndex: number;
   winnerHandName: string;
+  playerName: string;
 }
 
 interface UseTableAnimationsResult {
@@ -252,8 +253,7 @@ export function useTableAnimations({
 
     const onBadBeat = (data: BadBeatData) => {
       setBadBeat(data);
-      // Auto-clear after animation duration (3 seconds)
-      setTimeout(() => setBadBeat(null), 3000);
+      setTimeout(() => setBadBeat(null), 5000);
     };
 
     const onHandResult = () => {
@@ -273,8 +273,8 @@ export function useTableAnimations({
     socket.on(S2C_TABLE.ALLIN_SHOWDOWN, onAllinShowdown);
     socket.on(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
     socket.on(S2C_TABLE.STREET_DEAL, onStreetDeal);
-    socket.on(S2C_TABLE.HAND_RESULT, onHandResult);
     socket.on(S2C_TABLE.BAD_BEAT, onBadBeat);
+    socket.on(S2C_TABLE.HAND_RESULT, onHandResult);
 
     return () => {
       socket.off?.(S2C_TABLE.GAME_STATE, onGameState);
@@ -288,8 +288,8 @@ export function useTableAnimations({
       socket.off?.(S2C_TABLE.ALLIN_SHOWDOWN, onAllinShowdown);
       socket.off?.(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
       socket.off?.(S2C_TABLE.STREET_DEAL, onStreetDeal);
-      socket.off?.(S2C_TABLE.HAND_RESULT, onHandResult);
       socket.off?.(S2C_TABLE.BAD_BEAT, onBadBeat);
+      socket.off?.(S2C_TABLE.HAND_RESULT, onHandResult);
     };
   }, [socket, enableSound, seatRotation]); // eslint-disable-line react-hooks/exhaustive-deps
 
