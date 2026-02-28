@@ -1,9 +1,5 @@
 {
   "name": "@poker/server",
-<<<<<<< HEAD
-=======
-
->>>>>>> 8e0e7b0 (Add winning hand golden glow effect for showdown (v1.15.0))
   "version": "1.15.2",
   "private": true,
   "type": "module",
