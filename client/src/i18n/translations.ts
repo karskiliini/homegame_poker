@@ -124,6 +124,11 @@ const en = {
   // Sound toggle
   sound_mute: 'Mute sounds',
   sound_unmute: 'Unmute sounds',
+  sound_volume: 'Volume',
+  sound_category_cards: 'Cards',
+  sound_category_chips: 'Chips',
+  sound_category_actions: 'Actions',
+  sound_category_notifications: 'Notifications',
 
   // Poker table
   table_waiting: 'Waiting for players...',
@@ -266,6 +271,11 @@ export const translations: Record<Language, Translations> = {
     // Sound toggle
     sound_mute: 'Mykista aanet',
     sound_unmute: 'Aanet paalle',
+    sound_volume: 'Aanenvoimakkuus',
+    sound_category_cards: 'Kortit',
+    sound_category_chips: 'Pelimerkit',
+    sound_category_actions: 'Toiminnot',
+    sound_category_notifications: 'Ilmoitukset',
 
     // Poker table
     table_waiting: 'Odotetaan pelaajia...',

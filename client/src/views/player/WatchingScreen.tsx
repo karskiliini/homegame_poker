@@ -35,7 +35,6 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [soundEnabled, setSoundEnabled] = useState(tableSoundManager.enabled);
   const [showBuyIn, setShowBuyIn] = useState(false);
   const [buyInAmount, setBuyInAmount] = useState(0);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
@@ -107,12 +106,6 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     return () => ro.disconnect();
   }, []);
 
-  const toggleSound = useCallback(() => {
-    const next = !tableSoundManager.enabled;
-    tableSoundManager.setEnabled(next);
-    setSoundEnabled(next);
-  }, []);
-
   const handleBack = useCallback(() => {
     setWatchingTableId(null);
     setScreen('table_lobby');
@@ -170,7 +163,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
       <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
         <ThemeToggle />
         <LanguageToggle />
-        <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
+        <SoundToggle soundManager={tableSoundManager} />
       </div>
 
       {/* Poker table — fixed virtual size, scaled to fit viewport */}

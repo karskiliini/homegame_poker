@@ -80,8 +80,6 @@ export function PlayerView() {
   const [handHistoryView, setHandHistoryView] = useState<'none' | 'list' | 'detail'>('none');
   const [handHistoryData, setHandHistoryData] = useState<HandRecord[]>([]);
   const [selectedHand, setSelectedHand] = useState<HandRecord | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(playerSoundManager.enabled);
-
   useEffect(() => {
     const socket = socketRef.current;
     socket.connect();
@@ -232,12 +230,6 @@ export function PlayerView() {
     setScreen('watching');
   }, [setCurrentTableId, setLobbyState, setPrivateState, setScreen]);
 
-  const toggleSound = useCallback(() => {
-    const next = !playerSoundManager.enabled;
-    playerSoundManager.setEnabled(next);
-    setSoundEnabled(next);
-  }, []);
-
   const openHistory = useCallback(() => {
     socketRef.current.emit('player:get_history');
     setHandHistoryView('list');
@@ -309,7 +301,7 @@ export function PlayerView() {
 
       {/* Top-right controls (visible during game) */}
       {screen === 'game' && handHistoryView === 'none' && (
-        <TopRightControls soundEnabled={soundEnabled} toggleSound={toggleSound} openHistory={openHistory} />
+        <TopRightControls openHistory={openHistory} />
       )}
 
       {/* Overlays */}
@@ -359,9 +351,7 @@ export function PlayerView() {
   );
 }
 
-function TopRightControls({ soundEnabled, toggleSound, openHistory }: {
-  soundEnabled: boolean;
-  toggleSound: () => void;
+function TopRightControls({ openHistory }: {
   openHistory: () => void;
 }) {
   const t = useT();
@@ -369,7 +359,7 @@ function TopRightControls({ soundEnabled, toggleSound, openHistory }: {
     <div className="fixed top-4 right-4 z-40 flex items-center gap-3">
       <ThemeToggle />
       <LanguageToggle />
-      <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
+      <SoundToggle soundManager={playerSoundManager} />
       <button
         onClick={openHistory}
         className="text-blue-400 text-sm underline"

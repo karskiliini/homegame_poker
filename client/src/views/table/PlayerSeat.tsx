@@ -24,6 +24,8 @@ interface PlayerSeatProps {
   equity?: number;
   /** Number of hole cards (2 for NLHE, 4 for PLO). Defaults to 2. */
   numHoleCards?: number;
+  /** Render cards below the avatar (for top-half seats, so cards stay on the felt). */
+  cardsBelow?: boolean;
 }
 
 function useDcCountdown(disconnectedAt: number | null): string | null {
@@ -54,7 +56,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2 }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardsBelow }: PlayerSeatProps) {
   const { gradients, assets } = useTheme();
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
@@ -75,49 +77,53 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   // Show card backs when player has cards but they're not revealed
   const showCardBacks = player.hasCards && !player.holeCards && !isFolded;
 
+  const cardsElement = (
+    <div className={`flex ${cardsBelow ? 'mt-1' : 'mb-1'}`} style={{ minHeight: 52, gap: numHoleCards > 2 ? 0 : 2 }}>
+      {player.holeCards ? (
+        player.holeCards.map((card, i) => (
+          <div
+            key={i}
+            className="animate-card-flip"
+            style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : undefined}
+          >
+            <CardComponent card={card} size="sm" isWinner={isWinner} />
+          </div>
+        ))
+      ) : (
+        <AnimatePresence>
+          {showCardBacks && Array.from({ length: numHoleCards }, (_, i) => (
+            <motion.div
+              key={`cardback-${i}`}
+              initial={false}
+              exit={{
+                x: (foldDirection?.x ?? 0) + (i === 0 ? -12 : 12),
+                y: foldDirection?.y ?? -40,
+                scale: 0.3,
+                rotate: i === 0 ? -15 : 25,
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.45,
+                delay: i * 0.08,
+                ease: 'easeIn',
+              }}
+              style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : i > 0 ? { marginLeft: 2 } : undefined}
+            >
+              <CardBack size="sm" />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      )}
+    </div>
+  );
+
   return (
     <div
       className={`relative flex flex-col items-center ${isFolded || isInactive ? 'opacity-40' : ''}`}
       style={isInactive ? { filter: 'grayscale(0.6)' } : undefined}
     >
-      {/* Cards above the avatar */}
-      <div className="flex mb-1" style={{ minHeight: 52, gap: numHoleCards > 2 ? 0 : 2 }}>
-        {player.holeCards ? (
-          player.holeCards.map((card, i) => (
-            <div
-              key={i}
-              className="animate-card-flip"
-              style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : undefined}
-            >
-              <CardComponent card={card} size="sm" isWinner={isWinner} />
-            </div>
-          ))
-        ) : (
-          <AnimatePresence>
-            {showCardBacks && Array.from({ length: numHoleCards }, (_, i) => (
-              <motion.div
-                key={`cardback-${i}`}
-                initial={false}
-                exit={{
-                  x: (foldDirection?.x ?? 0) + (i === 0 ? -12 : 12),
-                  y: foldDirection?.y ?? -40,
-                  scale: 0.3,
-                  rotate: i === 0 ? -15 : 25,
-                  opacity: 0,
-                }}
-                transition={{
-                  duration: 0.45,
-                  delay: i * 0.08,
-                  ease: 'easeIn',
-                }}
-                style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : i > 0 ? { marginLeft: 2 } : undefined}
-              >
-                <CardBack size="sm" />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
-      </div>
+      {/* Cards above avatar for bottom-half seats */}
+      {!cardsBelow && cardsElement}
 
       {/* Large avatar (Full Tilt style) */}
       <div
@@ -305,6 +311,9 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
           BB
         </div>
       )}
+
+      {/* Cards below avatar for top-half seats */}
+      {cardsBelow && cardsElement}
 
       {/* Equity percentage */}
       {equity != null && (

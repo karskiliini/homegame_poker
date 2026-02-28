@@ -780,6 +780,7 @@ export function PokerTable({
                   foldDirection={getFoldDirection(seatIndex)}
                   equity={equities?.[seatIndex]}
                   numHoleCards={numHoleCards}
+                  cardsBelow={pos.y < 50}
                 />
                 {badBeat && badBeat.loserSeatIndex === seatIndex && (
                   <BadBeatBubble seatIndex={seatIndex} playerName={badBeat.playerName} />
