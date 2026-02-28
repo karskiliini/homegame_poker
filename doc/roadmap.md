@@ -16,10 +16,10 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 > Prioriteetti: välitön. Perusasiat kuntoon ennen uusia ominaisuuksia.
 
 ### 0.1 Rebuy & Sit-Out -järjestelmän viimeistely
-- [ ] Rebuy-prompt UI pelaajan puhelimessa (serveri valmis, client puuttuu)
-- [ ] Sit-out -tilan visuaalinen esitys pöydällä (harmaa/himmennys)
-- [ ] Rejoin-nappi sit-out-pelaajalle
-- [ ] Testaus: koko flow pelaajan bustista → rebuy-prompt → rebuy → takaisin peliin
+- [x] Rebuy-prompt UI pelaajan puhelimessa (serveri valmis, client puuttuu)
+- [x] Sit-out -tilan visuaalinen esitys pöydällä (harmaa/himmennys)
+- [x] Rejoin-nappi sit-out-pelaajalle
+- [x] Testaus: koko flow pelaajan bustista → rebuy-prompt → rebuy → takaisin peliin
 
 ### 0.2 Chip Stack -visualisointi (suunnitelma olemassa)
 - [ ] Realistiset chippipinovisuaalit beteille ja poteille
@@ -31,6 +31,13 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] PLO-käsienarviointi: paras 5 kortista 2 kädestä + 3 boardista
 - [ ] PLO pot-limit -betin laskenta
 - [ ] Testikattavuus PLO:lle
+
+### 0.4 Käyttäjätilit & sähköpostikirjautuminen
+- [ ] Sähköpostikirjautuminen: pelaaja rekisteröityy ja kirjautuu sähköpostilla (+ salasana tai magic link)
+- [ ] Pelaajan saldo tallennetaan tietokantaan (pysyvä, sessioiden välillä)
+- [ ] Buy-in vähennetään saldosta, cash-out lisätään saldoon
+- [ ] Pelaajan profiili: nimi, avatar, sähköposti, saldohistoria
+- [ ] Admin voi lisätä/poistaa saldoa pelaajalle (esim. käteismaksu → saldo)
 
 ---
 
@@ -113,6 +120,11 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Pikavalintanapit: 1/3 pot, 1/2 pot, 2/3 pot, pot, all-in
 - [ ] Edellisen betin muistaminen (nopea re-raise samalla summalla)
 - [ ] Pot odds -näyttö (valinnainen)
+- [ ] Rahasumman syöttö näppäimistöllä: nappi avaa custom numeronäppäimistön
+  - Näppäimistö nousee kauniisti alhaalta (0.3s slide-up animaatio)
+  - Touch-optimoitu: isot numeropainikkeet, helppo valita tarkat summat
+  - Backspace, clear, confirm-napit
+  - Min/max-rajat näkyvissä, virheellinen syöttö estetään
 
 ### 3.2 Pelaajan tilastot
 - [ ] Session stats pelaajan puhelimessa:
