@@ -122,9 +122,7 @@ describe('Disconnect timeout', () => {
     longGm.addPlayer(sock1, 'Dave', 100);
     longGm.addPlayer(sock2, 'Eve', 100);
 
-    // Ready up both and start the game
-    longGm.setPlayerReady('sock-1');
-    longGm.setPlayerReady('sock-2');
+    // Players are auto-ready on join, just start the game
     longGm.checkStartGame();
 
     // Let event queue process (small delays for card dealing etc.)

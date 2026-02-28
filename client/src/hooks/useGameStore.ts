@@ -7,14 +7,11 @@ interface LobbyPlayer {
   name: string;
   seatIndex: number;
   stack: number;
-  isReady: boolean;
   isConnected: boolean;
 }
 
 interface LobbyState {
   players: LobbyPlayer[];
-  readyCount: number;
-  neededCount: number;
   phase: string;
   tableId?: string;
 }
