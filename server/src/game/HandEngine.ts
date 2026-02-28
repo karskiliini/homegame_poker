@@ -866,6 +866,14 @@ export class HandEngine {
       }
     }
 
+    // Chip conservation assertion: total chips must equal starting total
+    const totalChipsNow = this.players.reduce((sum, p) => sum + p.currentStack, 0);
+    const totalChipsStart = this.players.reduce((sum, p) => sum + p.startingStack, 0);
+    if (totalChipsNow !== totalChipsStart) {
+      console.error(`CHIP CONSERVATION VIOLATION: started with ${totalChipsStart}, now have ${totalChipsNow}. Pots: ${JSON.stringify(potResults.map(p => ({ name: p.name, amount: p.amount, winners: p.winners.map(w => `${w.playerName}:${w.amount}`) })))}`);
+      console.error(`Players: ${this.players.map(p => `${p.name}(start:${p.startingStack},now:${p.currentStack},invested:${p.totalInvested})`).join(', ')}`);
+    }
+
     const result: HandResult = {
       handId: this.handId,
       handNumber: this.handNumber,

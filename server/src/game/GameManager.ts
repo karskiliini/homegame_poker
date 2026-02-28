@@ -58,6 +58,7 @@ export class GameManager {
   private isProcessingQueue = false;
   private lastProcessedEventType: string = '';
   private queueTimer: ReturnType<typeof setTimeout> | null = null;
+  private handCompleteWatchdog: ReturnType<typeof setTimeout> | null = null;
 
   private pendingRebuyPrompts: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
@@ -196,6 +197,7 @@ export class GameManager {
     this.lastStreetWasDramatic = false;
     this.isAllInRunout = false;
     if (this.queueTimer) { clearTimeout(this.queueTimer); this.queueTimer = null; }
+    if (this.handCompleteWatchdog) { clearTimeout(this.handCompleteWatchdog); this.handCompleteWatchdog = null; }
 
     this.broadcastLobbyState();
     const eligiblePlayers = [...this.players.values()]
@@ -238,12 +240,20 @@ export class GameManager {
     if (delay > 0) {
       this.queueTimer = setTimeout(() => {
         this.queueTimer = null;
-        this.processEvent(event);
+        try {
+          this.processEvent(event);
+        } catch (err) {
+          console.error(`Error processing event ${event.type}:`, err);
+        }
         this.lastProcessedEventType = event.type;
         this.processEventQueue();
       }, delay);
     } else {
-      this.processEvent(event);
+      try {
+        this.processEvent(event);
+      } catch (err) {
+        console.error(`Error processing event ${event.type}:`, err);
+      }
       this.lastProcessedEventType = event.type;
       this.processEventQueue();
     }
@@ -501,11 +511,22 @@ export class GameManager {
     this.phase = 'hand_complete';
     this.actionTimer.cancel();
     this.currentActorSeatIndex = null;
+
+    // Watchdog: if the game is still in hand_complete after 30s, force recovery
+    if (this.handCompleteWatchdog) clearTimeout(this.handCompleteWatchdog);
+    this.handCompleteWatchdog = setTimeout(() => {
+      this.handCompleteWatchdog = null;
+      if (this.phase === 'hand_complete') {
+        console.error('WATCHDOG: Game stuck in hand_complete phase — forcing recovery');
+        this.scheduleNextHand();
+      }
+    }, 30000);
     for (const hp of result.players) {
       const socketId = this.playerIdToSocketId.get(hp.playerId);
       if (socketId) { const player = this.players.get(socketId); if (player) { player.stack = hp.currentStack; player.status = hp.currentStack > 0 ? 'waiting' : 'busted'; } }
     }
     for (const pot of result.pots) { for (const w of pot.winners) console.log(`${w.playerName} wins ${w.amount} from ${pot.name}${pot.winningHand ? ' (' + pot.winningHand + ')' : ''}`); }
+    console.log(`Final stacks: ${result.players.map(p => `${p.name}=${p.currentStack}(was ${p.startingStack})`).join(', ')}`);
     this.storeHandHistory(result);
     const potAwards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string; winningHand?: string }[] = [];
     for (let i = 0; i < result.pots.length; i++) {
@@ -540,6 +561,7 @@ export class GameManager {
   }
 
   private scheduleNextHand() {
+    if (this.handCompleteWatchdog) { clearTimeout(this.handCompleteWatchdog); this.handCompleteWatchdog = null; }
     setTimeout(() => {
       if (this.phase === 'hand_complete') {
         this.phase = 'waiting_for_players';

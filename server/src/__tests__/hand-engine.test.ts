@@ -465,6 +465,135 @@ describe('HandEngine - Side pots', () => {
     const total = h.result!.players.reduce((sum, p) => sum + p.currentStack, 0);
     expect(total).toBe(230);
   });
+
+  it('should return side pot to big stack when short stack wins (3280 vs 400)', () => {
+    const players = [
+      { playerId: 'big', seatIndex: 0, name: 'BigStack', stack: 3280 },
+      { playerId: 'short', seatIndex: 1, name: 'ShortStack', stack: 400 },
+    ];
+    // Short stack has aces (wins), big stack has kings (loses)
+    const deck = buildDeck(
+      [['Kh', 'Kd'], ['Ah', 'Ad']],
+      ['7c', '9s', 'Jd', '3h', '5c'],
+    );
+    h.start(makeConfig({ maxBuyIn: 5000 }), players, 0, deck);
+
+    // Heads-up: SB (dealer, seat 0 = big stack) acts first preflop
+    expect(h.getCurrentTurn()!.playerId).toBe('big');
+    h.actCurrent('all_in');
+
+    // BB (seat 1 = short stack) calls all-in
+    expect(h.getCurrentTurn()!.playerId).toBe('short');
+    h.actCurrent('call');
+
+    expect(h.isComplete()).toBe(true);
+
+    const bigP = h.result!.players.find(p => p.playerId === 'big')!;
+    const shortP = h.result!.players.find(p => p.playerId === 'short')!;
+
+    // Main pot: 400 * 2 = 800 → short stack wins
+    // Side pot: 2880 * 1 = 2880 → returned to big stack (only eligible)
+    expect(shortP.currentStack).toBe(800);   // 400*2
+    expect(bigP.currentStack).toBe(2880);     // 3280-400
+
+    // Total chips conserved
+    const total = h.result!.players.reduce((sum, p) => sum + p.currentStack, 0);
+    expect(total).toBe(3680); // 3280+400
+  });
+
+  it('should return side pot when big stack loses (short stack uses all_in action)', () => {
+    const players = [
+      { playerId: 'big', seatIndex: 0, name: 'BigStack', stack: 3280 },
+      { playerId: 'short', seatIndex: 1, name: 'ShortStack', stack: 400 },
+    ];
+    const deck = buildDeck(
+      [['Kh', 'Kd'], ['Ah', 'Ad']],
+      ['7c', '9s', 'Jd', '3h', '5c'],
+    );
+    h.start(makeConfig({ maxBuyIn: 5000 }), players, 0, deck);
+
+    // Big stack goes all-in
+    h.actCurrent('all_in');
+    // Short stack also uses all_in (instead of call)
+    h.actCurrent('all_in');
+
+    expect(h.isComplete()).toBe(true);
+    const bigP = h.result!.players.find(p => p.playerId === 'big')!;
+    const shortP = h.result!.players.find(p => p.playerId === 'short')!;
+
+    expect(shortP.currentStack).toBe(800);
+    expect(bigP.currentStack).toBe(2880);
+    expect(h.result!.players.reduce((sum, p) => sum + p.currentStack, 0)).toBe(3680);
+  });
+
+  it('should handle 3-player pot where one folds and short stack wins all-in', () => {
+    const players = [
+      { playerId: 'big', seatIndex: 0, name: 'BigStack', stack: 3280 },
+      { playerId: 'medium', seatIndex: 1, name: 'Medium', stack: 1000 },
+      { playerId: 'short', seatIndex: 2, name: 'ShortStack', stack: 400 },
+    ];
+    // Short wins with aces, big has kings, medium has queens
+    const deck = buildDeck(
+      [['Kh', 'Kd'], ['Qh', 'Qd'], ['Ah', 'Ad']],
+      ['7c', '9s', 'Jd', '3h', '5c'],
+    );
+    h.start(makeConfig({ maxBuyIn: 5000 }), players, 0, deck);
+
+    // Preflop: seat 0 is dealer (3-handed: UTG), seat 1 is SB, seat 2 is BB
+    // In 3-handed, dealer acts first preflop (UTG)
+    h.actCurrent('all_in');    // BigStack all-in 3280
+    h.actCurrent('fold');      // Medium folds (posted SB=1)
+    h.actCurrent('call');      // ShortStack calls (posted BB=2, calls 398 more)
+
+    expect(h.isComplete()).toBe(true);
+    const bigP = h.result!.players.find(p => p.playerId === 'big')!;
+    const shortP = h.result!.players.find(p => p.playerId === 'short')!;
+    const medP = h.result!.players.find(p => p.playerId === 'medium')!;
+
+    // Main pot: min(400, 3280, 1) * 3 = 1*3=3 from blind level, then 399*2=798 from invested level
+    // Side pot: 2880 * 1 = 2880 (only BigStack eligible)
+    // Short wins main pot, Big gets side pot back
+    // Medium loses just the SB (1 chip)
+    expect(shortP.currentStack).toBeGreaterThan(400);  // Won the main pot
+    expect(bigP.currentStack).toBe(3280 - 400);        // Lost 400 to main pot, got side pot back
+    expect(medP.currentStack).toBe(999);                // Lost just SB
+
+    const total = h.result!.players.reduce((sum, p) => sum + p.currentStack, 0);
+    expect(total).toBe(3280 + 1000 + 400); // All chips conserved
+  });
+
+  it('should handle multiple side pots with big stack disparity', () => {
+    const players = [
+      { playerId: 'p1', seatIndex: 0, name: 'Player1', stack: 5000 },
+      { playerId: 'p2', seatIndex: 1, name: 'Player2', stack: 100 },
+      { playerId: 'p3', seatIndex: 2, name: 'Player3', stack: 500 },
+    ];
+    // P2 (100) has best hand, P3 (500) has second best
+    const deck = buildDeck(
+      [['7h', '2d'], ['Ah', 'Ad'], ['Kh', 'Kd']],
+      ['3c', '9s', 'Jd', '4h', '5c'],
+    );
+    h.start(makeConfig({ maxBuyIn: 10000 }), players, 0, deck);
+
+    h.actCurrent('all_in');  // P1 all-in 5000
+    h.actCurrent('all_in');  // P2 all-in 100
+    h.actCurrent('all_in');  // P3 all-in 500
+
+    expect(h.isComplete()).toBe(true);
+    const p1 = h.result!.players.find(p => p.playerId === 'p1')!;
+    const p2 = h.result!.players.find(p => p.playerId === 'p2')!;
+    const p3 = h.result!.players.find(p => p.playerId === 'p3')!;
+
+    // Main pot: 100*3 = 300 → P2 wins (aces)
+    // Side pot 1: 400*2 = 800 → P3 wins (kings beat 7-2)
+    // Side pot 2: 4500*1 = 4500 → P1 gets back (only eligible)
+    expect(p2.currentStack).toBe(300);
+    expect(p3.currentStack).toBe(800);
+    expect(p1.currentStack).toBe(4500);
+
+    const total = h.result!.players.reduce((sum, p) => sum + p.currentStack, 0);
+    expect(total).toBe(5600);
+  });
 });
 
 describe('HandEngine - Action validation', () => {
