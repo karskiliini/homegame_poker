@@ -101,6 +101,71 @@ describe('PotManager - calculatePots', () => {
     expect(totalPot).toBe(totalInvested);
   });
 
+  it('should merge pots when folded player creates same-eligible split (no spurious side pots)', () => {
+    // SB posts 1 and folds, BB and BTN play to 6
+    // Without merging: pot at level 1 (3 chips) + pot at level 6 (10 chips) = 2 pots
+    // Correct: single pot of 13 since both pots have same eligible set [BB, BTN]
+    const players = [
+      makeHandPlayer({ playerId: 'sb', totalInvested: 1, isFolded: true }),
+      makeHandPlayer({ playerId: 'bb', totalInvested: 6 }),
+      makeHandPlayer({ playerId: 'btn', totalInvested: 6 }),
+    ];
+    const pots = calculatePots(players);
+    expect(pots).toHaveLength(1);
+    expect(pots[0].amount).toBe(13);
+    expect(pots[0].eligiblePlayerIds).toContain('bb');
+    expect(pots[0].eligiblePlayerIds).toContain('btn');
+  });
+
+  it('should merge multiple folded-player levels into single pot', () => {
+    // 4 players: two fold at different levels, two remain
+    // A folds after investing 2, B folds after investing 5, C and D invest 10
+    const players = [
+      makeHandPlayer({ playerId: 'a', totalInvested: 2, isFolded: true }),
+      makeHandPlayer({ playerId: 'b', totalInvested: 5, isFolded: true }),
+      makeHandPlayer({ playerId: 'c', totalInvested: 10 }),
+      makeHandPlayer({ playerId: 'd', totalInvested: 10 }),
+    ];
+    const pots = calculatePots(players);
+    // All levels have eligible = [c, d], so should merge to 1 pot
+    expect(pots).toHaveLength(1);
+    expect(pots[0].amount).toBe(27); // 2+5+10+10
+    expect(pots[0].eligiblePlayerIds).toEqual(expect.arrayContaining(['c', 'd']));
+    expect(pots[0].eligiblePlayerIds).toHaveLength(2);
+  });
+
+  it('should NOT merge pots when eligible sets differ (real side pot)', () => {
+    // Short all-in 50, big has 100 — different eligible sets → 2 pots
+    const players = [
+      makeHandPlayer({ playerId: 'short', totalInvested: 50, isAllIn: true }),
+      makeHandPlayer({ playerId: 'big', totalInvested: 100 }),
+    ];
+    const pots = calculatePots(players);
+    expect(pots).toHaveLength(2);
+  });
+
+  it('should merge where eligible matches but keep real side pots (mixed scenario)', () => {
+    // SB(1, fold), BB(10), BTN all-in(5), CO(10)
+    // Level 1: 4*1=4, eligible [BB, BTN, CO]
+    // Level 5: 3*4=12, eligible [BB, BTN, CO] → merge with prev
+    // Level 10: 2*5=10, eligible [BB, CO] → new pot (BTN dropped)
+    const players = [
+      makeHandPlayer({ playerId: 'sb', totalInvested: 1, isFolded: true }),
+      makeHandPlayer({ playerId: 'btn', totalInvested: 5, isAllIn: true }),
+      makeHandPlayer({ playerId: 'bb', totalInvested: 10 }),
+      makeHandPlayer({ playerId: 'co', totalInvested: 10 }),
+    ];
+    const pots = calculatePots(players);
+    expect(pots).toHaveLength(2);
+    // Main pot: levels 1+5 merged = 4+12 = 16, eligible [BB, BTN, CO]
+    expect(pots[0].amount).toBe(16);
+    expect(pots[0].eligiblePlayerIds).toHaveLength(3);
+    // Side pot: level 10 = 10, eligible [BB, CO]
+    expect(pots[1].amount).toBe(10);
+    expect(pots[1].eligiblePlayerIds).toHaveLength(2);
+    expect(pots[1].eligiblePlayerIds).not.toContain('btn');
+  });
+
   it('should handle all players with same investment', () => {
     const players = [
       makeHandPlayer({ playerId: 'a', totalInvested: 100 }),

@@ -39,7 +39,22 @@ export function calculatePots(players: HandPlayer[]): Pot[] {
     previousLevel = currentLevel;
   }
 
-  return pots;
+  // Merge adjacent pots with the same eligible player set
+  // (prevents spurious side pots when folded players create investment-level gaps)
+  const merged: Pot[] = [];
+  for (const pot of pots) {
+    if (merged.length > 0) {
+      const prev = merged[merged.length - 1];
+      if (prev.eligiblePlayerIds.length === pot.eligiblePlayerIds.length
+        && prev.eligiblePlayerIds.every(id => pot.eligiblePlayerIds.includes(id))) {
+        prev.amount += pot.amount;
+        continue;
+      }
+    }
+    merged.push(pot);
+  }
+
+  return merged;
 }
 
 export function collectBetsIntoPots(players: HandPlayer[], existingPots: Pot[]): Pot[] {
