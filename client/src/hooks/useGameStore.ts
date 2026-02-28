@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { GameState, PrivatePlayerState, TableInfo, StakeLevel } from '@poker/shared';
 import type { AvatarId } from '@poker/shared';
+import type { Language } from '../i18n/translations.js';
+import { detectLanguage } from '../i18n/translations.js';
 
 interface LobbyPlayer {
   id: string;
@@ -60,6 +62,10 @@ interface GameStore {
   // UI state
   screen: 'login' | 'table_lobby' | 'watching' | 'lobby' | 'game';
   setScreen: (screen: 'login' | 'table_lobby' | 'watching' | 'lobby' | 'game') => void;
+
+  // Language
+  language: Language;
+  setLanguage: (lang: Language) => void;
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -97,4 +103,10 @@ export const useGameStore = create<GameStore>((set) => ({
 
   screen: 'login',
   setScreen: (screen) => set({ screen }),
+
+  language: detectLanguage(),
+  setLanguage: (language) => {
+    localStorage.setItem('ftp-language', language);
+    set({ language });
+  },
 }));
