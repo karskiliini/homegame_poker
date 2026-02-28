@@ -494,10 +494,10 @@ export class GameManager {
     }
     for (const pot of result.pots) { for (const w of pot.winners) console.log(`${w.playerName} wins ${w.amount} from ${pot.name}${pot.winningHand ? ' (' + pot.winningHand + ')' : ''}`); }
     this.storeHandHistory(result);
-    const potAwards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string }[] = [];
+    const potAwards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string; winningHand?: string }[] = [];
     for (let i = 0; i < result.pots.length; i++) {
       const pot = result.pots[i];
-      for (const winner of pot.winners) { const hp = result.players.find(p => p.playerId === winner.playerId); if (hp) potAwards.push({ potIndex: i, amount: winner.amount, winnerSeatIndex: hp.seatIndex, winnerName: winner.playerName }); }
+      for (const winner of pot.winners) { const hp = result.players.find(p => p.playerId === winner.playerId); if (hp) potAwards.push({ potIndex: i, amount: winner.amount, winnerSeatIndex: hp.seatIndex, winnerName: winner.playerName, winningHand: pot.winningHand }); }
     }
     this.emitToTableRoom(S2C_TABLE.POT_AWARD, { awards: potAwards });
     this.emitSound('chip_win');

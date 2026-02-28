@@ -460,6 +460,30 @@ export function PokerTable({
         </div>
       )}
 
+      {/* Winning hand text */}
+      {potAwards && potAwards.length > 0 && potAwards[0].winningHand && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{
+            top: '63%',
+            zIndex: 30,
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: 'var(--ftp-gold)',
+              textShadow: '0 0 10px rgba(234,179,8,0.5), 0 1px 3px rgba(0,0,0,0.8)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {potAwards[0].winningHand}
+          </div>
+        </div>
+      )}
+
       {/* Bet chips on the table */}
       {!collectingBets && players
         .filter(p => p.currentBet > 0)

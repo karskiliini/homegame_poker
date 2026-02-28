@@ -10,6 +10,7 @@ interface PotAward {
   amount: number;
   winnerSeatIndex: number;
   winnerName: string;
+  winningHand?: string;
 }
 
 interface CollectingBet {
