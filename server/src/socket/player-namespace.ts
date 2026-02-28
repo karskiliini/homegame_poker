@@ -89,12 +89,12 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       // Try to find which table has this player
       const targetTableId = data.tableId;
       if (!targetTableId) {
-        socket.emit(S2C_PLAYER.ERROR, { message: 'Table ID required for reconnect' });
+        socket.emit(S2C_PLAYER.RECONNECT_FAILED, { message: 'Table ID required for reconnect' });
         return;
       }
       const gm = tableManager.getTable(targetTableId);
       if (!gm) {
-        socket.emit(S2C_PLAYER.ERROR, { message: 'Table not found' });
+        socket.emit(S2C_PLAYER.RECONNECT_FAILED, { message: 'Table not found' });
         return;
       }
       const result = gm.reconnectPlayer(data.playerId, socket, data.playerToken);
