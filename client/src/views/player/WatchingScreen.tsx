@@ -97,7 +97,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
       // Scale to fit both dimensions (contain behavior)
       // Leave vertical headroom for seat content that overflows virtual table bounds
       const scaleX = wrapperWidth / TABLE_VIRTUAL_W;
-      const scaleY = (wrapperHeight - 100) / TABLE_VIRTUAL_H;
+      const scaleY = (wrapperHeight - 150) / TABLE_VIRTUAL_H;
       setScale(Math.min(scaleX, scaleY));
     };
 
@@ -174,7 +174,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
           style={{
             width: TABLE_VIRTUAL_W,
             height: TABLE_VIRTUAL_H,
-            transform: `translateY(30px) scale(${scale})`,
+            transform: `translateY(150px) scale(${scale})`,
             transformOrigin: 'center center',
           }}
         >
