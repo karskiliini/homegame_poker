@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import { AVATAR_BACKGROUNDS } from '@poker/shared';
-import type { TableInfo, AvatarId } from '@poker/shared';
+import { AVATAR_OPTIONS } from '@poker/shared';
+import type { TableInfo } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 
 interface TableLobbyTVProps {
@@ -172,7 +172,7 @@ export function TableLobbyTV({ socket, onSelectTable }: TableLobbyTVProps) {
                 ) : (
                   selectedTable.players.map((p, i) => {
                     const isEven = i % 2 === 0;
-                    const [bg1, bg2] = AVATAR_BACKGROUNDS[p.avatarId as AvatarId] || ['#333', '#444'];
+                    const img = AVATAR_OPTIONS.find(a => a.id === p.avatarId)?.image ?? null;
                     return (
                       <div
                         key={i}
@@ -189,10 +189,15 @@ export function TableLobbyTV({ socket, onSelectTable }: TableLobbyTVProps) {
                               width: 28,
                               height: 28,
                               borderRadius: '50%',
-                              background: `linear-gradient(135deg, ${bg1}, ${bg2})`,
+                              overflow: 'hidden',
+                              background: '#2C3E50',
                               flexShrink: 0,
                             }}
-                          />
+                          >
+                            {img && (
+                              <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            )}
+                          </div>
                           <span className="font-semibold">{p.name}</span>
                         </div>
                         <div className="font-mono tabular-nums" style={{ flex: 1, textAlign: 'right', fontWeight: 600 }}>

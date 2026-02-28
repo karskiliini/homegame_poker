@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import { C2S_LOBBY, STAKE_LEVELS, AVATAR_BACKGROUNDS } from '@poker/shared';
-import type { TableInfo, StakeLevel, AvatarId } from '@poker/shared';
+import { C2S_LOBBY, STAKE_LEVELS, AVATAR_OPTIONS } from '@poker/shared';
+import type { TableInfo, StakeLevel } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 
 interface TableLobbyScreenProps {
@@ -291,7 +291,7 @@ function TableRow({
             <div className="mb-3" style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--ftp-lobby-border)' }}>
               {table.players.map((p, i) => {
                 const playerEven = i % 2 === 0;
-                const [bg1, bg2] = AVATAR_BACKGROUNDS[p.avatarId as AvatarId] || ['#333', '#444'];
+                const img = AVATAR_OPTIONS.find(a => a.id === p.avatarId)?.image ?? null;
                 return (
                   <div
                     key={i}
@@ -306,10 +306,15 @@ function TableRow({
                         width: 20,
                         height: 20,
                         borderRadius: '50%',
-                        background: `linear-gradient(135deg, ${bg1}, ${bg2})`,
+                        overflow: 'hidden',
+                        background: '#2C3E50',
                         flexShrink: 0,
                       }}
-                    />
+                    >
+                      {img && (
+                        <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                    </div>
                     <span style={{ fontSize: 13, fontWeight: 500 }}>{p.name}</span>
                     <span className="ml-auto font-mono tabular-nums" style={{ fontSize: 12, fontWeight: 600 }}>
                       {p.stack}
