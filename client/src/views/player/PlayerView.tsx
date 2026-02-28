@@ -258,13 +258,18 @@ export function PlayerView() {
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLeaveTable = useCallback(() => {
+    // Save the current table ID so the player can keep watching after leaving
+    const tableId = useGameStore.getState().currentTableId;
     socketRef.current.emit(C2S_LOBBY.LEAVE_TABLE);
     clearSession();
+    if (tableId) {
+      setWatchingTableId(tableId);
+    }
     setCurrentTableId(null);
     setLobbyState(null);
     setPrivateState(null);
     setScreen('watching');
-  }, [setCurrentTableId, setLobbyState, setPrivateState, setScreen]);
+  }, [setCurrentTableId, setLobbyState, setPrivateState, setScreen, setWatchingTableId]);
 
   const openHistory = useCallback(() => {
     socketRef.current.emit('player:get_history');
