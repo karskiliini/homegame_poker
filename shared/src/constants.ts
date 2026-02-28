@@ -14,5 +14,8 @@ export const DELAY_AFTER_PLAYER_ACTED_MS = 800;
 export const DELAY_SHOWDOWN_TO_RESULT_MS = 3000;
 export const DELAY_POT_AWARD_MS = 1500;
 
+// Game start countdown (after min players ready)
+export const START_COUNTDOWN_MS = 5000;
+
 // Disconnect timeout: remove player from table after this duration
 export const DISCONNECT_TIMEOUT_MS = 180_000;

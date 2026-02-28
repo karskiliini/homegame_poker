@@ -69,7 +69,9 @@ describe('Rebuy prompt', () => {
     gm.addPlayer(sockAlice, 'Alice', 2);
     gm.addPlayer(sockBob, 'Bob', 200);
 
-    // Players are auto-ready on join, just start the game
+    // Sit in both players so the game can start
+    gm.handleSitIn('sock-alice');
+    gm.handleSitIn('sock-bob');
     gm.checkStartGame();
 
     // Process card dealing + pre-action delay
@@ -184,16 +186,11 @@ describe('Rebuy prompt', () => {
     gm.addPlayer(sock1, 'Alice', 100);
     gm.addPlayer(sock2, 'Bob', 100);
 
-    const alice = getPlayer(gm, 'sock-1');
-    alice.status = 'sitting_out';
-    alice.stack = 0;
-    alice.isReady = false;
+    // Bob sits in (waiting), Alice stays sitting_out
+    gm.handleSitIn('sock-2');
 
-    // Trigger scheduleNextHand path: set phase to hand_complete, then advance
-    (gm as any).phase = 'hand_complete';
-    // scheduleNextHand fires after HAND_COMPLETE_PAUSE_MS
-    // We trigger it by calling the same logic (auto-ready loop)
-    vi.advanceTimersByTime(0); // no pending timers yet, but let's advance
+    const alice = getPlayer(gm, 'sock-1');
+    alice.stack = 0; // busted scenario
 
     // Simulate what scheduleNextHand does:
     (gm as any).phase = 'waiting_for_players';

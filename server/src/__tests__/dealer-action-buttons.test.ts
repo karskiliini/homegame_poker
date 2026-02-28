@@ -87,9 +87,9 @@ describe('Dealer action buttons', () => {
     gm.addPlayer(sock2, 'Bob', 200);
     gm.addPlayer(sock3, 'Charlie', 200);
 
-    gm.setPlayerReady('sock-1');
-    gm.setPlayerReady('sock-2');
-    gm.setPlayerReady('sock-3');
+    gm.handleSitIn('sock-1');
+    gm.handleSitIn('sock-2');
+    gm.handleSitIn('sock-3');
     gm.checkStartGame();
 
     drainEventQueue();
@@ -115,9 +115,9 @@ describe('Dealer action buttons', () => {
     gm.addPlayer(sock2, 'Bob', 200);
     gm.addPlayer(sock3, 'Charlie', 200);
 
-    gm.setPlayerReady('sock-1');
-    gm.setPlayerReady('sock-2');
-    gm.setPlayerReady('sock-3');
+    gm.handleSitIn('sock-1');
+    gm.handleSitIn('sock-2');
+    gm.handleSitIn('sock-3');
     gm.checkStartGame();
 
     const handEngine = (gm as any).handEngine;
@@ -173,9 +173,9 @@ describe('Dealer action buttons', () => {
     gm.addPlayer(sock2, 'Bob', 200);
     gm.addPlayer(sock3, 'Charlie', 200);
 
-    gm.setPlayerReady('sock-1');
-    gm.setPlayerReady('sock-2');
-    gm.setPlayerReady('sock-3');
+    gm.handleSitIn('sock-1');
+    gm.handleSitIn('sock-2');
+    gm.handleSitIn('sock-3');
     gm.checkStartGame();
 
     const handEngine = (gm as any).handEngine;
@@ -224,25 +224,26 @@ describe('Dealer action buttons', () => {
     gm.addPlayer(sock1, 'Alice', 200);
     gm.addPlayer(sock2, 'Bob', 200);
 
-    gm.setPlayerReady('sock-1');
-    gm.setPlayerReady('sock-2');
+    gm.handleSitIn('sock-1');
+    gm.handleSitIn('sock-2');
     gm.checkStartGame();
 
     // Don't advance timers — only cards_dealt has been processed, not player_turn
-    // Get the first PRIVATE_STATE for each player
+    // Get PRIVATE_STATE calls (index 0 is initial sitting_out, index 1 is cards_dealt)
     const states1 = getPrivateStates(sock1);
     const states2 = getPrivateStates(sock2);
 
-    expect(states1.length).toBeGreaterThan(0);
-    expect(states2.length).toBeGreaterThan(0);
+    // At least 2: initial sitting_out + cards_dealt
+    expect(states1.length).toBeGreaterThanOrEqual(2);
+    expect(states2.length).toBeGreaterThanOrEqual(2);
 
-    // During cards_dealt, nobody should have isMyTurn=true
-    expect(states1[0].isMyTurn).toBe(false);
-    expect(states2[0].isMyTurn).toBe(false);
+    // The cards_dealt state (index 1): nobody should have isMyTurn=true
+    expect(states1[1].isMyTurn).toBe(false);
+    expect(states2[1].isMyTurn).toBe(false);
 
     // But they should have hole cards
-    expect(states1[0].holeCards.length).toBe(2);
-    expect(states2[0].holeCards.length).toBe(2);
+    expect(states1[1].holeCards.length).toBe(2);
+    expect(states2[1].holeCards.length).toBe(2);
 
     // Now advance to process player_turn — the correct actor should get isMyTurn=true
     drainEventQueue();

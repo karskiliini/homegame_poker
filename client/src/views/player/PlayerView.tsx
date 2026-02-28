@@ -63,7 +63,7 @@ export function PlayerView() {
     socket.on(S2C_PLAYER.JOINED, (data: { playerId: string; tableId: string }) => {
       setPlayerId(data.playerId);
       setCurrentTableId(data.tableId);
-      setScreen('lobby');
+      setScreen('game');
     });
 
     // Per-table events

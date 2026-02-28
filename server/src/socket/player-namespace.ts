@@ -163,6 +163,14 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       gm.handleSitOut(socket.id);
     });
 
+    socket.on(C2S.SIT_IN, () => {
+      if (!currentTableId) return;
+      const gm = tableManager.getTable(currentTableId);
+      if (!gm) return;
+      gm.handleSitIn(socket.id);
+      gm.checkStartGame();
+    });
+
     socket.on(C2S.REPORT_BUG, (data: { description: string }) => {
       if (!data.description || typeof data.description !== 'string') return;
       let name = 'Anonymous';

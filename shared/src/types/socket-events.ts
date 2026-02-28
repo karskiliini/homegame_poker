@@ -2,6 +2,7 @@ export const C2S = {
   JOIN: 'player:join',
   REBUY: 'player:rebuy',
   SIT_OUT: 'player:sit_out',
+  SIT_IN: 'player:sit_in',
   ACTION: 'player:action',
   RIT_RESPONSE: 'player:rit_response',
   SHOW_CARDS: 'player:show_cards',

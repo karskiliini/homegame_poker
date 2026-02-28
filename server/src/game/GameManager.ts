@@ -9,7 +9,7 @@ import {
   SHOW_CARDS_TIMEOUT_MS, DISCONNECT_TIMEOUT_MS, REBUY_PROMPT_MS,
   DELAY_AFTER_CARDS_DEALT_MS, DELAY_AFTER_STREET_DEALT_MS,
   DELAY_AFTER_PLAYER_ACTED_MS, DELAY_SHOWDOWN_TO_RESULT_MS,
-  DELAY_POT_AWARD_MS,
+  DELAY_POT_AWARD_MS, START_COUNTDOWN_MS,
 } from '@poker/shared';
 import { HandEngine } from './HandEngine.js';
 import type { HandEngineEvent, HandResult, ShowdownEntry } from './HandEngine.js';
@@ -111,7 +111,7 @@ export class GameManager {
 
     const player: Player = {
       id: uuidv4(), name: name.trim(), seatIndex, stack: buyIn,
-      status: 'waiting', isConnected: true, isReady: true,
+      status: 'sitting_out', isConnected: true, isReady: false,
       runItTwicePreference: 'ask', autoMuck: false, disconnectedAt: null,
       avatarId: avatarId || 'link',
     };
@@ -121,6 +121,15 @@ export class GameManager {
     this.socketMap.set(socket.id, socket);
     this.playerIdToSocketId.set(player.id, socket.id);
     socket.join(this.roomId);
+
+    // Send initial private state so client can render immediately
+    const initialState: PrivatePlayerState = {
+      id: player.id, name: player.name, seatIndex: player.seatIndex, stack: player.stack,
+      status: 'sitting_out', holeCards: [], currentBet: 0, availableActions: [],
+      minRaise: 0, maxRaise: 0, callAmount: 0, potTotal: 0, isMyTurn: false,
+      showCardsOption: false, runItTwiceOffer: false, runItTwiceDeadline: 0,
+    };
+    socket.emit(S2C_PLAYER.PRIVATE_STATE, initialState);
 
     console.log(`${player.name} joined at seat ${seatIndex} with ${buyIn} chips [${this.tableId}]`);
     return { playerId: player.id };
@@ -132,7 +141,6 @@ export class GameManager {
   }
 
   private startCountdownTimer: ReturnType<typeof setTimeout> | null = null;
-  private START_COUNTDOWN_MS = 15000;
 
   checkStartGame() {
     if (this.phase !== 'waiting_for_players') return;
@@ -149,7 +157,7 @@ export class GameManager {
         if (this.phase !== 'waiting_for_players') return;
         const ready = [...this.players.values()].filter(p => p.isReady && p.isConnected && p.stack > 0);
         if (ready.length >= this.config.minPlayers) this.startNewHand();
-      }, this.START_COUNTDOWN_MS);
+      }, START_COUNTDOWN_MS);
     }
   }
 
@@ -571,6 +579,18 @@ export class GameManager {
     player.status = 'sitting_out';
     player.isReady = false;
     console.log(`${player.name} is sitting out`);
+    this.broadcastLobbyState();
+    this.broadcastTableState();
+  }
+
+  handleSitIn(socketId: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+    if (player.status !== 'sitting_out') return;
+    if (player.stack <= 0) return;
+    player.status = 'waiting';
+    player.isReady = true;
+    console.log(`${player.name} sat in`);
     this.broadcastLobbyState();
     this.broadcastTableState();
   }

@@ -238,10 +238,22 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
 
         {/* Actions */}
         <div className="mt-2">
-          {(isSittingOut || isBusted) ? (
+          {isSittingOut && (privateState?.stack ?? 0) > 0 ? (
             <div className="text-center py-4 space-y-3">
               <div style={{ color: 'var(--ftp-text-muted)', fontSize: 15 }}>
                 Sitting Out
+              </div>
+              <button
+                onClick={() => socket.emit(C2S.SIT_IN)}
+                className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-lg"
+              >
+                Sit In
+              </button>
+            </div>
+          ) : (isBusted || (privateState?.stack ?? 0) <= 0) ? (
+            <div className="text-center py-4 space-y-3">
+              <div style={{ color: 'var(--ftp-text-muted)', fontSize: 15 }}>
+                {isBusted ? 'Busted' : 'Sitting Out'}
               </div>
               <button
                 onClick={() => socket.emit(C2S.REBUY, { amount: config?.maxBuyIn ?? 200 })}
