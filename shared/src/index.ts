@@ -7,3 +7,4 @@ export * from './types/socket-events.js';
 export * from './types/sound.js';
 export * from './constants.js';
 export * from './utils/card-utils.js';
+export * from './chipUtils.js';

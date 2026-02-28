@@ -1,34 +1,15 @@
 import type { PotDisplay as PotDisplayType } from '@poker/shared';
+import { breakdownChips } from '@poker/shared';
+import { ChipStack } from '../../components/ChipStack.js';
 
 interface PotDisplayProps {
   pots: PotDisplayType[];
+  bigBlind: number;
   playerNames?: Record<string, string>; // playerId -> name
   potGrow?: boolean;
 }
 
-// Simple chip stack icon
-function ChipStack({ color }: { color: string }) {
-  return (
-    <div className="inline-flex flex-col items-center" style={{ marginRight: 4 }}>
-      {[0, 1, 2].map(i => (
-        <div
-          key={i}
-          style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: `radial-gradient(circle at 35% 35%, ${color}, ${color}dd)`,
-            border: '1.5px dashed rgba(255,255,255,0.35)',
-            marginTop: i > 0 ? -18 : 0,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-export function PotDisplay({ pots, playerNames, potGrow }: PotDisplayProps) {
+export function PotDisplay({ pots, bigBlind, playerNames, potGrow }: PotDisplayProps) {
   if (pots.length === 0) return null;
 
   const hasSidePots = pots.length > 1;
@@ -41,13 +22,15 @@ export function PotDisplay({ pots, playerNames, potGrow }: PotDisplayProps) {
           ? pot.eligible.map(id => playerNames[id]).filter(Boolean)
           : [];
 
+        const breakdown = breakdownChips(pot.amount, bigBlind);
+
         return (
           <div
             key={i}
             className={`flex items-center gap-1 animate-fade-in-up ${potGrow ? 'animate-pot-grow' : ''}`}
             style={{ animationDelay: `${i * 100}ms` }}
           >
-            <ChipStack color={i === 0 ? '#CC2222' : '#2244AA'} />
+            <ChipStack breakdown={breakdown} size="md" />
             <div className="text-center">
               <div
                 className="font-bold font-mono tabular-nums"

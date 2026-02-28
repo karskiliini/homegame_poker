@@ -19,6 +19,7 @@ export interface Player {
   isReady: boolean;
   runItTwicePreference: 'ask' | 'always_no';
   autoMuck: boolean;
+  disconnectedAt: number | null;
 }
 
 export interface PublicPlayerState {
@@ -28,6 +29,7 @@ export interface PublicPlayerState {
   stack: number;
   status: PlayerStatus;
   isConnected: boolean;
+  disconnectedAt: number | null;
   currentBet: number;
   isDealer: boolean;
   isSmallBlind: boolean;

@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PublicPlayerState } from '@poker/shared';
+import { DISCONNECT_TIMEOUT_MS } from '@poker/shared';
 import { CardComponent } from '../../components/Card.js';
 import { CardBack } from '../../components/CardBack.js';
 
@@ -40,11 +42,40 @@ interface PlayerSeatProps {
   foldDirection?: { x: number; y: number };
 }
 
+function useDcCountdown(disconnectedAt: number | null): string | null {
+  const [remaining, setRemaining] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (disconnectedAt == null) {
+      setRemaining(null);
+      return;
+    }
+
+    const update = () => {
+      const left = disconnectedAt + DISCONNECT_TIMEOUT_MS - Date.now();
+      if (left <= 0) {
+        setRemaining('0:00');
+        return;
+      }
+      const mins = Math.floor(left / 60000);
+      const secs = Math.floor((left % 60000) / 1000);
+      setRemaining(`${mins}:${secs.toString().padStart(2, '0')}`);
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [disconnectedAt]);
+
+  return remaining;
+}
+
 export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection }: PlayerSeatProps) {
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
   const isAllIn = player.status === 'all_in';
   const isDisconnected = !player.isConnected;
+  const dcCountdown = useDcCountdown(player.disconnectedAt);
   const [color1, color2] = getAvatarColors(player.name);
   const initials = getInitials(player.name);
 
@@ -135,7 +166,11 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
             }}
           >
             {player.name}
-            {isDisconnected && <span style={{ color: '#EF4444', marginLeft: 4, fontSize: 10 }}>DC</span>}
+            {isDisconnected && (
+              <span style={{ color: '#EF4444', marginLeft: 4, fontSize: 10 }}>
+                DC{dcCountdown ? ` ${dcCountdown}` : ''}
+              </span>
+            )}
           </div>
           <div
             className="font-mono tabular-nums"

@@ -6,7 +6,7 @@ import type {
 } from '@poker/shared';
 import {
   S2C_PLAYER, S2C_TABLE, HAND_COMPLETE_PAUSE_MS, RIT_TIMEOUT_MS,
-  SHOW_CARDS_TIMEOUT_MS,
+  SHOW_CARDS_TIMEOUT_MS, DISCONNECT_TIMEOUT_MS,
   DELAY_AFTER_CARDS_DEALT_MS, DELAY_AFTER_STREET_DEALT_MS,
   DELAY_AFTER_PLAYER_ACTED_MS, DELAY_SHOWDOWN_TO_RESULT_MS,
   DELAY_POT_AWARD_MS,
@@ -58,6 +58,10 @@ export class GameManager {
   private lastProcessedEventType: string = '';
   private queueTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // Disconnect removal tracking
+  private disconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map(); // socketId → timer
+  private pendingRemovals: Set<string> = new Set(); // socketIds to remove after hand completes
+
   constructor(config: GameConfig, io: Server) {
     this.config = config;
     this.io = io;
@@ -100,6 +104,7 @@ export class GameManager {
       isReady: false,
       runItTwicePreference: 'ask',
       autoMuck: false,
+      disconnectedAt: null,
     };
 
     this.players.set(socket.id, player);
@@ -646,6 +651,9 @@ export class GameManager {
       if (this.phase === 'hand_complete') {
         this.phase = 'waiting_for_players';
 
+        // Remove players whose disconnect timeout expired during the hand
+        this.processPendingRemovals();
+
         // Auto-ready all players with chips
         for (const [, player] of this.players) {
           if (player.stack > 0 && player.isConnected && player.status !== 'busted') {
@@ -848,10 +856,91 @@ export class GameManager {
     const player = this.players.get(socketId);
     if (player) {
       player.isConnected = false;
+      player.disconnectedAt = Date.now();
+      this.startDisconnectTimer(socketId);
       console.log(`${player.name} disconnected`);
       this.broadcastLobbyState();
       this.broadcastTableState();
     }
+  }
+
+  handlePlayerReconnect(socketId: string) {
+    const player = this.players.get(socketId);
+    if (player) {
+      player.disconnectedAt = null;
+      this.cancelDisconnectTimer(socketId);
+    }
+  }
+
+  private startDisconnectTimer(socketId: string) {
+    // Cancel any existing timer for this socket
+    this.cancelDisconnectTimer(socketId);
+
+    const timer = setTimeout(() => {
+      this.disconnectTimers.delete(socketId);
+      this.handleDisconnectTimeout(socketId);
+    }, DISCONNECT_TIMEOUT_MS);
+
+    this.disconnectTimers.set(socketId, timer);
+  }
+
+  private cancelDisconnectTimer(socketId: string) {
+    const timer = this.disconnectTimers.get(socketId);
+    if (timer) {
+      clearTimeout(timer);
+      this.disconnectTimers.delete(socketId);
+    }
+    this.pendingRemovals.delete(socketId);
+  }
+
+  private handleDisconnectTimeout(socketId: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+
+    // If player reconnected in the meantime, skip
+    if (player.isConnected) return;
+
+    if (this.phase === 'hand_in_progress') {
+      // Defer removal until hand completes
+      this.pendingRemovals.add(socketId);
+      console.log(`${player.name} disconnect timeout - pending removal after hand`);
+    } else {
+      this.removePlayer(socketId);
+    }
+  }
+
+  removePlayer(socketId: string) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+
+    console.log(`${player.name} removed from table (disconnect timeout)`);
+
+    // Clean up all maps
+    this.seatMap.delete(player.seatIndex);
+    this.playerIdToSocketId.delete(player.id);
+    this.socketMap.delete(socketId);
+    this.players.delete(socketId);
+    this.pendingRemovals.delete(socketId);
+
+    // Notify clients
+    this.io.of('/table').emit(S2C_TABLE.PLAYER_LEFT, {
+      playerId: player.id,
+      seatIndex: player.seatIndex,
+      playerName: player.name,
+    });
+
+    this.broadcastLobbyState();
+    this.broadcastTableState();
+  }
+
+  private processPendingRemovals() {
+    for (const socketId of this.pendingRemovals) {
+      const player = this.players.get(socketId);
+      if (player && !player.isConnected) {
+        this.removePlayer(socketId);
+      }
+    }
+    this.pendingRemovals.clear();
   }
 
   private lastTurnEvent: HandEngineEvent | null = null;
@@ -946,6 +1035,7 @@ export class GameManager {
         stack: hp?.currentStack ?? p.stack,
         status: hp ? (hp.isFolded ? 'folded' : hp.isAllIn ? 'all_in' : 'active') : p.status,
         isConnected: p.isConnected,
+        disconnectedAt: p.disconnectedAt,
         currentBet: hp?.currentBet ?? 0,
         isDealer: p.seatIndex === this.dealerSeatIndex,
         isSmallBlind: false,

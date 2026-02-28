@@ -1,28 +1,23 @@
+import { breakdownChips } from '@poker/shared';
+import { ChipStack } from '../../components/ChipStack.js';
+
 interface BetChipProps {
   amount: number;
+  bigBlind: number;
   collecting?: boolean;
   style?: React.CSSProperties;
 }
 
-export function BetChip({ amount, collecting, style }: BetChipProps) {
+export function BetChip({ amount, bigBlind, collecting, style }: BetChipProps) {
+  const breakdown = breakdownChips(amount, bigBlind);
+
   return (
     <div
       className={collecting ? 'animate-bet-collect' : 'animate-fade-in-up'}
       style={style}
     >
       <div className="flex items-center gap-1">
-        {/* Chip icon */}
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle at 35% 35%, #FBBF24, #D97706)',
-            border: '2px dashed rgba(255,255,255,0.4)',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-            flexShrink: 0,
-          }}
-        />
+        <ChipStack breakdown={breakdown} size="sm" />
         {/* Amount */}
         <span
           className="font-mono font-bold tabular-nums"

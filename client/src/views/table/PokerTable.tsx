@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { GameState } from '@poker/shared';
+import { breakdownChips } from '@poker/shared';
 import { PlayerSeat } from './PlayerSeat.js';
 import { CommunityCards } from './CommunityCards.js';
 import { PotDisplay } from './PotDisplay.js';
 import { BetChip } from './BetChip.js';
 import { CardBack } from '../../components/CardBack.js';
+import { ChipStack } from '../../components/ChipStack.js';
 
 // Seat positions around an oval table (percentage-based, for 10 seats)
 export const SEAT_POSITIONS: { x: number; y: number }[] = [
@@ -213,7 +215,7 @@ export function PokerTable({
       {/* Pots */}
       {pots.length > 0 && (
         <div className="absolute top-[58%] left-1/2 -translate-x-1/2">
-          <PotDisplay pots={pots} playerNames={playerNames} potGrow={potGrow} />
+          <PotDisplay pots={pots} bigBlind={config.bigBlind} playerNames={playerNames} potGrow={potGrow} />
         </div>
       )}
 
@@ -232,7 +234,7 @@ export function PokerTable({
                 zIndex: 20,
               }}
             >
-              <BetChip amount={p.currentBet} />
+              <BetChip amount={p.currentBet} bigBlind={config.bigBlind} />
             </div>
           );
         })}
@@ -259,6 +261,7 @@ export function PokerTable({
           >
             <BetChip
               amount={bet.amount}
+              bigBlind={config.bigBlind}
               collecting
               style={{
                 '--start-x': `${startX}px`,
@@ -321,17 +324,7 @@ export function PokerTable({
               } as React.CSSProperties}
             >
               <div className="flex items-center gap-1">
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle at 35% 35%, #FBBF24, #D97706)',
-                    border: '2px dashed rgba(255,255,255,0.4)',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-                    flexShrink: 0,
-                  }}
-                />
+                <ChipStack breakdown={breakdownChips(anim.amount, config.bigBlind)} size="sm" />
                 <span
                   className="font-mono font-bold tabular-nums"
                   style={{
@@ -370,16 +363,7 @@ export function PokerTable({
               '--start-y': '0px',
             } as React.CSSProperties}
           >
-            <div
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle at 35% 35%, #FBBF24, #D97706)',
-                border: '2px dashed rgba(255,255,255,0.4)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-              }}
-            />
+            <ChipStack breakdown={breakdownChips(anim.amount, config.bigBlind)} size="sm" />
           </div>
           {/* Amount label */}
           <div
