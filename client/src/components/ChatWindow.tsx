@@ -26,8 +26,8 @@ export function ChatWindow({ messages, minimized: minimizedProp, onToggleMinimiz
   return (
     <div
       style={{
-        width: 280,
-        height: minimized ? 36 : 236,
+        width: '100%',
+        height: minimized ? 36 : 180,
         background: 'rgba(0, 0, 0, 0.55)',
         backdropFilter: 'blur(8px)',
         borderRadius: 10,
@@ -92,7 +92,7 @@ export function ChatWindow({ messages, minimized: minimizedProp, onToggleMinimiz
           <div
             ref={scrollRef}
             style={{
-              height: 200,
+              height: 144,
               overflowY: 'auto',
               padding: '12px 14px',
               display: 'flex',

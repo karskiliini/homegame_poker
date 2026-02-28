@@ -103,7 +103,7 @@ export function ActionButtons({
   }, []);
 
   return (
-    <div className="space-y-3 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
+    <div className="space-y-2 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
       {/* Main action buttons */}
       <div className="flex gap-3">
         {canFold && (
@@ -295,12 +295,12 @@ function PresetButton({
     <button
       onClick={onClick}
       style={{
-        padding: '6px 14px',
+        padding: '10px 16px',
         borderRadius: 4,
         background: active ? '#D97706' : 'rgba(255,255,255,0.1)',
         border: `1px solid ${active ? '#D97706' : 'rgba(255,255,255,0.2)'}`,
         color: active ? '#FFFFFF' : '#E0E0E0',
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         cursor: 'pointer',
         transition: 'background 0.1s ease',

@@ -35,7 +35,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  const [chatMinimized, setChatMinimized] = useState(false);
+  const [chatMinimized, setChatMinimized] = useState(true);
   const t = useT();
   const { gradients, assets } = useTheme();
   const avatarIds = useMemo(() => Array.from({ length: assets.avatarCount }, (_, i) => String(i + 1)), [assets.avatarCount]);
@@ -84,7 +84,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
 
     const updateScale = () => {
       const wrapperWidth = wrapper.clientWidth;
-      setScale((wrapperWidth / TABLE_W) * 0.7);
+      setScale((wrapperWidth / TABLE_W) * 0.65);
     };
 
     updateScale();
@@ -140,15 +140,15 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
 
   return (
     <div
-      className="min-h-screen flex flex-col"
-      style={{ background: gradients.phoneBackground }}
+      className="flex flex-col"
+      style={{ minHeight: '100dvh', background: gradients.phoneBackground }}
     >
       {/* Top: Mini poker table (~60vh) */}
       <div
         ref={wrapperRef}
         className="relative w-full overflow-hidden flex justify-center flex-1"
         style={{
-          minHeight: '45vh',
+          minHeight: '38vh',
           background: gradients.phoneRadialBackground,
         }}
       >
@@ -158,13 +158,13 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
             <button
               onClick={onLeaveTable}
               style={{
-                padding: '6px 14px',
+                padding: '10px 16px',
                 borderRadius: 6,
                 background: 'rgba(255,255,255,0.1)',
                 color: 'var(--ftp-text-secondary)',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: 600,
               }}
             >
@@ -179,7 +179,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
             style={{
               width: TABLE_W,
               height: TABLE_H,
-              transform: `translateY(30px) scale(${scale})`,
+              transform: `translateY(16px) scale(${scale})`,
               transformOrigin: 'top center',
             }}
           >
@@ -219,11 +219,12 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
 
       {/* Bottom: Own cards + actions */}
       <div
-        className="flex flex-col px-4 pt-1 pb-1"
+        className="flex flex-col px-3 pt-1 pb-1"
         style={{
           background: 'rgba(0,0,0,0.5)',
           opacity: isFolded ? 0.6 : 1,
           transition: 'opacity 0.3s ease',
+          paddingBottom: 'max(4px, env(safe-area-inset-bottom))',
         }}
       >
         {/* Cards + stack row */}
@@ -336,13 +337,13 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
             <button
               onClick={() => socket.emit(C2S.SIT_OUT)}
               style={{
-                padding: '6px 14px',
+                padding: '10px 16px',
                 borderRadius: 6,
                 background: 'rgba(255,255,255,0.08)',
                 color: 'var(--ftp-text-secondary)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 cursor: 'pointer',
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: 600,
               }}
             >
@@ -358,7 +359,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               onClick={() => socket.emit(C2S.SIT_OUT_NEXT_HAND)}
               className="flex items-center gap-2"
               style={{
-                padding: '6px 12px',
+                padding: '8px 14px',
                 borderRadius: 6,
                 background: sitOutNextHand ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
                 border: sitOutNextHand ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.1)',
@@ -368,8 +369,8 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
             >
               <div
                 style={{
-                  width: 16,
-                  height: 16,
+                  width: 20,
+                  height: 20,
                   borderRadius: 3,
                   border: sitOutNextHand ? '2px solid #EAB308' : '2px solid rgba(255,255,255,0.3)',
                   background: sitOutNextHand ? '#EAB308' : 'transparent',
@@ -377,7 +378,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.2s ease',
-                  fontSize: 11,
+                  fontSize: 13,
                   color: '#000',
                   fontWeight: 700,
                 }}
@@ -386,7 +387,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               </div>
               <span
                 style={{
-                  fontSize: 12,
+                  fontSize: 13,
                   color: sitOutNextHand ? '#EAB308' : 'var(--ftp-text-muted)',
                   fontWeight: sitOutNextHand ? 600 : 400,
                 }}
@@ -398,7 +399,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               onClick={() => socket.emit(C2S.AUTO_MUCK)}
               className="flex items-center gap-2"
               style={{
-                padding: '6px 12px',
+                padding: '8px 14px',
                 borderRadius: 6,
                 background: autoMuck ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
                 border: autoMuck ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.1)',
@@ -408,8 +409,8 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
             >
               <div
                 style={{
-                  width: 16,
-                  height: 16,
+                  width: 20,
+                  height: 20,
                   borderRadius: 3,
                   border: autoMuck ? '2px solid #EAB308' : '2px solid rgba(255,255,255,0.3)',
                   background: autoMuck ? '#EAB308' : 'transparent',
@@ -417,7 +418,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.2s ease',
-                  fontSize: 11,
+                  fontSize: 13,
                   color: '#000',
                   fontWeight: 700,
                 }}
@@ -426,7 +427,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               </div>
               <span
                 style={{
-                  fontSize: 12,
+                  fontSize: 13,
                   color: autoMuck ? '#EAB308' : 'var(--ftp-text-muted)',
                   fontWeight: autoMuck ? 600 : 400,
                 }}
