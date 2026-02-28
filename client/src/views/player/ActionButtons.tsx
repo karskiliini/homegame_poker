@@ -60,12 +60,47 @@ export function ActionButtons({
   // Slider step: 5% of max buy-in
   const sliderStep = Math.max(1, Math.round(maxBuyIn * 0.05));
 
+  const smallBlind = Math.round(bigBlind / 2);
+
   // Mouse wheel handler: 1 big blind per scroll tick
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY < 0 ? bigBlind : -bigBlind;
     setRaiseAmount(prev => clampRaise(prev + delta));
   }, [bigBlind, clampRaise]);
+
+  const sliderRef = useRef<HTMLInputElement>(null);
+  const isDraggingThumb = useRef(false);
+
+  // Prevent native jump-to-click; step by 1 small blind toward click instead
+  const handleSliderPointerDown = useCallback((e: React.PointerEvent<HTMLInputElement>) => {
+    const input = sliderRef.current;
+    if (!input) return;
+
+    const rect = input.getBoundingClientRect();
+    const thumbWidth = 28; // matches CSS thumb size
+    const trackLeft = rect.left + thumbWidth / 2;
+    const trackWidth = rect.width - thumbWidth;
+
+    // Where the thumb currently sits (pixel offset from track start)
+    const fraction = (raiseAmount - minRaise) / (maxRaise - minRaise || 1);
+    const thumbCenter = trackLeft + fraction * trackWidth;
+
+    // If click is within the thumb area, allow normal drag
+    if (Math.abs(e.clientX - thumbCenter) <= thumbWidth / 2) {
+      isDraggingThumb.current = true;
+      return;
+    }
+
+    // Click is on the track — prevent native jump and step by 1 small blind
+    e.preventDefault();
+    const direction = e.clientX > thumbCenter ? 1 : -1;
+    setRaiseAmount(prev => clampRaise(prev + direction * smallBlind));
+  }, [raiseAmount, minRaise, maxRaise, smallBlind, clampRaise]);
+
+  const handleSliderPointerUp = useCallback(() => {
+    isDraggingThumb.current = false;
+  }, []);
 
   return (
     <div className="space-y-3 p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.4)' }}>
@@ -122,12 +157,15 @@ export function ActionButtons({
           {/* Slider */}
           <div className="px-1">
             <input
+              ref={sliderRef}
               type="range"
               min={minRaise}
               max={maxRaise}
               step={sliderStep}
               value={raiseAmount}
               onChange={(e) => setRaiseAmount(Number(e.target.value))}
+              onPointerDown={handleSliderPointerDown}
+              onPointerUp={handleSliderPointerUp}
               onWheel={handleWheel}
               className="w-full ftp-slider"
             />
