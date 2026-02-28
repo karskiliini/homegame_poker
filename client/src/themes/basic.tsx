@@ -118,6 +118,7 @@ export const basicTheme: ThemeConfig = {
     animSeatJoin: '400ms',
     animSeatLeave: '300ms',
     animAllinPulse: '2000ms',
+    animFold: '450ms',
     animBtnHover: '100ms',
     animBtnClick: '50ms',
 

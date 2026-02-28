@@ -103,6 +103,7 @@ export interface ThemeCSSVars {
   animSeatJoin: string;
   animSeatLeave: string;
   animAllinPulse: string;
+  animFold: string;
   animBtnHover: string;
   animBtnClick: string;
 

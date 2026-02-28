@@ -94,27 +94,27 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
           ))
         ) : (
           <AnimatePresence>
-            {showCardBacks && (
+            {showCardBacks && Array.from({ length: numHoleCards }, (_, i) => (
               <motion.div
-                className="flex"
-                style={{ gap: numHoleCards > 2 ? 0 : 2 }}
+                key={`cardback-${i}`}
                 initial={false}
                 exit={{
-                  x: foldDirection?.x ?? 0,
+                  x: (foldDirection?.x ?? 0) + (i === 0 ? -12 : 12),
                   y: foldDirection?.y ?? -40,
-                  scale: 0.4,
-                  rotate: -20,
+                  scale: 0.3,
+                  rotate: i === 0 ? -15 : 25,
                   opacity: 0,
                 }}
-                transition={{ duration: 0.4, ease: 'easeIn' }}
+                transition={{
+                  duration: 0.45,
+                  delay: i * 0.08,
+                  ease: 'easeIn',
+                }}
+                style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : i > 0 ? { marginLeft: 2 } : undefined}
               >
-                {Array.from({ length: numHoleCards }, (_, i) => (
-                  <div key={i} style={numHoleCards > 2 && i > 0 ? { marginLeft: -8 } : undefined}>
-                    <CardBack size="sm" />
-                  </div>
-                ))}
+                <CardBack size="sm" />
               </motion.div>
-            )}
+            ))}
           </AnimatePresence>
         )}
       </div>
