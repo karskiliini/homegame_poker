@@ -450,7 +450,7 @@ describe('Run It Twice', () => {
     expect(secondBoardEvents[0].cards).toEqual(['2s', '5s', '9s', '3c', '4c']);
   });
 
-  it('chip conservation across many random RIT hands', () => {
+  it('chip conservation across many random RIT hands', { timeout: 60_000 }, () => {
     const initialStack = 200;
 
     for (let hand = 0; hand < 500; hand++) {

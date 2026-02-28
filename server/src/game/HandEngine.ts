@@ -7,6 +7,7 @@ import { Deck } from './Deck.js';
 import { collectBetsIntoPots } from './PotManager.js';
 import { determineWinners, evaluateHand } from '../evaluation/hand-rank.js';
 import type { EvaluationResult } from '../evaluation/hand-rank.js';
+import { calculateEquity } from '../evaluation/equity.js';
 
 export interface HandResult {
   handId: string;
@@ -40,9 +41,11 @@ export type HandEngineEvent =
   | { type: 'cards_dealt'; playerCards: Map<string, CardString[]> }
   | { type: 'player_turn'; playerId: string; seatIndex: number; availableActions: ActionType[]; callAmount: number; minRaise: number; maxRaise: number }
   | { type: 'player_acted'; playerId: string; playerName: string; seatIndex: number; action: ActionType; amount: number; isAllIn: boolean }
-  | { type: 'street_dealt'; street: Street; cards: CardString[] }
+  | { type: 'street_dealt'; street: Street; cards: CardString[]; dramatic?: boolean }
   | { type: 'pots_updated'; pots: Pot[] }
   | { type: 'all_in_runout'; remainingStreets: Street[] }
+  | { type: 'allin_showdown'; entries: { playerId: string; seatIndex: number; holeCards: CardString[] }[] }
+  | { type: 'equity_update'; equities: Map<string, number> }
   | { type: 'rit_eligible'; playerIds: string[] }
   | { type: 'second_board_dealt'; cards: CardString[] }
   | { type: 'showdown'; entries: ShowdownEntry[] }
@@ -540,14 +543,49 @@ export class HandEngine {
   }
 
   private dealRunout(remainingStreets: Street[]) {
+    const activePlayers = this.players.filter(p => !p.isFolded);
+    const playerHands = activePlayers.map(p => ({ playerId: p.playerId, holeCards: p.holeCards }));
+
+    // Emit allin_showdown before dealing runout cards (reveals hole cards)
+    if (remainingStreets.length > 0) {
+      this.onEvent({
+        type: 'allin_showdown',
+        entries: activePlayers.map(p => ({
+          playerId: p.playerId,
+          seatIndex: p.seatIndex,
+          holeCards: [...p.holeCards],
+        })),
+      });
+
+      // Emit initial equity before any runout cards
+      const initialEquity = calculateEquity(this.gameType, playerHands, [...this.communityCards]);
+      this.onEvent({ type: 'equity_update', equities: initialEquity });
+    }
+
     // Deal remaining community cards (first board)
-    for (const s of remainingStreets) {
+    for (let i = 0; i < remainingStreets.length; i++) {
+      const s = remainingStreets[i];
       const cardCount = s === 'flop' ? 3 : 1;
       this.deck.deal(1); // burn
       const cards = this.deck.deal(cardCount);
       this.communityCards.push(...cards);
       this.streets.push({ street: s, cards: [...cards], actions: [] });
-      this.onEvent({ type: 'street_dealt', street: s, cards: [...cards] });
+
+      // Check if this is the river and if it's dramatic (leader's equity < 100%)
+      let dramatic: boolean | undefined;
+      if (s === 'river') {
+        // Check equity BEFORE this card was dealt (was the outcome uncertain?)
+        const boardBeforeRiver = this.communityCards.slice(0, this.communityCards.length - 1);
+        const preRiverEquity = calculateEquity(this.gameType, playerHands, boardBeforeRiver);
+        const maxEquity = Math.max(...preRiverEquity.values());
+        dramatic = maxEquity < 100;
+      }
+
+      this.onEvent({ type: 'street_dealt', street: s, cards: [...cards], dramatic });
+
+      // Emit updated equity after each street
+      const equity = calculateEquity(this.gameType, playerHands, [...this.communityCards]);
+      this.onEvent({ type: 'equity_update', equities: equity });
     }
 
     this.currentStreet = 'river';

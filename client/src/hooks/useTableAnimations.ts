@@ -35,6 +35,8 @@ interface UseTableAnimationsResult {
   potGrow: boolean;
   betChipAnimations: BetChipAnimation[];
   dealCardAnimations: DealCardAnimation[];
+  equities: Record<number, number> | null;
+  dramaticRiver: boolean;
 }
 
 let animId = 0;
@@ -55,6 +57,8 @@ export function useTableAnimations({
   const [potGrow, setPotGrow] = useState(false);
   const [betChipAnimations, setBetChipAnimations] = useState<BetChipAnimation[]>([]);
   const [dealCardAnimations, setDealCardAnimations] = useState<DealCardAnimation[]>([]);
+  const [equities, setEquities] = useState<Record<number, number> | null>(null);
+  const [dramaticRiver, setDramaticRiver] = useState(false);
 
   // Helper: resolve display position for a seat index (respects rotation)
   const getSeatPos = (seatIndex: number) => {
@@ -209,6 +213,37 @@ export function useTableAnimations({
       }, 1500);
     };
 
+    const onAllinShowdown = (data: { entries: { seatIndex: number; cards: CardString[] }[] }) => {
+      const current = gameStateRef.current;
+      if (current) {
+        const updated = {
+          ...current,
+          players: current.players.map(p => {
+            const entry = data.entries.find(e => e.seatIndex === p.seatIndex);
+            return entry ? { ...p, holeCards: entry.cards } : p;
+          }),
+        };
+        gameStateRef.current = updated;
+        setGameState(updated);
+      }
+    };
+
+    const onEquityUpdate = (data: { equities: Record<number, number> }) => {
+      setEquities(data.equities);
+    };
+
+    const onStreetDeal = (data: { street: string; cards: CardString[]; dramatic?: boolean }) => {
+      if (data.dramatic) {
+        setDramaticRiver(true);
+      }
+    };
+
+    const onHandResult = () => {
+      // Clear equity display when hand completes
+      setEquities(null);
+      setDramaticRiver(false);
+    };
+
     socket.on(S2C_TABLE.GAME_STATE, onGameState);
     socket.on(S2C_TABLE.SOUND, onSound);
     socket.on(S2C_TABLE.POT_UPDATE, onPotUpdate);
@@ -217,6 +252,10 @@ export function useTableAnimations({
     socket.on(S2C_TABLE.POT_AWARD, onPotAward);
     socket.on(S2C_TABLE.PLAYER_TIMER, onPlayerTimer);
     socket.on(S2C_TABLE.SECOND_BOARD_DEALT, onSecondBoardDealt);
+    socket.on(S2C_TABLE.ALLIN_SHOWDOWN, onAllinShowdown);
+    socket.on(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
+    socket.on(S2C_TABLE.STREET_DEAL, onStreetDeal);
+    socket.on(S2C_TABLE.HAND_RESULT, onHandResult);
 
     return () => {
       socket.off?.(S2C_TABLE.GAME_STATE, onGameState);
@@ -227,6 +266,10 @@ export function useTableAnimations({
       socket.off?.(S2C_TABLE.POT_AWARD, onPotAward);
       socket.off?.(S2C_TABLE.PLAYER_TIMER, onPlayerTimer);
       socket.off?.(S2C_TABLE.SECOND_BOARD_DEALT, onSecondBoardDealt);
+      socket.off?.(S2C_TABLE.ALLIN_SHOWDOWN, onAllinShowdown);
+      socket.off?.(S2C_TABLE.EQUITY_UPDATE, onEquityUpdate);
+      socket.off?.(S2C_TABLE.STREET_DEAL, onStreetDeal);
+      socket.off?.(S2C_TABLE.HAND_RESULT, onHandResult);
     };
   }, [socket, enableSound, seatRotation]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -239,5 +282,7 @@ export function useTableAnimations({
     potGrow,
     betChipAnimations,
     dealCardAnimations,
+    equities,
+    dramaticRiver,
   };
 }

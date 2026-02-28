@@ -8,7 +8,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['server/src/__tests__/**/*.test.ts'],
+    include: ['server/src/__tests__/**/*.test.ts', 'client/src/__tests__/**/*.test.ts'],
     globals: true,
   },
 });

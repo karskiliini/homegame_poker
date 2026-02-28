@@ -10,6 +10,7 @@ import {
   DELAY_AFTER_CARDS_DEALT_MS, DELAY_AFTER_STREET_DEALT_MS,
   DELAY_AFTER_PLAYER_ACTED_MS, DELAY_SHOWDOWN_TO_RESULT_MS,
   DELAY_POT_AWARD_MS, START_COUNTDOWN_MS,
+  DELAY_AFTER_ALLIN_SHOWDOWN_MS, DELAY_DRAMATIC_RIVER_MS,
 } from '@poker/shared';
 import { HandEngine } from './HandEngine.js';
 import type { HandEngineEvent, HandResult, ShowdownEntry } from './HandEngine.js';
@@ -234,6 +235,8 @@ export class GameManager {
     }
   }
 
+  private lastStreetWasDramatic = false;
+
   private getEventDelay(event: HandEngineEvent): number {
     if (event.type === 'player_turn') {
       switch (this.lastProcessedEventType) {
@@ -243,8 +246,27 @@ export class GameManager {
         default: return 0;
       }
     }
+    // All-in showdown: delay after equity_update so clients see the initial equity
+    if (event.type === 'allin_showdown') return 0;
+    // First street after allin_showdown: wait for card reveal
+    if (event.type === 'equity_update' && this.lastProcessedEventType === 'allin_showdown') return DELAY_AFTER_ALLIN_SHOWDOWN_MS;
+    // Street dealt during runout: use dramatic river delay if applicable
+    if (event.type === 'street_dealt' && this.lastProcessedEventType === 'equity_update') {
+      // Check if this street is a dramatic river
+      if (event.type === 'street_dealt' && 'dramatic' in event && event.dramatic) {
+        this.lastStreetWasDramatic = true;
+        return DELAY_DRAMATIC_RIVER_MS;
+      }
+      return DELAY_AFTER_STREET_DEALT_MS;
+    }
     if (event.type === 'street_dealt' && this.lastProcessedEventType === 'street_dealt') return DELAY_AFTER_STREET_DEALT_MS;
     if (event.type === 'second_board_dealt' && this.lastProcessedEventType === 'street_dealt') return DELAY_AFTER_STREET_DEALT_MS;
+    // Showdown after equity_update (the final one): short delay
+    if (event.type === 'showdown' && this.lastProcessedEventType === 'equity_update') {
+      const delay = this.lastStreetWasDramatic ? DELAY_DRAMATIC_RIVER_MS : DELAY_AFTER_STREET_DEALT_MS;
+      this.lastStreetWasDramatic = false;
+      return delay;
+    }
     if (event.type === 'showdown' && (this.lastProcessedEventType === 'street_dealt' || this.lastProcessedEventType === 'second_board_dealt')) return DELAY_AFTER_STREET_DEALT_MS;
     if (event.type === 'hand_complete' && this.lastProcessedEventType === 'showdown') return DELAY_SHOWDOWN_TO_RESULT_MS;
     return 0;
@@ -305,12 +327,42 @@ export class GameManager {
         console.log(`${event.playerName}: ${event.action}${event.amount > 0 ? ' ' + event.amount : ''}${event.isAllIn ? ' (ALL-IN)' : ''}`);
         break;
 
+      case 'allin_showdown':
+        // Reveal hole cards for all active players on table view
+        for (const entry of event.entries) {
+          const existing = this.currentShowdownEntries.find(e => e.playerId === entry.playerId);
+          if (!existing) {
+            this.currentShowdownEntries.push({
+              playerId: entry.playerId, seatIndex: entry.seatIndex,
+              holeCards: entry.holeCards, handName: '', handDescription: '', shown: true,
+            });
+          }
+        }
+        this.emitToTableRoom(S2C_TABLE.ALLIN_SHOWDOWN, {
+          entries: event.entries.map(e => ({ seatIndex: e.seatIndex, cards: e.holeCards })),
+        });
+        this.broadcastTableState();
+        break;
+
+      case 'equity_update': {
+        const equityObj: Record<number, number> = {};
+        for (const [playerId, eq] of event.equities) {
+          const socketId = this.playerIdToSocketId.get(playerId);
+          if (socketId) {
+            const player = this.players.get(socketId);
+            if (player) equityObj[player.seatIndex] = eq;
+          }
+        }
+        this.emitToTableRoom(S2C_TABLE.EQUITY_UPDATE, { equities: equityObj });
+        break;
+      }
+
       case 'street_dealt':
         this.currentCommunityCards = this.handEngine?.getCommunityCards() ?? [];
         this.currentBets.clear();
-        this.emitToTableRoom(S2C_TABLE.STREET_DEAL, { street: event.street, cards: event.cards });
+        this.emitToTableRoom(S2C_TABLE.STREET_DEAL, { street: event.street, cards: event.cards, dramatic: event.dramatic });
         this.emitSound('card_flip');
-        console.log(`--- ${event.street.toUpperCase()} --- [${event.cards.join(' ')}]`);
+        console.log(`--- ${event.street.toUpperCase()} --- [${event.cards.join(' ')}]${event.dramatic ? ' (DRAMATIC)' : ''}`);
         this.broadcastTableState();
         break;
 

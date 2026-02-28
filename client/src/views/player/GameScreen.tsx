@@ -55,6 +55,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
     potAwards, winnerSeats, awardingPotIndex,
     timerData, collectingBets, potGrow,
     betChipAnimations, dealCardAnimations,
+    equities, dramaticRiver,
   } = useTableAnimations({
     socket: tableSocketRef.current,
     containerRef: tableContainerRef,
@@ -174,6 +175,8 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable }: GameScreenPr
               myPlayerId={privateState?.id}
               myHoleCards={privateState?.holeCards}
               highlightMySeat
+              equities={equities}
+              dramaticRiver={dramaticRiver}
             />
           </div>
         ) : (

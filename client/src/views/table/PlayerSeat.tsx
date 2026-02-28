@@ -19,6 +19,7 @@ interface PlayerSeatProps {
   timerSeconds?: number;
   timerMax?: number;
   foldDirection?: { x: number; y: number };
+  equity?: number;
 }
 
 function useDcCountdown(disconnectedAt: number | null): string | null {
@@ -49,7 +50,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity }: PlayerSeatProps) {
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
   const isAllIn = player.status === 'all_in';
@@ -260,6 +261,22 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
           }}
         >
           BB
+        </div>
+      )}
+
+      {/* Equity percentage */}
+      {equity != null && (
+        <div
+          className="font-mono font-bold mt-1 px-2 py-0.5 rounded animate-fade-in-up"
+          style={{
+            fontSize: 14,
+            color: '#FFFFFF',
+            background: 'rgba(0,0,0,0.7)',
+            textAlign: 'center',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+          }}
+        >
+          {equity}%
         </div>
       )}
 
