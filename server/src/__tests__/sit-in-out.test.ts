@@ -120,6 +120,9 @@ describe('Sit In / Sit Out', () => {
     gm.addPlayer(sock1, 'Alice', 100);
     gm.addPlayer(sock2, 'Bob', 100);
 
+    // Bob joins as sitting_out by default (second player), sit him in
+    gm.handleSitIn('sock-2');
+
     // Alice sits out
     gm.handleSitOut('sock-1');
     const alice = getPlayer(gm, 'sock-1');
