@@ -13,7 +13,10 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleCreateTable = (stakeLevel: StakeLevel) => {
-    socket.emit(C2S_LOBBY.CREATE_TABLE, { stakeLevelId: stakeLevel.id });
+    socket.emit(C2S_LOBBY.CREATE_TABLE, { stakeLevelId: stakeLevel.id }, (response: { tableId: string }) => {
+      setWatchingTableId(response.tableId);
+      setScreen('watching');
+    });
     setShowCreateModal(false);
   };
 

@@ -26,11 +26,14 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       socket.emit(S2C_LOBBY.TABLE_LIST, tableManager.getTableList());
     });
 
-    socket.on(C2S_LOBBY.CREATE_TABLE, (data: { stakeLevelId: string; name?: string }) => {
+    socket.on(C2S_LOBBY.CREATE_TABLE, (data: { stakeLevelId: string; name?: string }, callback?: (response: { tableId: string }) => void) => {
       const result = tableManager.createTable(data.stakeLevelId, data.name);
       if (result.error) {
         socket.emit(S2C_LOBBY.ERROR, { message: result.error });
       } else {
+        if (typeof callback === 'function') {
+          callback({ tableId: result.tableId! });
+        }
         socket.emit(S2C_LOBBY.TABLE_CREATED, { tableId: result.tableId });
         tableManager.broadcastTableList();
       }
