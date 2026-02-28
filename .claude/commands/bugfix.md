@@ -1,5 +1,11 @@
 ## Bugfix Workflow
 
+### Preparation
+
+0. **Hae user-bugit** — Aja `/fetch_user_bugs` ennen mitään muuta. Tämä hakee käyttäjien raportoimat bugit etätietokannasta ja kirjoittaa ne `doc/user_bugs.md`-tiedostoon.
+
+1. **Synkronoi** — Aja `git pull origin main` varmistaaksesi että sinulla on viimeisin koodi ja doc-tiedostot.
+
 Read the file `doc/bugs.md` and pick the first item from the queue (the first bug that is NOT marked as [DONE]).
 
 Also check `doc/user_bugs.md` for user-submitted bug reports marked as [NEW].

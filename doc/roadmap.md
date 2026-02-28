@@ -8,6 +8,9 @@
 
 ---
 
+## Vaihe -1: Tärkein asia ensin:
+tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake yläkulmassa lobby näkymässä mahdollistaa kielivalinnat.
+
 ## Vaihe 0 — Keskeneräisten ominaisuuksien viimeistely
 
 > Prioriteetti: välitön. Perusasiat kuntoon ennen uusia ominaisuuksia.

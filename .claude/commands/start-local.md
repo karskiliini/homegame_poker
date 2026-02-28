@@ -12,21 +12,22 @@ Tee seuraavat asiat järjestyksessä:
 
 3. **Hae koneen IP** — Aja `ipconfig getifaddr en0` saadaksesi lähiverkon IP-osoitteen.
 
-4. **Tulosta linkit** käyttäjälle tässä muodossa (korvaa IP oikealla arvolla):
+4. **Avaa selainikkunat** — Aja nämä kolme komentoa rinnakkain:
+   - `open http://localhost:5173/table` (TV-näkymä)
+   - `open http://localhost:5173` (Pelaaja 1)
+   - `open http://localhost:5173` (Pelaaja 2 — avautuu samaan profiiliin, mutta riittää testaukseen)
+
+5. **Tulosta linkit** käyttäjälle tässä muodossa (korvaa IP oikealla arvolla):
 
 ---
 
-**Serveri käynnistetty!**
-
-Avaa selaimessa:
+**Serveri käynnistetty! Selainikkunat avattu.**
 
 | Näkymä | URL |
 |--------|-----|
 | TV / pöytä | http://localhost:5173/table |
 | Pelaaja 1 | http://localhost:5173 |
-| Pelaaja 2 | http://localhost:5173 (toinen ikkuna/incognito) |
+| Pelaaja 2 | http://localhost:5173 |
 | Pelaaja puhelimella | http://<IP>:5173 |
-
-Vinkki: Avaa kaksi erillistä selainikkunaa (tai yksi incognito) pelaajille, niin saat 2 pelaajaa pöytään.
 
 ---

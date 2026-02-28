@@ -57,24 +57,26 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
             Playing as {playerName}
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          style={{
-            padding: '10px 20px',
-            borderRadius: 8,
-            background: 'linear-gradient(180deg, #16A34A, #15803D)',
-            color: 'white',
-            fontWeight: 700,
-            fontSize: 14,
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 3px 0 #14532D, 0 4px 8px rgba(0,0,0,0.3)',
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-          }}
-        >
-          + Create
-        </button>
+        {tables.length > 0 && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 8,
+              background: 'linear-gradient(180deg, #16A34A, #15803D)',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: 14,
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 3px 0 #14532D, 0 4px 8px rgba(0,0,0,0.3)',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
+          >
+            + Create
+          </button>
+        )}
       </div>
 
       {/* Table list */}
