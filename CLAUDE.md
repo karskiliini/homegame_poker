@@ -22,6 +22,8 @@ Always use a git worktree when working on bugs or features. This keeps the main 
 
 When merging back to main, always rebase the dev branch onto main first (`git rebase main`) and then fast-forward merge (`git merge --ff-only <branch>`). This keeps the git history linear without merge commits. After merging, delete the worktree branch both locally and from remote (`git branch -d <branch>` and `git push origin --delete <branch>`).
 
+**Never create GitHub Pull Requests.** Always merge worktree/feature branches directly to main via rebase + fast-forward merge, then push main. Use `/push` to do this automatically.
+
 ## Local Testing
 When starting a local server for manual testing, always use a random free port to avoid conflicts with other running instances (e.g. the user's dev server or another Claude instance). Use `--port 0` or pick a random port in the 4000–5999 range. Never use the default ports 3000 or 5173 for testing.
 
