@@ -20,6 +20,8 @@ interface GameStore {
   // Connection
   isConnected: boolean;
   setConnected: (connected: boolean) => void;
+  serverVersion: string | null;
+  setServerVersion: (version: string) => void;
 
   // Stake levels (from server)
   stakeLevels: StakeLevel[];
@@ -63,6 +65,8 @@ interface GameStore {
 export const useGameStore = create<GameStore>((set) => ({
   isConnected: false,
   setConnected: (isConnected) => set({ isConnected }),
+  serverVersion: null,
+  setServerVersion: (serverVersion) => set({ serverVersion }),
 
   stakeLevels: [],
   setStakeLevels: (stakeLevels) => set({ stakeLevels }),

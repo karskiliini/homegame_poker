@@ -3,6 +3,7 @@ import type { Socket } from 'socket.io-client';
 import { C2S_LOBBY, STAKE_LEVELS } from '@poker/shared';
 import type { StakeLevel } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
+import { VersionInfo } from '../../components/VersionInfo.js';
 
 interface TableLobbyScreenProps {
   socket: Socket;
@@ -260,6 +261,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
           </div>
         </div>
       )}
+      <VersionInfo />
     </div>
   );
 }

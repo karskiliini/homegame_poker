@@ -13,7 +13,19 @@ Run these in parallel:
 If there are uncommitted changes, warn the user and suggest running `/commit` first.
 If there are no unpushed commits, report "already up to date" and stop.
 
-## Step 2 — Push
+## Step 2 — Bump version
+Before pushing, bump the patch version in all package.json files to keep versions in sync.
+
+1. Read the current version from the root `package.json`
+2. Bump the patch number (e.g. `1.0.3` → `1.0.4`)
+3. Update all four `package.json` files: root, `shared/package.json`, `server/package.json`, `client/package.json`
+4. Stage and commit the version bump:
+```bash
+git add package.json shared/package.json server/package.json client/package.json
+git commit -m "chore: bump version to <new_version>"
+```
+
+## Step 3 — Push
 
 ### If on `main`:
 ```bash
@@ -48,6 +60,6 @@ EOF
 )"
 ```
 
-## Step 3 — Report
+## Step 4 — Report
 - Print the push result
 - If a PR was created or already exists, print the PR URL

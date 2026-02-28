@@ -1,7 +1,14 @@
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import type { Namespace } from 'socket.io';
 import { C2S, C2S_LOBBY, S2C_PLAYER, S2C_LOBBY, STAKE_LEVELS } from '@poker/shared';
 import type { TableManager } from '../game/TableManager.js';
 import { insertBugReport } from '../db/bugs.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf-8'));
+const SERVER_VERSION: string = pkg.version;
 
 export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager) {
   nsp.on('connection', (socket) => {
@@ -15,6 +22,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
 
     socket.emit(S2C_PLAYER.CONNECTED, {
       stakeLevels: STAKE_LEVELS,
+      serverVersion: SERVER_VERSION,
     });
 
     // Send current table list

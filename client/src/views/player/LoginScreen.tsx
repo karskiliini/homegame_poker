@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AVATAR_OPTIONS } from '@poker/shared';
 import type { AvatarId } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
+import { VersionInfo } from '../../components/VersionInfo.js';
 
 function getRandomAvatar(): AvatarId {
   const idx = Math.floor(Math.random() * AVATAR_OPTIONS.length);
@@ -136,6 +137,7 @@ export function LoginScreen() {
           </button>
         </div>
       </div>
+      <VersionInfo />
     </div>
   );
 }

@@ -21,7 +21,7 @@ import { BugReportButton } from '../../components/BugReportButton.js';
 export function PlayerView() {
   const socketRef = useRef(createPlayerSocket());
   const {
-    screen, setScreen, setConnected,
+    screen, setScreen, setConnected, setServerVersion,
     setLobbyState, setPrivateState,
     setTables, setPlayerId, setCurrentTableId, setStakeLevels,
     setWatchingTableId,
@@ -45,8 +45,9 @@ export function PlayerView() {
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
 
-    socket.on(S2C_PLAYER.CONNECTED, (data: { stakeLevels: StakeLevel[] }) => {
+    socket.on(S2C_PLAYER.CONNECTED, (data: { stakeLevels: StakeLevel[]; serverVersion?: string }) => {
       setStakeLevels(data.stakeLevels);
+      if (data.serverVersion) setServerVersion(data.serverVersion);
     });
 
     // Lobby events
