@@ -27,10 +27,10 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [x] Animaatiot: chip fly seat→bet, collect bet→pot, pot award→winner
 
 ### 0.3 PLO:n viimeistely
-- [ ] 4 kättä PLO-pelaajille (nyt jaetaan vain 2)
-- [ ] PLO-käsienarviointi: paras 5 kortista 2 kädestä + 3 boardista
-- [ ] PLO pot-limit -betin laskenta
-- [ ] Testikattavuus PLO:lle
+- [x] 4 kättä PLO-pelaajille (nyt jaetaan vain 2)
+- [x] PLO-käsienarviointi: paras 5 kortista 2 kädestä + 3 boardista
+- [x] PLO pot-limit -betin laskenta
+- [x] Testikattavuus PLO:lle
 
 ### 0.4 Käyttäjätilit & sähköpostikirjautuminen
 - [ ] Sähköpostikirjautuminen: pelaaja rekisteröityy ja kirjautuu sähköpostilla (+ salasana tai magic link)
