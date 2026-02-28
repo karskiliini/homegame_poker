@@ -28,6 +28,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   const [soundEnabled, setSoundEnabled] = useState(tableSoundManager.enabled);
   const [showBuyIn, setShowBuyIn] = useState(false);
   const [buyInAmount, setBuyInAmount] = useState(0);
+  const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
 
   const table = tables.find(t => t.tableId === watchingTableId);
   const maxBuyIn = table?.stakeLevel.maxBuyIn ?? 200;
@@ -79,8 +80,15 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     setScreen('table_lobby');
   }, [setWatchingTableId, setScreen]);
 
+  const handleSeatClick = useCallback((seatIndex: number) => {
+    setSelectedSeat(seatIndex);
+    setBuyInAmount(maxBuyIn);
+    setShowBuyIn(true);
+  }, [maxBuyIn]);
+
   const handleSitDown = useCallback(() => {
     setBuyInAmount(maxBuyIn);
+    setSelectedSeat(null);
     setShowBuyIn(true);
   }, [maxBuyIn]);
 
@@ -91,9 +99,11 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
       name: playerName,
       buyIn: buyInAmount,
       avatarId: playerAvatar,
+      ...(selectedSeat !== null ? { seatIndex: selectedSeat } : {}),
     });
     setShowBuyIn(false);
-  }, [watchingTableId, buyInAmount, playerSocket, playerName, playerAvatar]);
+    setSelectedSeat(null);
+  }, [watchingTableId, buyInAmount, playerSocket, playerName, playerAvatar, selectedSeat]);
 
   return (
     <div
@@ -138,6 +148,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
           dealCardAnimations={dealCardAnimations}
           equities={equities}
           dramaticRiver={dramaticRiver}
+          onSeatClick={handleSeatClick}
         />
       ) : (
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22 }}>{t('watching_connecting')}</div>
@@ -187,6 +198,11 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
             </h2>
             <p className="mb-4" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
               {table?.name} &mdash; {table?.stakeLevel.label}
+              {selectedSeat !== null && (
+                <span style={{ color: 'var(--ftp-gold)', marginLeft: 8 }}>
+                  {t('table_seat')} {selectedSeat + 1}
+                </span>
+              )}
             </p>
             <input
               type="number"

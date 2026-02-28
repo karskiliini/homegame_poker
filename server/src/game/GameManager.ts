@@ -100,14 +100,20 @@ export class GameManager {
     this.io.of('/player').to(this.roomId).emit(event, data);
   }
 
-  addPlayer(socket: Socket, name: string, buyIn: number, avatarId?: string): { playerId?: string; error?: string } {
+  addPlayer(socket: Socket, name: string, buyIn: number, avatarId?: string, preferredSeat?: number): { playerId?: string; error?: string } {
     if (buyIn > this.config.maxBuyIn) return { error: `Maximum buy-in is ${this.config.maxBuyIn}` };
     if (buyIn <= 0) return { error: 'Buy-in must be positive' };
     if (!name.trim()) return { error: 'Name is required' };
 
     let seatIndex = -1;
-    for (let i = 0; i < this.config.maxPlayers; i++) {
-      if (!this.seatMap.has(i)) { seatIndex = i; break; }
+    if (preferredSeat !== undefined) {
+      if (preferredSeat < 0 || preferredSeat >= this.config.maxPlayers) return { error: 'Invalid seat number' };
+      if (this.seatMap.has(preferredSeat)) return { error: `Seat ${preferredSeat} is already taken` };
+      seatIndex = preferredSeat;
+    } else {
+      for (let i = 0; i < this.config.maxPlayers; i++) {
+        if (!this.seatMap.has(i)) { seatIndex = i; break; }
+      }
     }
     if (seatIndex === -1) return { error: 'Table is full' };
 

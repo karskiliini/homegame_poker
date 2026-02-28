@@ -97,6 +97,8 @@ interface PokerTableProps {
   equities?: Record<number, number> | null;
   /** Whether the river card should use dramatic peel animation */
   dramaticRiver?: boolean;
+  /** Called when an empty seat is clicked (for seat selection) */
+  onSeatClick?: (seatIndex: number) => void;
 }
 
 // Table center in percentage coordinates
@@ -104,12 +106,54 @@ const TABLE_CENTER = { x: 50, y: 50 };
 
 let chipAnimId = 0;
 
+function EmptySeat({ seatIndex, onClick }: { seatIndex: number; onClick?: (seatIndex: number) => void }) {
+  const [hovered, setHovered] = useState(false);
+  const t = useT();
+  const isClickable = !!onClick;
+
+  return (
+    <div
+      className={`flex items-center justify-center${isClickable ? '' : ' pointer-events-none'}`}
+      style={{
+        width: 140,
+        height: 56,
+        borderRadius: 6,
+        border: hovered
+          ? '1px solid rgba(74, 222, 128, 0.5)'
+          : '1px solid rgba(255,255,255,0.08)',
+        background: hovered
+          ? 'linear-gradient(180deg, rgba(34, 197, 94, 0.35), rgba(22, 163, 74, 0.25))'
+          : 'linear-gradient(180deg, rgba(30,58,95,0.3), rgba(15,30,51,0.3))',
+        color: hovered ? '#4ADE80' : 'rgba(255,255,255,0.2)',
+        fontSize: hovered ? 14 : 11,
+        fontWeight: hovered ? 700 : 400,
+        cursor: isClickable ? 'pointer' : 'default',
+        transition: 'all 0.2s ease',
+        textTransform: hovered ? 'uppercase' : 'none',
+        letterSpacing: hovered ? 2 : 0,
+        ...(hovered ? {
+          boxShadow: '0 0 16px rgba(74, 222, 128, 0.25), inset 0 0 12px rgba(74, 222, 128, 0.1)',
+        } : {}),
+      }}
+      onMouseEnter={() => isClickable && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onTouchStart={() => isClickable && setHovered(true)}
+      onTouchEnd={() => { setHovered(false); if (isClickable) onClick(seatIndex); }}
+      onClick={() => isClickable && onClick(seatIndex)}
+    >
+      <span className={hovered ? 'animate-sit-in-pulse' : ''}>
+        {hovered ? t('table_sit_in') : `${t('table_seat')} ${seatIndex + 1}`}
+      </span>
+    </div>
+  );
+}
+
 export function PokerTable({
   gameState, potAwards, winnerSeats = [], awardingPotIndex,
   timerData, collectingBets, potGrow,
   betChipAnimations = [], dealCardAnimations = [],
   mySeatIndex, myPlayerId, myHoleCards, highlightMySeat,
-  equities, dramaticRiver,
+  equities, dramaticRiver, onSeatClick,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
@@ -579,20 +623,10 @@ export function PokerTable({
                 equity={equities?.[seatIndex]}
               />
             ) : (
-              <div
-                className="flex items-center justify-center"
-                style={{
-                  width: 140,
-                  height: 56,
-                  borderRadius: 6,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  background: 'linear-gradient(180deg, rgba(30,58,95,0.3), rgba(15,30,51,0.3))',
-                  color: 'rgba(255,255,255,0.2)',
-                  fontSize: 11,
-                }}
-              >
-                {t('table_seat')} {seatIndex + 1}
-              </div>
+              <EmptySeat
+                seatIndex={seatIndex}
+                onClick={onSeatClick}
+              />
             )}
           </div>
         );

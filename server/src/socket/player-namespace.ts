@@ -47,14 +47,14 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       }
     });
 
-    socket.on(C2S_LOBBY.JOIN_TABLE, (data: { tableId: string; name: string; buyIn: number; avatarId?: string }) => {
+    socket.on(C2S_LOBBY.JOIN_TABLE, (data: { tableId: string; name: string; buyIn: number; avatarId?: string; seatIndex?: number }) => {
       const gm = tableManager.getTable(data.tableId);
       if (!gm) {
         socket.emit(S2C_LOBBY.ERROR, { message: 'Table not found' });
         return;
       }
 
-      const result = gm.addPlayer(socket, data.name, data.buyIn, data.avatarId);
+      const result = gm.addPlayer(socket, data.name, data.buyIn, data.avatarId, data.seatIndex);
       if (result.error) {
         socket.emit(S2C_PLAYER.ERROR, { message: result.error });
       } else {
