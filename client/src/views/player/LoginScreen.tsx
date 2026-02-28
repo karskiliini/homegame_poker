@@ -108,7 +108,7 @@ export function LoginScreen() {
                     }}
                   >
                     <img
-                      src={`${assets.avatarBasePath}/${avatarImageFile(id)}`}
+                      src={`${assets.avatarBasePath}/${avatarImageFile(id, assets.avatarNames)}`}
                       alt={`Avatar ${id}`}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

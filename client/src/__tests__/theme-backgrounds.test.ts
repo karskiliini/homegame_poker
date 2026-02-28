@@ -138,6 +138,45 @@ describe('Theme-specific table backgrounds', () => {
     expect(src).toContain('cccp-star-glow');
   });
 
+  // ---- CCCP avatar names ----
+
+  it('CCCP theme defines avatarNames list matching actual files on disk', () => {
+    const src = readFileSync(join(__dirname, '..', 'themes', 'cccp.tsx'), 'utf-8');
+    // Must have avatarNames array
+    expect(src).toContain('avatarNames');
+    // Must include known character names
+    expect(src).toContain('beria.png');
+    expect(src).toContain('lenin.png');
+    expect(src).toContain('marx.png');
+  });
+
+  it('CCCP avatarCount matches avatarNames length', () => {
+    const src = readFileSync(join(__dirname, '..', 'themes', 'cccp.tsx'), 'utf-8');
+    // Extract avatarNames array entries
+    const namesMatch = src.match(/avatarNames:\s*\[([\s\S]*?)\]/);
+    expect(namesMatch).toBeTruthy();
+    const entries = namesMatch![1].match(/'.+?\.png'/g);
+    expect(entries).toBeTruthy();
+    // Extract avatarCount
+    const countMatch = src.match(/avatarCount:\s*(\d+)/);
+    expect(countMatch).toBeTruthy();
+    expect(entries!.length).toBe(parseInt(countMatch![1], 10));
+  });
+
+  it('avatarImageFile resolves named avatars from avatarNames', () => {
+    const src = readFileSync(
+      join(__dirname, '..', 'utils', 'avatarImageFile.ts'),
+      'utf-8'
+    );
+    // Must accept an optional avatarNames parameter
+    expect(src).toContain('avatarNames');
+  });
+
+  it('basic theme does NOT define avatarNames (uses numbered fallback)', () => {
+    const src = readFileSync(join(__dirname, '..', 'themes', 'basic.tsx'), 'utf-8');
+    expect(src).not.toContain('avatarNames');
+  });
+
   // ---- CSS animation exists ----
 
   it('index.css contains cccp-star-glow keyframes', () => {

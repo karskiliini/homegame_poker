@@ -190,6 +190,8 @@ export interface ThemeAssets {
   avatarBasePath: string;
   /** Number of avatar images available in this theme */
   avatarCount: number;
+  /** Named avatar filenames — when set, avatarId indexes into this list instead of generating avatar-NN.png */
+  avatarNames?: string[];
 }
 
 /** Complete theme configuration */

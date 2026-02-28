@@ -100,7 +100,16 @@ export const cccpTheme: ThemeConfig = {
 
   assets: {
     avatarBasePath: '/themes/cccp/avatars',
-    avatarCount: 54,
+    avatarCount: 16,
+    avatarNames: [
+      'beria.png', 'che.png', 'fidel.png', 'gorba.png',
+      'grok-image-0f8893e1-8b1e-4a19-9bd9-27497c1c813a.png',
+      'grok-image-6b601c51-944c-49a4-a574-aec3e1fe9ebf.png',
+      'grok-image-ae319b10-dc12-4569-a6f9-11b0a870a8e0.png',
+      'grok-image-dae9d59a-69b8-41b0-88dd-900bb98b7115.png',
+      'idi.png', 'kim.png', 'lenin.png', 'marx.png',
+      'molotov.png', 'polpot.png', 'xi.png', 'zukov.png',
+    ],
   },
 
   watermark: cccpWatermark,

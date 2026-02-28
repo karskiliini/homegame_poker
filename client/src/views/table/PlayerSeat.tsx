@@ -64,7 +64,7 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const isInactive = isSittingOut || isBusted;
   const isDisconnected = !player.isConnected;
   const dcCountdown = useDcCountdown(player.disconnectedAt);
-  const avatarImage = player.avatarId ? `${assets.avatarBasePath}/${avatarImageFile(player.avatarId)}` : null;
+  const avatarImage = player.avatarId ? `${assets.avatarBasePath}/${avatarImageFile(player.avatarId, assets.avatarNames)}` : null;
   const initials = getInitials(player.name);
 
   // Timer bar color
