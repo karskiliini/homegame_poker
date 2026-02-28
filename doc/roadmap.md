@@ -38,7 +38,7 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Buy-in vähennetään saldosta, cash-out lisätään saldoon
 - [ ] Pelaajan profiili: nimi, avatar, sähköposti, saldohistoria
 - [ ] Admin voi lisätä/poistaa saldoa pelaajalle (esim. käteismaksu → saldo)
-- [WIP] Teeman mukainen pöydän taustakuva. Basic: green felt, cccp: Red felt with a with soviet star symbol in the middle. Make a wow effect.
+- [x] Teeman mukainen pöydän taustakuva. Basic: green felt, cccp: Red felt with a with soviet star symbol in the middle. Make a wow effect.
 
 ---
 
