@@ -38,6 +38,7 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Buy-in vähennetään saldosta, cash-out lisätään saldoon
 - [ ] Pelaajan profiili: nimi, avatar, sähköposti, saldohistoria
 - [ ] Admin voi lisätä/poistaa saldoa pelaajalle (esim. käteismaksu → saldo)
+- [WIP] Teeman mukainen pöydän taustakuva. Basic: green felt, cccp: Red felt with a with soviet star symbol in the middle. Make a wow effect.
 
 ---
 
@@ -75,7 +76,7 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Royal Flush / Straight Flush: erikoisanimaatio (confetti/fireworks)
 - [ ] Winner-ilmoitus: bannerianimaatio voittajan kohdalla
 - [ ] Fold-animaatio: kortit liukuvat pois pöydältä
-- [ ] Bad beat -animaatio: erikoisefekti suck-outille (Full Tilt -tyylinen räjähdys)
+- [x] Bad beat -animaatio: erikoisefekti suck-outille (Full Tilt -tyylinen räjähdys)
 - [ ] "The Nuts" -ilmoitus: erikoisefekti showdownissa kun pelaajalla on paras mahdollinen käsi
 
 ### 1.5 Use caset
