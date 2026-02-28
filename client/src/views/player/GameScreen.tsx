@@ -1,7 +1,18 @@
+import { useEffect, useRef, useState } from 'react';
 import type { Socket } from 'socket.io-client';
+import { C2S, resolvePreAction } from '@poker/shared';
+import type { PreActionType } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
+import { useTableAnimations } from '../../hooks/useTableAnimations.js';
+import { createTableSocket } from '../../socket.js';
+import { PokerTable } from '../table/PokerTable.js';
 import { CardComponent } from '../../components/Card.js';
 import { ActionButtons } from './ActionButtons.js';
+import { PreActionButtons } from './PreActionButtons.js';
+
+// Virtual table dimensions for scaling
+const TABLE_W = 900;
+const TABLE_H = 550;
 
 interface GameScreenProps {
   socket: Socket;
@@ -9,97 +20,207 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ socket, onOpenHistory }: GameScreenProps) {
-  const { privateState, lobbyState } = useGameStore();
+  const { privateState, lobbyState, gameState, setGameState } = useGameStore();
+  const tableSocketRef = useRef(createTableSocket());
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
 
-  if (!privateState) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: 'var(--ftp-bg-primary)' }}
-      >
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18 }}>Starting hand...</div>
-      </div>
-    );
-  }
+  // Connect / disconnect the table namespace socket
+  useEffect(() => {
+    const ts = tableSocketRef.current;
+    ts.connect();
+    return () => { ts.disconnect(); };
+  }, []);
 
-  const isFolded = privateState.status === 'folded';
+  // Animation hook — sound disabled (PlayerView handles sound via /player namespace)
+  const seatRotation = privateState?.seatIndex;
+  const {
+    potAwards, winnerSeats, awardingPotIndex,
+    timerData, collectingBets, potGrow,
+    betChipAnimations, dealCardAnimations,
+  } = useTableAnimations({
+    socket: tableSocketRef.current,
+    containerRef: tableContainerRef,
+    setGameState,
+    enableSound: false,
+    seatRotation,
+  });
+
+  // Calculate scale to fit the virtual table into the wrapper width
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const updateScale = () => {
+      const wrapperWidth = wrapper.clientWidth;
+      setScale(wrapperWidth / TABLE_W);
+    };
+
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(wrapper);
+    return () => ro.disconnect();
+  }, []);
+
+  // Pre-action state
+  const [preAction, setPreAction] = useState<PreActionType | null>(null);
+  const prevIsMyTurn = useRef(false);
+
+  // Auto-action when it becomes our turn
+  useEffect(() => {
+    if (!privateState) return;
+    const justBecameMyTurn = privateState.isMyTurn && !prevIsMyTurn.current;
+    prevIsMyTurn.current = privateState.isMyTurn;
+
+    if (!justBecameMyTurn || !preAction) return;
+
+    const autoAction = resolvePreAction(preAction, privateState.availableActions);
+    setPreAction(null);
+
+    if (autoAction) {
+      socket.emit(C2S.ACTION, { action: autoAction });
+    }
+  }, [privateState?.isMyTurn, preAction, privateState?.availableActions, socket]);
+
+  // Reset pre-action when hand ends (hole cards cleared)
+  useEffect(() => {
+    if (privateState && privateState.holeCards.length === 0) {
+      setPreAction(null);
+    }
+  }, [privateState?.holeCards.length]);
+
+  const isFolded = privateState?.status === 'folded';
   const isHandActive = lobbyState?.phase === 'hand_in_progress';
-  const showActions = privateState.isMyTurn && isHandActive && privateState.availableActions.length > 0;
+  const showActions = privateState?.isMyTurn && isHandActive && (privateState?.availableActions.length ?? 0) > 0;
+  const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && (privateState?.holeCards.length ?? 0) > 0;
 
   return (
     <div
-      className="min-h-screen flex flex-col justify-between"
-      style={{
-        background: 'linear-gradient(180deg, #1C1C1C 0%, #0F1520 100%)',
-        padding: 16,
-      }}
+      className="min-h-screen flex flex-col"
+      style={{ background: 'linear-gradient(180deg, #0A0A0F 0%, #0F1520 100%)' }}
     >
-      {/* Top: game info */}
-      <div className="text-center pt-2">
-        <div style={{ color: 'var(--ftp-text-secondary)', fontSize: 13 }}>
-          Stack:{' '}
-          <span
-            className="font-mono font-bold tabular-nums"
-            style={{ color: '#FFFFFF' }}
-          >
-            {privateState.stack.toLocaleString()}
-          </span>
-        </div>
-        {privateState.potTotal > 0 && (
+      {/* Top: Mini poker table (~60vh) */}
+      <div
+        ref={wrapperRef}
+        className="relative w-full overflow-hidden"
+        style={{
+          height: '58vh',
+          background: 'radial-gradient(ellipse at 50% 80%, #1A1208, #12100C, #0A0A0F)',
+        }}
+      >
+        {gameState ? (
           <div
-            className="font-mono font-bold tabular-nums mt-1"
-            style={{ color: '#EAB308', fontSize: 14 }}
+            ref={tableContainerRef}
+            style={{
+              width: TABLE_W,
+              height: TABLE_H,
+              transform: `scale(${scale})`,
+              transformOrigin: 'top left',
+            }}
           >
-            Pot: {privateState.potTotal.toLocaleString()}
+            <PokerTable
+              gameState={gameState}
+              potAwards={potAwards}
+              winnerSeats={winnerSeats}
+              awardingPotIndex={awardingPotIndex}
+              timerData={timerData}
+              collectingBets={collectingBets}
+              potGrow={potGrow}
+              betChipAnimations={betChipAnimations}
+              dealCardAnimations={dealCardAnimations}
+              mySeatIndex={privateState?.seatIndex}
+              myPlayerId={privateState?.id}
+              myHoleCards={privateState?.holeCards}
+              highlightMySeat
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>
+              Connecting to table...
+            </div>
           </div>
         )}
       </div>
 
-      {/* Middle: hole cards */}
-      <div className="flex justify-center gap-4 my-8">
-        {privateState.holeCards.length > 0 ? (
-          privateState.holeCards.map((card, i) => (
-            <div
-              key={i}
-              className="animate-card-flip"
-              style={{
-                animationDelay: `${i * 120}ms`,
-                opacity: isFolded ? 0.35 : 1,
-                transition: 'opacity 0.3s ease',
-              }}
-            >
-              <CardComponent card={card} size="lg" />
+      {/* Bottom: Own cards + actions (~42vh) */}
+      <div
+        className="flex-1 flex flex-col justify-between px-4 pt-3 pb-4"
+        style={{
+          opacity: isFolded ? 0.6 : 1,
+          transition: 'opacity 0.3s ease',
+        }}
+      >
+        {/* Cards + stack row */}
+        <div className="flex items-center justify-center gap-4">
+          {privateState && privateState.holeCards.length > 0 ? (
+            <>
+              <div className="flex gap-2">
+                {privateState.holeCards.map((card, i) => (
+                  <div
+                    key={i}
+                    className="animate-card-flip"
+                    style={{
+                      animationDelay: `${i * 120}ms`,
+                      opacity: isFolded ? 0.35 : 1,
+                      transition: 'opacity 0.3s ease',
+                    }}
+                  >
+                    <CardComponent card={card} size="lg" />
+                  </div>
+                ))}
+              </div>
+              <div className="text-right ml-2">
+                <div style={{ color: 'var(--ftp-text-secondary)', fontSize: 12 }}>Stack</div>
+                <div
+                  className="font-mono font-bold tabular-nums"
+                  style={{ color: '#FFFFFF', fontSize: 20 }}
+                >
+                  {privateState.stack.toLocaleString()}
+                </div>
+                {privateState.potTotal > 0 && (
+                  <div
+                    className="font-mono tabular-nums"
+                    style={{ color: '#EAB308', fontSize: 13 }}
+                  >
+                    Pot: {privateState.potTotal.toLocaleString()}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14, padding: 20 }}>
+              Waiting for cards...
             </div>
-          ))
-        ) : (
-          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 16, padding: 40 }}>
-            Waiting for cards...
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Bottom: actions */}
-      <div className="pb-4">
-        {showActions ? (
-          <ActionButtons
-            socket={socket}
-            availableActions={privateState.availableActions}
-            callAmount={privateState.callAmount}
-            minRaise={privateState.minRaise}
-            maxRaise={privateState.maxRaise}
-            stack={privateState.stack}
-            potTotal={privateState.potTotal}
-          />
-        ) : (
-          <div className="text-center py-8">
-            <div style={{
-              color: isFolded ? 'var(--ftp-text-muted)' : 'var(--ftp-text-secondary)',
-              fontSize: 16,
-            }}>
-              {isFolded ? 'Folded' : 'Waiting for your turn...'}
+        {/* Actions */}
+        <div className="mt-2">
+          {showActions && privateState ? (
+            <ActionButtons
+              socket={socket}
+              availableActions={privateState.availableActions}
+              callAmount={privateState.callAmount}
+              minRaise={privateState.minRaise}
+              maxRaise={privateState.maxRaise}
+              stack={privateState.stack}
+              potTotal={privateState.potTotal}
+            />
+          ) : showPreActions ? (
+            <PreActionButtons preAction={preAction} setPreAction={setPreAction} />
+          ) : (
+            <div className="text-center py-4">
+              <div style={{
+                color: isFolded ? 'var(--ftp-text-muted)' : 'var(--ftp-text-secondary)',
+                fontSize: 15,
+              }}>
+                {isFolded ? 'Folded' : 'Waiting for your turn...'}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

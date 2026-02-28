@@ -1,8 +1,8 @@
 ---
-description: Use when the user asks to "deploy", "push to railway", "deploy to production", or "update the server". Pushes the latest committed code to Railway.
+description: Use when the user asks to "deploy", "deploy to vercel", "deploy to production", or "update the server". Deploys the latest committed code to Vercel.
 ---
 
-# Deploy to Railway
+# Deploy to Vercel
 
 ## Step 1 — Pre-flight checks
 Run these in parallel:
@@ -13,9 +13,9 @@ If there are uncommitted changes, warn the user and suggest running `/commit` fi
 
 ## Step 2 — Deploy
 ```bash
-railway up --detach
+bunx vercel --prod
 ```
 
 ## Step 3 — Report
 - Print which commit was deployed
-- Print the Railway deployment URL if available
+- Print the Vercel production URL (https://pokersofta.vercel.app)

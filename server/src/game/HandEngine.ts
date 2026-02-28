@@ -44,6 +44,7 @@ export type HandEngineEvent =
   | { type: 'pots_updated'; pots: Pot[] }
   | { type: 'all_in_runout'; remainingStreets: Street[] }
   | { type: 'rit_eligible'; playerIds: string[] }
+  | { type: 'second_board_dealt'; cards: CardString[] }
   | { type: 'showdown'; entries: ShowdownEntry[] }
   | { type: 'hand_complete'; result: HandResult };
 
@@ -560,6 +561,7 @@ export class HandEngine {
         const cards = this.deck.deal(cardCount);
         this.secondBoard.push(...cards);
       }
+      this.onEvent({ type: 'second_board_dealt', cards: [...this.secondBoard] });
     }
 
     this.showdown();
@@ -604,70 +606,126 @@ export class HandEngine {
   private showdown() {
     const activePlayers = this.players.filter(p => !p.isFolded);
     const showdownEntries: ShowdownEntry[] = [];
+    const isRIT = this.secondBoard != null && this.secondBoard.length > 0;
 
     // Award each pot
     const potResults: PotResult[] = [];
     for (let i = 0; i < this.pots.length; i++) {
       const pot = this.pots[i];
+      const potName = i === 0 ? 'Main Pot' : `Side Pot ${i}`;
       const eligible = activePlayers.filter(p => pot.eligiblePlayerIds.includes(p.playerId));
 
       if (eligible.length === 0) continue;
 
+      // Single eligible player — no evaluation needed
       if (eligible.length === 1) {
         eligible[0].currentStack += pot.amount;
         potResults.push({
-          name: i === 0 ? 'Main Pot' : `Side Pot ${i}`,
+          name: potName,
           amount: pot.amount,
           winners: [{ playerId: eligible[0].playerId, playerName: eligible[0].name, amount: pot.amount }],
         });
         continue;
       }
 
-      // Evaluate hands
-      const winners = determineWinners(
-        this.gameType,
-        eligible.map(p => ({ playerId: p.playerId, holeCards: p.holeCards })),
-        this.communityCards,
-      );
+      if (isRIT) {
+        // RIT: split pot between two boards
+        const firstHalf = pot.amount - Math.floor(pot.amount / 2); // odd chip to board 1
+        const secondHalf = Math.floor(pot.amount / 2);
 
-      const share = Math.floor(pot.amount / winners.length);
-      const remainder = pot.amount - share * winners.length;
+        const playerHands = eligible.map(p => ({ playerId: p.playerId, holeCards: p.holeCards }));
 
-      const winnerResults = winners.map((w, idx) => {
-        const amount = share + (idx === 0 ? remainder : 0);
-        const player = this.players.find(p => p.playerId === w.playerId)!;
-        player.currentStack += amount;
-        return { playerId: w.playerId, playerName: player.name, amount };
-      });
+        // Board 1 winners
+        const board1Winners = determineWinners(this.gameType, playerHands, this.communityCards);
+        // Board 2 winners
+        const board2Winners = determineWinners(this.gameType, playerHands, this.secondBoard!);
 
-      potResults.push({
-        name: i === 0 ? 'Main Pot' : `Side Pot ${i}`,
-        amount: pot.amount,
-        winners: winnerResults,
-        winningHand: winners[0].result.description,
-      });
+        // Distribute board 1 share
+        const winnerAmounts = new Map<string, number>();
+        const b1Share = Math.floor(firstHalf / board1Winners.length);
+        const b1Remainder = firstHalf - b1Share * board1Winners.length;
+        for (let w = 0; w < board1Winners.length; w++) {
+          const amt = b1Share + (w === 0 ? b1Remainder : 0);
+          winnerAmounts.set(board1Winners[w].playerId, (winnerAmounts.get(board1Winners[w].playerId) ?? 0) + amt);
+        }
 
-      // Build showdown entries
-      for (const player of eligible) {
-        if (!showdownEntries.find(e => e.playerId === player.playerId)) {
-          const evalResult = evaluateHand(this.gameType, player.holeCards, this.communityCards);
-          showdownEntries.push({
-            playerId: player.playerId,
-            seatIndex: player.seatIndex,
-            holeCards: [...player.holeCards],
-            handName: evalResult.handName,
-            handDescription: evalResult.description,
-            shown: true, // Will be modified by show/muck logic
-          });
+        // Distribute board 2 share
+        const b2Share = Math.floor(secondHalf / board2Winners.length);
+        const b2Remainder = secondHalf - b2Share * board2Winners.length;
+        for (let w = 0; w < board2Winners.length; w++) {
+          const amt = b2Share + (w === 0 ? b2Remainder : 0);
+          winnerAmounts.set(board2Winners[w].playerId, (winnerAmounts.get(board2Winners[w].playerId) ?? 0) + amt);
+        }
+
+        // Credit stacks and build results
+        const winnerResults: { playerId: string; playerName: string; amount: number }[] = [];
+        for (const [playerId, amount] of winnerAmounts) {
+          const player = this.players.find(p => p.playerId === playerId)!;
+          player.currentStack += amount;
+          winnerResults.push({ playerId, playerName: player.name, amount });
+        }
+
+        potResults.push({
+          name: potName,
+          amount: pot.amount,
+          winners: winnerResults,
+          winningHand: `Board 1: ${board1Winners[0].result.description}, Board 2: ${board2Winners[0].result.description}`,
+        });
+
+        // Build showdown entries from both boards
+        for (const player of eligible) {
+          if (!showdownEntries.find(e => e.playerId === player.playerId)) {
+            const evalResult = evaluateHand(this.gameType, player.holeCards, this.communityCards);
+            showdownEntries.push({
+              playerId: player.playerId,
+              seatIndex: player.seatIndex,
+              holeCards: [...player.holeCards],
+              handName: evalResult.handName,
+              handDescription: evalResult.description,
+              shown: true,
+            });
+          }
+        }
+      } else {
+        // Normal (non-RIT) evaluation
+        const winners = determineWinners(
+          this.gameType,
+          eligible.map(p => ({ playerId: p.playerId, holeCards: p.holeCards })),
+          this.communityCards,
+        );
+
+        const share = Math.floor(pot.amount / winners.length);
+        const remainder = pot.amount - share * winners.length;
+
+        const winnerResults = winners.map((w, idx) => {
+          const amount = share + (idx === 0 ? remainder : 0);
+          const player = this.players.find(p => p.playerId === w.playerId)!;
+          player.currentStack += amount;
+          return { playerId: w.playerId, playerName: player.name, amount };
+        });
+
+        potResults.push({
+          name: potName,
+          amount: pot.amount,
+          winners: winnerResults,
+          winningHand: winners[0].result.description,
+        });
+
+        // Build showdown entries
+        for (const player of eligible) {
+          if (!showdownEntries.find(e => e.playerId === player.playerId)) {
+            const evalResult = evaluateHand(this.gameType, player.holeCards, this.communityCards);
+            showdownEntries.push({
+              playerId: player.playerId,
+              seatIndex: player.seatIndex,
+              holeCards: [...player.holeCards],
+              handName: evalResult.handName,
+              handDescription: evalResult.description,
+              shown: true,
+            });
+          }
         }
       }
-    }
-
-    // Handle second board (RIT)
-    if (this.secondBoard && this.secondBoard.length > 0) {
-      // Re-evaluate for second board and split pots
-      // This is simplified - in practice, pots should be split 50/50 between boards
-      // TODO: Full RIT pot splitting
     }
 
     this.onEvent({ type: 'showdown', entries: showdownEntries });

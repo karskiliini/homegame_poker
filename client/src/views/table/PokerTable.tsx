@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import type { GameState } from '@poker/shared';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import type { GameState, CardString } from '@poker/shared';
 import { breakdownChips } from '@poker/shared';
 import { PlayerSeat } from './PlayerSeat.js';
 import { CommunityCards } from './CommunityCards.js';
@@ -77,11 +77,20 @@ interface PokerTableProps {
   gameState: GameState;
   potAwards?: PotAward[];
   winnerSeats?: number[];
+  awardingPotIndex?: number | null;
   timerData?: { seatIndex: number; secondsRemaining: number } | null;
   collectingBets?: CollectingBet[] | null;
   potGrow?: boolean;
   betChipAnimations?: BetChipAnimation[];
   dealCardAnimations?: DealCardAnimation[];
+  /** Rotate seats so this seat appears at bottom center */
+  mySeatIndex?: number;
+  /** Player ID for card injection */
+  myPlayerId?: string;
+  /** Hole cards to show face-up for myPlayerId's seat */
+  myHoleCards?: CardString[];
+  /** Highlight own seat with accent border */
+  highlightMySeat?: boolean;
 }
 
 // Table center in percentage coordinates
@@ -90,13 +99,27 @@ const TABLE_CENTER = { x: 50, y: 50 };
 let chipAnimId = 0;
 
 export function PokerTable({
-  gameState, potAwards, winnerSeats = [], timerData,
-  collectingBets, potGrow,
+  gameState, potAwards, winnerSeats = [], awardingPotIndex,
+  timerData, collectingBets, potGrow,
   betChipAnimations = [], dealCardAnimations = [],
+  mySeatIndex, myPlayerId, myHoleCards, highlightMySeat,
 }: PokerTableProps) {
-  const { players, communityCards, pots, phase, handNumber, config } = gameState;
+  const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
+
+  // Position lookup that respects seat rotation
+  const getDisplaySeatPos = useCallback((physicalSeatIndex: number) => {
+    if (mySeatIndex == null) return SEAT_POSITIONS[physicalSeatIndex];
+    const displayIdx = (physicalSeatIndex - mySeatIndex + 10) % 10;
+    return SEAT_POSITIONS[displayIdx];
+  }, [mySeatIndex]);
+
+  const getDisplayBetPos = useCallback((physicalSeatIndex: number) => {
+    if (mySeatIndex == null) return BET_POSITIONS[physicalSeatIndex];
+    const displayIdx = (physicalSeatIndex - mySeatIndex + 10) % 10;
+    return BET_POSITIONS[displayIdx];
+  }, [mySeatIndex]);
 
   // Build player name map for PotDisplay
   const playerNames = useMemo(() => {
@@ -116,7 +139,7 @@ export function PokerTable({
     const centerY = rect.height * 0.58;
 
     const newAnims: ChipAnimation[] = potAwards.map(award => {
-      const seatPos = SEAT_POSITIONS[award.winnerSeatIndex];
+      const seatPos = getDisplaySeatPos(award.winnerSeatIndex);
       const targetX = (seatPos.x / 100) * rect.width - centerX;
       const targetY = (seatPos.y / 100) * rect.height - centerY;
 
@@ -130,24 +153,23 @@ export function PokerTable({
 
     setChipAnimations(newAnims);
 
-    // Clear animations after they complete
     const timer = setTimeout(() => {
       setChipAnimations([]);
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [potAwards]);
+  }, [potAwards, getDisplaySeatPos]);
 
-  // Calculate fold direction vectors (from seat toward table center)
-  const getFoldDirection = (seatIndex: number) => {
-    const seat = SEAT_POSITIONS[seatIndex];
+  // Calculate fold direction vectors (from display seat toward table center)
+  const getFoldDirection = useCallback((physicalSeatIndex: number) => {
+    const seat = getDisplaySeatPos(physicalSeatIndex);
     const dx = TABLE_CENTER.x - seat.x;
     const dy = TABLE_CENTER.y - seat.y;
     const len = Math.sqrt(dx * dx + dy * dy);
     if (len === 0) return { x: 0, y: -40 };
     const scale = 80;
     return { x: (dx / len) * scale, y: (dy / len) * scale };
-  };
+  }, [getDisplaySeatPos]);
 
   return (
     <div ref={tableRef} className="relative w-full h-full max-w-[1400px] max-h-[900px]">
@@ -274,7 +296,7 @@ export function PokerTable({
       {/* Pots */}
       {pots.length > 0 && (
         <div className="absolute top-[58%] left-1/2 -translate-x-1/2">
-          <PotDisplay pots={pots} bigBlind={config.bigBlind} playerNames={playerNames} potGrow={potGrow} />
+          <PotDisplay pots={pots} bigBlind={config.bigBlind} playerNames={playerNames} potGrow={potGrow} awardingPotIndex={awardingPotIndex} />
         </div>
       )}
 
@@ -282,7 +304,7 @@ export function PokerTable({
       {!collectingBets && players
         .filter(p => p.currentBet > 0)
         .map(p => {
-          const betPos = BET_POSITIONS[p.seatIndex];
+          const betPos = getDisplayBetPos(p.seatIndex);
           return (
             <div
               key={`bet-${p.seatIndex}`}
@@ -300,9 +322,8 @@ export function PokerTable({
 
       {/* Collecting bet chips animation */}
       {collectingBets && tableRef.current && collectingBets.map(bet => {
-        const betPos = BET_POSITIONS[bet.seatIndex];
+        const betPos = getDisplayBetPos(bet.seatIndex);
         const rect = tableRef.current!.getBoundingClientRect();
-        // Calculate pixel offset from bet position to pot center
         const startX = 0;
         const startY = 0;
         const endX = ((POT_CENTER.x - betPos.x) / 100) * rect.width;
@@ -335,7 +356,7 @@ export function PokerTable({
 
       {/* Deal card animations (flying from dealer to seats) */}
       {dealCardAnimations.map(anim => {
-        const seatPos = SEAT_POSITIONS[anim.seatIndex];
+        const seatPos = getDisplaySeatPos(anim.seatIndex);
         return (
           <div
             key={anim.id}
@@ -362,7 +383,7 @@ export function PokerTable({
 
       {/* Bet chip fly animations (from seat to bet position) */}
       {betChipAnimations.map(anim => {
-        const betPos = BET_POSITIONS[anim.seatIndex];
+        const betPos = getDisplayBetPos(anim.seatIndex);
         return (
           <div
             key={anim.id}
@@ -456,17 +477,30 @@ export function PokerTable({
       )}
 
       {/* Player seats */}
-      {SEAT_POSITIONS.map((pos, seatIndex) => {
+      {Array.from({ length: 10 }, (_, seatIndex) => {
+        const pos = getDisplaySeatPos(seatIndex);
         const player = players.find(p => p.seatIndex === seatIndex);
+        // Inject own hole cards face-up when myPlayerId + myHoleCards are provided
+        const displayPlayer = player && myPlayerId && myHoleCards && player.id === myPlayerId
+          ? { ...player, holeCards: myHoleCards, hasCards: true }
+          : player;
+        const isMyHighlightedSeat = highlightMySeat && player && player.id === myPlayerId;
         return (
           <div
             key={seatIndex}
             className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${pos.x}%`, top: `${pos.y}%`, zIndex: 10 }}
+            style={{
+              left: `${pos.x}%`,
+              top: `${pos.y}%`,
+              zIndex: 10,
+              ...(isMyHighlightedSeat ? {
+                filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.5))',
+              } : {}),
+            }}
           >
-            {player ? (
+            {displayPlayer ? (
               <PlayerSeat
-                player={player}
+                player={displayPlayer}
                 isWinner={winnerSeats.includes(seatIndex)}
                 timerSeconds={timerData?.seatIndex === seatIndex ? timerData.secondsRemaining : undefined}
                 timerMax={config.actionTimeSeconds}
