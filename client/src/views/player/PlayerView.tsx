@@ -21,6 +21,8 @@ import { LanguageToggle } from '../../components/LanguageToggle.js';
 import { ThemeToggle } from '../../components/ThemeToggle.js';
 import { useT } from '../../hooks/useT.js';
 import { useSpeechBubbleQueue } from '../../hooks/useSpeechBubbleQueue.js';
+import { useXRDetection } from '../xr/useXRDetection.js';
+import { XRGameScreen } from '../xr/XRGameScreen.js';
 
 // === Auth session persistence (survives server restarts) ===
 const AUTH_SESSION_KEY = 'ftp-auth-session';
@@ -99,6 +101,7 @@ export function PlayerView() {
   const [handHistoryData, setHandHistoryData] = useState<HandRecord[]>([]);
   const [selectedHand, setSelectedHand] = useState<HandRecord | null>(null);
   const { activeBubble, enqueue, onBubbleDone } = useSpeechBubbleQueue();
+  const { supportsVR } = useXRDetection();
   useEffect(() => {
     const socket = socketRef.current;
     socket.connect();
@@ -346,7 +349,9 @@ export function PlayerView() {
       case 'lobby':
         return <LobbyScreen />;
       case 'game':
-        return <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} speechBubble={activeBubble} onSpeechBubbleDone={onBubbleDone} />;
+        return supportsVR
+          ? <XRGameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} speechBubble={activeBubble} onSpeechBubbleDone={onBubbleDone} />
+          : <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} speechBubble={activeBubble} onSpeechBubbleDone={onBubbleDone} />;
       default:
         return <LoginScreen socket={socketRef.current} />;
     }

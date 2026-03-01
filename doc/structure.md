@@ -14,6 +14,7 @@ poker_softa/
     views/
       player/       # Phone UI (GameScreen, ActionButtons, Lobby, Login, Watching)
       table/        # Table UI (PokerTable, PlayerSeat, BetChip, PotDisplay, DeckShuffleAnimation)
+      xr/           # WebXR/VR view (XRGameScreen, XRScene, scene components)
       history/      # HandHistoryDetail, HandHistoryList
     socket.ts       # Client socket connection
     App.tsx         # Root component
@@ -52,6 +53,7 @@ poker_softa/
 | Chat | - | components/ChatWindow.tsx, ChatInput.tsx | types/chat.ts |
 | Run it twice | game/GameManager.ts, HandEngine.ts | views/player/RunItTwicePrompt.tsx | - |
 | Watching view | - | views/player/WatchingScreen.tsx | - |
+| WebXR/VR | - | views/xr/XRGameScreen.tsx, XRScene.tsx, scene/*.tsx, useXRDetection.ts | - |
 
 ## Hotspots (largest files)
 
