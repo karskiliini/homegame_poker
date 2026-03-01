@@ -9,4 +9,5 @@ data/
 study_res/
 .vercel
 .claude/worktrees/
+.worktrees/
 *.tmp
