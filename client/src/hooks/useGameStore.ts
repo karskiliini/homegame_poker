@@ -5,18 +5,6 @@ import { detectLanguage } from '../i18n/translations.js';
 import type { ThemeId } from '../themes/types.js';
 import { DEFAULT_THEME } from '../themes/index.js';
 
-// Check if a reconnect session exists
-function hasStoredSession(): boolean {
-  try {
-    const raw = localStorage.getItem('ftp-session');
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    return !!(parsed.playerId && parsed.playerToken && parsed.tableId);
-  } catch {
-    return false;
-  }
-}
-
 interface LobbyPlayer {
   id: string;
   name: string;
@@ -146,7 +134,7 @@ export const useGameStore = create<GameStore>((set) => ({
 
   screen: 'login',
   setScreen: (screen) => set({ screen }),
-  reconnecting: hasStoredSession(),
+  reconnecting: false,
   setReconnecting: (reconnecting) => set({ reconnecting }),
 
   chatMessages: [],

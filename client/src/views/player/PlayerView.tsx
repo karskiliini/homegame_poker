@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { S2C_PLAYER, S2C_LOBBY, C2S_LOBBY, C2S } from '@poker/shared';
+import { S2C_PLAYER, S2C_LOBBY, C2S_LOBBY } from '@poker/shared';
 import type { PrivatePlayerState, HandRecord, SoundType, TableInfo, StakeLevel, ChatMessage } from '@poker/shared';
 import { createPlayerSocket } from '../../socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
@@ -23,6 +23,7 @@ import { useT } from '../../hooks/useT.js';
 import { useSpeechBubbleQueue } from '../../hooks/useSpeechBubbleQueue.js';
 import { useXRDetection } from '../xr/useXRDetection.js';
 import { XRGameScreen } from '../xr/XRGameScreen.js';
+import { saveTableSession, clearTableSession } from '../../utils/tableSession.js';
 
 // === Auth session persistence (survives server restarts) ===
 const AUTH_SESSION_KEY = 'ftp-auth-session';
@@ -39,45 +40,6 @@ function clearAuthSession() {
   try { localStorage.removeItem(AUTH_SESSION_KEY); } catch { /* noop */ }
 }
 
-// === Table session persistence for reconnection ===
-const SESSION_KEY = 'ftp-session';
-
-interface StoredSession {
-  playerId: string;
-  playerToken: string;
-  tableId: string;
-  playerName: string;
-  playerAvatar: string;
-}
-
-function saveSession(session: StoredSession) {
-  try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  } catch {
-    // localStorage may be unavailable
-  }
-}
-
-function loadSession(): StoredSession | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed.playerId && parsed.playerToken && parsed.tableId) return parsed;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function clearSession() {
-  try {
-    localStorage.removeItem(SESSION_KEY);
-  } catch {
-    // localStorage may be unavailable
-  }
-}
-
 export function PlayerView() {
   const socketRef = useRef(createPlayerSocket());
   const {
@@ -85,7 +47,7 @@ export function PlayerView() {
     setLobbyState, setPrivateState,
     setTables, setPlayerId, setCurrentTableId, setStakeLevels,
     setWatchingTableId,
-    reconnecting, setReconnecting,
+    setReconnecting,
     addChatMessage,
     setAuthState, setAuthError, setAccountBalance, setPersistentPlayerId,
     setPlayerAvatar,
@@ -109,19 +71,9 @@ export function PlayerView() {
     socket.on('connect', () => {
       setConnected(true);
 
-      // Attempt table reconnection if we have a stored game session
-      const session = loadSession();
-      if (session) {
-        socket.emit(C2S.RECONNECT, {
-          playerId: session.playerId,
-          tableId: session.tableId,
-          playerToken: session.playerToken,
-        });
-      }
-
       // Auto-login with session token if we have one (survives server restarts)
       const authToken = loadAuthSession();
-      if (authToken && !session) {
+      if (authToken) {
         socket.emit(C2S_LOBBY.SESSION_AUTH, { sessionToken: authToken });
       }
     });
@@ -181,10 +133,10 @@ export function PlayerView() {
       setCurrentTableId(data.tableId);
       setScreen('game');
 
-      // Persist session for reconnection after refresh
+      // Persist per-table session for reconnection in table windows
       if (data.playerToken) {
         const store = useGameStore.getState();
-        saveSession({
+        saveTableSession(data.tableId, {
           playerId: data.playerId,
           playerToken: data.playerToken,
           tableId: data.tableId,
@@ -194,23 +146,15 @@ export function PlayerView() {
       }
     });
 
-    // Reconnection events
+    // Reconnection events (kept for backward compatibility / edge cases)
     socket.on(S2C_PLAYER.RECONNECTED, (data: { playerId: string; tableId: string }) => {
-      // Restore store state from stored session
-      const session = loadSession();
       setPlayerId(data.playerId);
       setCurrentTableId(data.tableId);
-      if (session) {
-        useGameStore.getState().setPlayerName(session.playerName);
-        useGameStore.getState().setPlayerAvatar(session.playerAvatar as any);
-      }
       setReconnecting(false);
       setScreen('game');
     });
 
     socket.on(S2C_PLAYER.RECONNECT_FAILED, () => {
-      // Session is no longer valid, clear it and let player start fresh
-      clearSession();
       setReconnecting(false);
     });
 
@@ -289,11 +233,10 @@ export function PlayerView() {
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLeaveTable = useCallback(() => {
-    // Save the current table ID so the player can keep watching after leaving
     const tableId = useGameStore.getState().currentTableId;
     socketRef.current.emit(C2S_LOBBY.LEAVE_TABLE);
-    clearSession();
     if (tableId) {
+      clearTableSession(tableId);
       setWatchingTableId(tableId);
     }
     setCurrentTableId(null);
@@ -325,20 +268,6 @@ export function PlayerView() {
   }, [selectedHand, handHistoryData]);
 
   const renderScreen = () => {
-    // Show reconnecting screen while attempting to rejoin
-    if (reconnecting) {
-      return (
-        <div
-          className="min-h-screen flex items-center justify-center"
-          style={{ background: 'linear-gradient(180deg, #0F1E33, #162D50)' }}
-        >
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 18 }}>
-            Reconnecting...
-          </div>
-        </div>
-      );
-    }
-
     switch (screen) {
       case 'login':
         return <LoginScreen socket={socketRef.current} />;
