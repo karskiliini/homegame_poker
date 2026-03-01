@@ -1,5 +1,13 @@
 # User Bug Reports
 
+## [DONE] Bug #11 — 2026-03-01 06:16:45
+**Reporter:** marski
+**Table:** 2fca99d6
+
+bugi: istuin samaan pöytään kahdesta eri selaimesta samalla käyttäjätunnuksella. Saman tilin ei pitäisi pystyä avaamaan toista selainta, tai ainakaan samalla tunnuksella ei pidä pystyä istumaan pöytään uudestaan. Pöytänäkymään tullessa, pitäisi olla selvää että onko oma pelaaja jo istumassa pöydässä. Samoin sit-in nappia painettaessa pidä huoli, että atomisesti varmistat, ettei sama käyttäjä ole jo painanut sit-in nappia toisesta selaimesta.
+
+---
+
 ## [NEW] Bug #10 — 2026-02-28 23:24:27
 **Reporter:** Anonymous
 **Table:** N/A
