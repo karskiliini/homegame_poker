@@ -44,6 +44,14 @@ export interface TableInfo {
   phase: string;
 }
 
+export interface BalanceTransaction {
+  id: number;
+  type: 'deposit' | 'buy_in' | 'cash_out' | 'rebuy';
+  amount: number;
+  tableId: string | null;
+  createdAt: string;
+}
+
 export function getStakeLevelById(id: string): StakeLevel | undefined {
   return STAKE_LEVELS.find(s => s.id === id);
 }

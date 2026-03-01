@@ -51,6 +51,8 @@ export const C2S_LOBBY = {
   LOGIN: 'lobby:login',
   DEPOSIT: 'lobby:deposit',
   SESSION_AUTH: 'lobby:session_auth',
+  GET_PROFILE: 'lobby:get_profile',
+  UPDATE_AVATAR: 'lobby:update_avatar',
 } as const;
 
 export const S2C_LOBBY = {
@@ -63,6 +65,8 @@ export const S2C_LOBBY = {
   AUTH_SUCCESS: 'lobby:auth_success',
   AUTH_ERROR: 'lobby:auth_error',
   BALANCE_UPDATE: 'lobby:balance_update',
+  PROFILE_DATA: 'lobby:profile_data',
+  AVATAR_UPDATED: 'lobby:avatar_updated',
 } as const;
 
 export const C2S_TABLE = {

@@ -8,7 +8,7 @@ import { insertBugReport } from '../db/bugs.js';
 import {
   findPlayerByName, findPlayerById, createPlayer, verifyPassword,
   getPlayerBalance, updateBalance, updateLastLogin, updateAvatar,
-  createSession, findSession, logTransaction,
+  createSession, findSession, logTransaction, getTransactions,
 } from '../db/players.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -153,6 +153,37 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       } else {
         socket.emit(S2C_LOBBY.ERROR, { message: 'Deposit failed' });
       }
+    });
+
+    socket.on(C2S_LOBBY.GET_PROFILE, () => {
+      if (!authenticatedPlayerId) {
+        socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Not authenticated' });
+        return;
+      }
+      const player = findPlayerById(authenticatedPlayerId);
+      if (!player) return;
+      const transactions = getTransactions(authenticatedPlayerId).map(t => ({
+        id: t.id,
+        type: t.type,
+        amount: t.amount,
+        tableId: t.table_id,
+        createdAt: t.created_at,
+      }));
+      socket.emit(S2C_LOBBY.PROFILE_DATA, {
+        name: player.name,
+        avatarId: player.avatar_id,
+        balance: player.balance,
+        transactions,
+      });
+    });
+
+    socket.on(C2S_LOBBY.UPDATE_AVATAR, (data: { avatarId: string }) => {
+      if (!authenticatedPlayerId) {
+        socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Not authenticated' });
+        return;
+      }
+      updateAvatar(authenticatedPlayerId, data.avatarId);
+      socket.emit(S2C_LOBBY.AVATAR_UPDATED, { avatarId: data.avatarId });
     });
 
     // === Lobby events ===
