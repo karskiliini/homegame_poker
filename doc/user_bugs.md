@@ -8,7 +8,7 @@ kun painaa check, ja tulee seuraava kortti, niin sinulla näkyy hetken aikaa ede
 
 ---
 
-## [NEW] Bug #22 — 2026-03-01 09:13:23
+## [ROADMAP] Bug #22 — 2026-03-01 09:13:23
 **Reporter:** marski2
 **Table:** 826d31bc
 
@@ -32,7 +32,7 @@ bugi: ylhäällä istuvan pelaajan kortit peittää stackin koko numeron.
 
 ---
 
-## [NEW] Bug #19 — 2026-03-01 08:51:25
+## [ROADMAP] Bug #19 — 2026-03-01 08:51:25
 **Reporter:** marski2
 **Table:** 826d31bc
 
@@ -40,7 +40,7 @@ timebank feature, when in desperate need.
 
 ---
 
-## [NEW] Bug #18 — 2026-03-01 08:46:21
+## [ROADMAP] Bug #18 — 2026-03-01 08:46:21
 **Reporter:** marski2
 **Table:** ee452322
 
@@ -48,7 +48,7 @@ refill feature
 
 ---
 
-## [NEW] Bug #17 — 2026-03-01 08:46:14
+## [ROADMAP] Bug #17 — 2026-03-01 08:46:14
 **Reporter:** marski2
 **Table:** ee452322
 
@@ -56,7 +56,7 @@ auto rebuy feature.
 
 ---
 
-## [NEW] Bug #16 — 2026-03-01 08:13:43
+## [ROADMAP] Bug #16 — 2026-03-01 08:13:43
 **Reporter:** Anonymous
 **Table:** N/A
 
@@ -64,7 +64,7 @@ tee työkalu jolla voi 2d:na suunnitella chip trickit. wireframena chippejä, ai
 
 ---
 
-## [NEW] Bug #15 — 2026-03-01 07:59:10
+## [ROADMAP] Bug #15 — 2026-03-01 07:59:10
 **Reporter:** Anonymous
 **Table:** N/A
 
