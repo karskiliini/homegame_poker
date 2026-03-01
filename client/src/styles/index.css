@@ -855,3 +855,72 @@ input[type="range"].ftp-volume-slider::-webkit-slider-thumb:hover {
 .animate-shuffle-burst {
   animation: shuffle-burst var(--ftp-anim-shuffle) cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+/* === All-in Spotlight === */
+.animate-spotlight-in {
+  animation: spotlight-in 800ms ease-out forwards;
+}
+.animate-spotlight-out {
+  animation: spotlight-out 600ms ease-in forwards;
+}
+@keyframes spotlight-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes spotlight-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* === Winner Banner === */
+.animate-winner-banner-in {
+  animation: winner-banner-in 500ms var(--ftp-ease-overshoot) forwards;
+}
+.animate-winner-banner-out {
+  animation: winner-banner-out 400ms ease-in forwards;
+}
+@keyframes winner-banner-in {
+  0% { opacity: 0; transform: scale(0) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes winner-banner-out {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8) translateY(-10px); }
+}
+
+/* === The Nuts Glow === */
+.animate-nuts-glow {
+  animation: nuts-glow 1200ms ease-in-out infinite;
+}
+@keyframes nuts-glow {
+  0%, 100% { text-shadow: 0 0 10px rgba(255,215,0,0.6), 0 0 20px rgba(255,215,0,0.3); }
+  50% { text-shadow: 0 0 20px rgba(255,215,0,0.9), 0 0 40px rgba(255,215,0,0.5), 0 0 60px rgba(255,165,0,0.3); }
+}
+
+/* === Royal Flush Celebration === */
+.animate-royal-glow {
+  animation: royal-glow 1500ms ease-out forwards;
+}
+@keyframes royal-glow {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(3); }
+}
+
+.animate-confetti {
+  animation: confetti-fall var(--confetti-duration, 3.5s) var(--confetti-delay, 0s) ease-in forwards;
+}
+@keyframes confetti-fall {
+  0% { opacity: 1; transform: translateY(-100%) rotate(0deg); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(100vh) rotate(var(--confetti-rotation, 720deg)); }
+}
+
+.animate-starburst {
+  animation: starburst 800ms ease-out forwards;
+}
+@keyframes starburst {
+  0% { opacity: 1; transform: scale(0); }
+  50% { opacity: 0.8; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(2); }
+}

@@ -14,7 +14,9 @@ import { useTheme } from '../../themes/useTheme.js';
 import { BadBeatBubble } from './BadBeatBubble.js';
 import { ChipTrickAnimation } from './ChipTrickAnimation.js';
 import { DeckShuffleAnimation } from './DeckShuffleAnimation.js';
-import type { BadBeatData, ChipTrickData } from '../../hooks/useTableAnimations.js';
+import { WinnerBanner } from './WinnerBanner.js';
+import { RoyalFlushCelebration } from './RoyalFlushCelebration.js';
+import type { BadBeatData, ChipTrickData, WinnerBannerData } from '../../hooks/useTableAnimations.js';
 
 // Virtual table dimensions — defines the fixed aspect ratio (18:11)
 // Both watching and phone views use these to scale the table via CSS transform
@@ -57,6 +59,7 @@ interface PotAward {
   amount: number;
   winnerSeatIndex: number;
   winnerName: string;
+  winningHand?: string;
 }
 
 interface CollectingBet {
@@ -130,6 +133,12 @@ interface PokerTableProps {
   winningCards?: CardString[];
   /** Whether the deck shuffle animation is playing */
   shuffling?: boolean;
+  /** Whether all-in spotlight overlay is active */
+  allInSpotlight?: boolean;
+  /** Winner banner data for each winning seat */
+  winnerBanners?: WinnerBannerData[];
+  /** Royal/Straight flush celebration data */
+  celebration?: { type: 'royal_flush' | 'straight_flush'; seatIndex: number } | null;
 }
 
 // Table center in percentage coordinates
@@ -190,6 +199,9 @@ export function PokerTable({
   chipTrick, onChipTrickClick,
   winningCards = [],
   shuffling,
+  allInSpotlight,
+  winnerBanners = [],
+  celebration,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const numHoleCards = config.gameType === 'PLO' ? 4 : 2;
@@ -400,6 +412,21 @@ export function PokerTable({
         }}
       />
 
+      {/* All-in spotlight overlay */}
+      {allInSpotlight && (
+        <div
+          className="animate-spotlight-in"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.55)',
+            zIndex: 25,
+            borderRadius: 'inherit',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
       {/* Game info */}
       <div className="absolute top-[13%] left-1/2 -translate-x-1/2 text-center">
         <div
@@ -427,7 +454,7 @@ export function PokerTable({
         if (!hasRIT) {
           // Single board — render normally
           return (
-            <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2" style={allInSpotlight ? { zIndex: 30 } : undefined}>
               <CommunityCards
                 cards={communityCards}
                 winningCards={winningCards}
@@ -450,7 +477,7 @@ export function PokerTable({
         const hasWinners = winningCards.length > 0;
 
         return (
-          <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2" style={allInSpotlight ? { zIndex: 30 } : undefined}>
             <div className="flex gap-2 items-center">
               {/* Shared pre-all-in cards — centered */}
               {sharedCards.map((card) => (
@@ -813,6 +840,7 @@ export function PokerTable({
           : player;
         const isMyHighlightedSeat = highlightMySeat && player && player.id === myPlayerId;
         const isBadBeatLoser = badBeat?.loserSeatIndex === seatIndex;
+        const isAllInPlayer = allInSpotlight && player?.status === 'all_in';
         return (
           <div
             key={seatIndex}
@@ -820,7 +848,7 @@ export function PokerTable({
             style={{
               left: `${pos.x}%`,
               top: `${pos.y}%`,
-              zIndex: isBadBeatLoser ? 58 : 10,
+              zIndex: isBadBeatLoser ? 58 : isAllInPlayer ? 30 : 10,
               ...(isMyHighlightedSeat ? {
                 filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.5))',
               } : {}),
@@ -857,6 +885,26 @@ export function PokerTable({
           </div>
         );
       })}
+
+      {/* Winner banners above winning seats */}
+      {winnerBanners.map(banner => {
+        const displayIdx = mySeatIndex != null
+          ? (banner.seatIndex - mySeatIndex + 10) % 10
+          : banner.seatIndex;
+        const pos = SEAT_POSITIONS[displayIdx];
+        return (
+          <WinnerBanner
+            key={banner.seatIndex}
+            handName={banner.handName}
+            handDescription={banner.handDescription}
+            isNuts={banner.isNuts}
+            position={pos}
+          />
+        );
+      })}
+
+      {/* Royal/Straight Flush celebration */}
+      {celebration && <RoyalFlushCelebration type={celebration.type} />}
 
       {/* Dealer button — animated overlay */}
       {currentDealerSeat != null && !dealerMoveAnim && (() => {

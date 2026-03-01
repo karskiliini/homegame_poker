@@ -43,6 +43,14 @@ export interface ChipTrickData {
   trickType: ChipTrickType;
 }
 
+export interface WinnerBannerData {
+  seatIndex: number;
+  handName: string;
+  handDescription: string;
+  handRank: string;
+  isNuts: boolean;
+}
+
 interface UseTableAnimationsResult {
   potAwards: PotAward[] | undefined;
   winnerSeats: number[];
@@ -58,6 +66,9 @@ interface UseTableAnimationsResult {
   badBeat: BadBeatData | null;
   chipTrick: ChipTrickData | null;
   shuffling: boolean;
+  allInSpotlight: boolean;
+  winnerBanners: WinnerBannerData[];
+  celebration: { type: 'royal_flush' | 'straight_flush'; seatIndex: number } | null;
 }
 
 let animId = 0;
@@ -84,6 +95,9 @@ export function useTableAnimations({
   const [badBeat, setBadBeat] = useState<BadBeatData | null>(null);
   const [chipTrick, setChipTrick] = useState<ChipTrickData | null>(null);
   const [shuffling, setShuffling] = useState(false);
+  const [allInSpotlight, setAllInSpotlight] = useState(false);
+  const [winnerBanners, setWinnerBanners] = useState<WinnerBannerData[]>([]);
+  const [celebration, setCelebration] = useState<{ type: 'royal_flush' | 'straight_flush'; seatIndex: number } | null>(null);
 
   // Helper: resolve display position for a seat index (respects rotation)
   const getSeatPos = (seatIndex: number) => {
@@ -222,6 +236,9 @@ export function useTableAnimations({
       isLastPot: boolean;
       totalPots: number;
       winningCards?: CardString[];
+      handRank?: string;
+      handName?: string;
+      isNuts?: boolean;
     }) => {
       const seats = [...new Set(data.awards.map(a => a.winnerSeatIndex))];
       setWinnerSeats(prev => [...new Set([...prev, ...seats])]);
@@ -229,6 +246,25 @@ export function useTableAnimations({
       setAwardingPotIndex(data.potIndex);
       if (data.winningCards) {
         setWinningCards(data.winningCards);
+      }
+
+      // Winner banners
+      if (data.handName) {
+        const banners = seats.map(seatIndex => ({
+          seatIndex,
+          handName: data.handName!,
+          handDescription: data.awards.find(a => a.winnerSeatIndex === seatIndex)?.winningHand || '',
+          handRank: data.handRank || '',
+          isNuts: data.isNuts || false,
+        }));
+        setWinnerBanners(banners);
+        setTimeout(() => setWinnerBanners([]), 3000);
+      }
+
+      // Royal/Straight Flush celebration
+      if (data.handRank === 'royal_flush' || data.handRank === 'straight_flush') {
+        setCelebration({ type: data.handRank, seatIndex: seats[0] });
+        setTimeout(() => setCelebration(null), 4500);
       }
 
       setTimeout(() => {
@@ -255,6 +291,7 @@ export function useTableAnimations({
     };
 
     const onAllinShowdown = (data: { entries: { seatIndex: number; cards: CardString[] }[] }) => {
+      setAllInSpotlight(true);
       const current = gameStateRef.current;
       if (current) {
         const updated = {
@@ -333,6 +370,9 @@ export function useTableAnimations({
     const onHandResult = () => {
       setEquities(null);
       setDramaticRiver(false);
+      setAllInSpotlight(false);
+      setWinnerBanners([]);
+      setCelebration(null);
       // Keep winner glow visible for 2s after hand result so players can see who won
       setTimeout(() => {
         setWinnerSeats([]);
@@ -390,5 +430,8 @@ export function useTableAnimations({
     badBeat,
     chipTrick,
     shuffling,
+    allInSpotlight,
+    winnerBanners,
+    celebration,
   };
 }

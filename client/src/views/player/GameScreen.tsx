@@ -70,6 +70,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
     timerData, collectingBets, potGrow,
     betChipAnimations, dealCardAnimations,
     equities, dramaticRiver, badBeat, chipTrick, shuffling,
+    allInSpotlight, winnerBanners, celebration,
   } = useTableAnimations({
     socket: tableSocketRef.current,
     containerRef: tableContainerRef,
@@ -226,6 +227,9 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               chipTrick={chipTrick}
               onChipTrickClick={handleChipTrick}
               shuffling={shuffling}
+              allInSpotlight={allInSpotlight}
+              winnerBanners={winnerBanners}
+              celebration={celebration}
             />
           </div>
         ) : (
