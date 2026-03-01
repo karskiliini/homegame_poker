@@ -34,9 +34,9 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 
 ### 0.4 Käyttäjätilit & sähköpostikirjautuminen
 - [ ] Sähköpostikirjautuminen: pelaaja rekisteröityy ja kirjautuu sähköpostilla (+ salasana tai magic link)
-- [ ] Pelaajan saldo tallennetaan tietokantaan (pysyvä, sessioiden välillä)
-- [ ] Buy-in vähennetään saldosta, cash-out lisätään saldoon
-- [ ] Pelaajan profiili: nimi, avatar, sähköposti, saldohistoria
+- [x] Pelaajan saldo tallennetaan tietokantaan (pysyvä, sessioiden välillä)
+- [x] Buy-in vähennetään saldosta, cash-out lisätään saldoon
+- [x] Pelaajan profiili: nimi, avatar, sähköposti, saldohistoria
 - [ ] Admin voi lisätä/poistaa saldoa pelaajalle (esim. käteismaksu → saldo)
 - [x] Teeman mukainen pöydän taustakuva. Basic: green felt, cccp: Red felt with a with soviet star symbol in the middle. Make a wow effect.
 
