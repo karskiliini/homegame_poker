@@ -6,7 +6,6 @@ import type { PrivatePlayerState, HandRecord, SoundType, StakeLevel, ChatMessage
 import { createPlayerSocket } from '../../socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { GameScreen } from './GameScreen.js';
-import { WatchingScreen } from './WatchingScreen.js';
 import { RunItTwicePrompt } from './RunItTwicePrompt.js';
 import { ShowCardsPrompt } from './ShowCardsPrompt.js';
 import { RebuyPrompt } from './RebuyPrompt.js';
@@ -104,7 +103,7 @@ export function TableWindowView() {
       setPlayerAvatar(data.avatarId);
       setAuthenticated(true);
       setWatchingTableId(tableId);
-      setScreen('watching');
+      setScreen('game');
     });
 
     socket.on(S2C_LOBBY.AUTH_ERROR, (data: { message: string }) => {
@@ -238,8 +237,8 @@ export function TableWindowView() {
     setLobbyState(null);
     setPrivateState(null);
     setWatchingTableId(tableId);
-    setScreen('watching');
-  }, [tableId, setCurrentTableId, setLobbyState, setPrivateState, setScreen, setWatchingTableId]);
+    // Stay on 'game' screen — GameScreen auto-switches to watching mode when privateState is null
+  }, [tableId, setCurrentTableId, setLobbyState, setPrivateState, setWatchingTableId]);
 
   const openHistory = useCallback(() => {
     socketRef.current.emit('player:get_history');
@@ -283,21 +282,15 @@ export function TableWindowView() {
       );
     }
 
-    switch (screen) {
-      case 'game':
-        return (
-          <GameScreen
-            socket={socketRef.current}
-            onOpenHistory={openHistory}
-            onLeaveTable={handleLeaveTable}
-            speechBubble={activeBubble}
-            onSpeechBubbleDone={onBubbleDone}
-          />
-        );
-      case 'watching':
-      default:
-        return <WatchingScreen playerSocket={socketRef.current} />;
-    }
+    return (
+      <GameScreen
+        socket={socketRef.current}
+        onOpenHistory={openHistory}
+        onLeaveTable={handleLeaveTable}
+        speechBubble={activeBubble}
+        onSpeechBubbleDone={onBubbleDone}
+      />
+    );
   };
 
   const selectedIdx = selectedHand ? handHistoryData.findIndex(h => h.handId === selectedHand.handId) : -1;
