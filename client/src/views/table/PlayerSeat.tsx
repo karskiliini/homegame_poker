@@ -472,13 +472,17 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
         </div>
       )}
 
-      {/* Cards — absolutely positioned toward table center ("in front" of the player) */}
+      {/* Cards — absolutely positioned toward table center ("in front" of the player).
+         For top-row seats (cardOffset.y > 20) cards would overlap the name plate,
+         so we anchor them below the plate (top 135) instead of at the avatar center. */}
       <div
         style={{
           position: 'absolute',
           left: '50%',
-          top: 40,
-          transform: `translate(calc(-50% + ${cardOffset.x}px), calc(-50% + ${cardOffset.y}px))`,
+          top: cardOffset.y > 20 ? 135 : 40,
+          transform: cardOffset.y > 20
+            ? `translate(calc(-50% + ${cardOffset.x}px), 0px)`
+            : `translate(calc(-50% + ${cardOffset.x}px), calc(-50% + ${cardOffset.y}px))`,
           zIndex: 2,
         }}
       >

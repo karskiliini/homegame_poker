@@ -1,6 +1,86 @@
 # User Bug Reports
 
-## [NEW] Bug #12 — 2026-03-01 06:20:04
+## [NEW] Bug #22 — 2026-03-01 09:13:23
+**Reporter:** marski2
+**Table:** 826d31bc
+
+jokaisella pöydällä pitää olla equity counter, joka näyttää prosenttien mukaan "oikeutetun" voittosumman. Lopuksi näkee sitten todellisen ja teoreettisen eron. Tee graafi, sininen väri kertoo teoreettisen ja vihreä/punainen todellisen profit/loss.
+
+---
+
+## [NEW] Bug #21 — 2026-03-01 08:57:05
+**Reporter:** marski2
+**Table:** 826d31bc
+
+button merkkii pitää olla isompi, eikä se saa mennä avatarin kanssa päällekkäin
+
+---
+
+## [DONE] Bug #20 — 2026-03-01 08:54:51
+**Reporter:** marski2
+**Table:** 826d31bc
+
+bugi: ylhäällä istuvan pelaajan kortit peittää stackin koko numeron.
+
+---
+
+## [NEW] Bug #19 — 2026-03-01 08:51:25
+**Reporter:** marski2
+**Table:** 826d31bc
+
+timebank feature, when in desperate need.
+
+---
+
+## [NEW] Bug #18 — 2026-03-01 08:46:21
+**Reporter:** marski2
+**Table:** ee452322
+
+refill feature
+
+---
+
+## [NEW] Bug #17 — 2026-03-01 08:46:14
+**Reporter:** marski2
+**Table:** ee452322
+
+auto rebuy feature.
+
+---
+
+## [NEW] Bug #16 — 2026-03-01 08:13:43
+**Reporter:** Anonymous
+**Table:** N/A
+
+tee työkalu jolla voi 2d:na suunnitella chip trickit. wireframena chippejä, aikajanalla niitä voi siirrellä ja chipit animoituu itsestään keyframejen välillä. voi siirtää chippejä xy akseleilla, sekä rotatoida z akselilla.
+
+---
+
+## [NEW] Bug #15 — 2026-03-01 07:59:10
+**Reporter:** Anonymous
+**Table:** N/A
+
+feature: meta quest 3 integraatio. Sivulle voi kirjautua meta quest 3:lla, näkymä sallii vain yhden pöydän avaamisen kerrallaan, kun pelaaja istuu pöytään, niin näkymä on 3D maailmassa jossa voi katsella ympäriinsä. Edessä näkyy pelipöytä ja pelaajien avatarit sen ympärillä. Näytön alalaidassa on aina kiinteästi chat, omat kortit, toimintanapit ja omien korttien yläpuolella community cardit.
+
+---
+
+## [NEW] Bug #14 — 2026-03-01 07:30:55
+**Reporter:** Anonymous
+**Table:** N/A
+
+poista koko tv näkymä pois koko projektista. Varmista ettei käyttäjän workflowssa näy koskaan TV näkymä mitenkään.
+
+---
+
+## [DONE] Bug #13 — 2026-03-01 07:25:41
+**Reporter:** Anonymous
+**Table:** N/A
+
+kun pelaaja clickaa lobbyssä että liity pöytään, niin kyseisen pöydän pitäisi aueta uudessa ikkunassa. Näitä ikkunoita pitää pystyä olemaan auki vain yksi kerrallaan per käyttäjätili. Näin pelaaja voi pelata monessa eri pöydässä yhtä aikaa, mutta ei koskaan yhdellä tilillä samassa pöydässä kahdella istuimella.
+
+---
+
+## [DONE] Bug #12 — 2026-03-01 06:20:04
 **Reporter:** marski
 **Table:** 2fca99d6
 
