@@ -53,35 +53,34 @@ describe('Leave Table -> Spectator flow', () => {
     const tableIdBeforeLeave = store.currentTableId;
     expect(tableIdBeforeLeave).toBe('table-123');
 
-    // Simulate what the UPDATED handleLeaveTable should do:
-    // 1. Set watchingTableId to current table so WatchingScreen can watch it
+    // Simulate what handleLeaveTable does:
+    // 1. Set watchingTableId to current table so GameScreen can show spectator view
     // 2. Clear player-specific state
-    // 3. Navigate to watching screen
+    // 3. Screen stays on 'game' (spectator mode, no privateState)
     store.setWatchingTableId(tableIdBeforeLeave);
     store.setCurrentTableId(null);
     store.setLobbyState(null as any);
     store.setPrivateState(null as any);
-    store.setScreen('watching');
 
     const afterStore = useGameStore.getState();
     // Player should now be watching the same table they just left
     expect(afterStore.watchingTableId).toBe('table-123');
     expect(afterStore.currentTableId).toBeNull();
-    expect(afterStore.screen).toBe('watching');
+    expect(afterStore.screen).toBe('game');
     expect(afterStore.privateState).toBeNull();
   });
 
   it('watching screen Leave button should go to table_lobby', () => {
-    // Set up: player is already in watching mode
+    // Set up: player is already in spectator mode (game screen, no privateState)
     useGameStore.setState({
-      screen: 'watching',
+      screen: 'game',
       watchingTableId: 'table-123',
       currentTableId: null,
       privateState: null,
     });
 
     const store = useGameStore.getState();
-    // WatchingScreen's "Back" button calls setWatchingTableId(null) + setScreen('table_lobby')
+    // GameScreen's "Back" button calls setWatchingTableId(null) + setScreen('table_lobby')
     store.setWatchingTableId(null);
     store.setScreen('table_lobby');
 

@@ -49,25 +49,6 @@ describe('PokerTable aspect ratio', () => {
     expect(rootClasses).not.toContain('h-full');
   });
 
-  it('WatchingScreen uses same phone-style layout as GameScreen', () => {
-    const src = readFileSync(
-      join(__dirname, '..', 'views', 'player', 'WatchingScreen.tsx'),
-      'utf-8'
-    );
-
-    // Should import the virtual dimensions
-    expect(src).toContain('TABLE_VIRTUAL_W');
-    expect(src).toContain('TABLE_VIRTUAL_H');
-
-    // Should use width-based scaling like GameScreen (not contain behavior)
-    expect(src).toContain('wrapperWidth / TABLE_W');
-
-    // Should wrap PokerTable in a container with fixed virtual size + scale transform
-    expect(src).toContain('width: TABLE_W');
-    expect(src).toContain('height: TABLE_H');
-    expect(src).toMatch(/transform:.*scale/);
-  });
-
   it('GameScreen (phone view) imports constants from PokerTable', () => {
     const src = readFileSync(
       join(__dirname, '..', 'views', 'player', 'GameScreen.tsx'),
