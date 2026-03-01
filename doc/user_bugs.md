@@ -112,7 +112,7 @@ kaikki pelaajat painoivat sit out ja lähtivät pois pelistä, paitsi minä. Kes
 
 ---
 
-## [NEW] Bug #9 — 2026-02-28 23:21:51
+## [DONE] Bug #9 — 2026-02-28 23:21:51
 **Reporter:** Anonymous
 **Table:** N/A
 

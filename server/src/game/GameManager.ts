@@ -1119,7 +1119,8 @@ export class GameManager {
   leaveTable(socketId: string) {
     const player = this.players.get(socketId);
     if (!player) return;
-    if (this.phase === 'hand_in_progress') {
+    // Sitting-out players can always leave immediately — they have no active hand participation
+    if (this.phase === 'hand_in_progress' && player.status !== 'sitting_out') {
       const hp = [...this.currentHandPlayers.values()].find(h => h.playerId === player.id);
       if (hp && !hp.isFolded) { this.pendingRemovals.add(socketId); return; }
     }
