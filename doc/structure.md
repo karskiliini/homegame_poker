@@ -44,7 +44,7 @@ poker_softa/
 | Lobby/Login | socket/player-namespace.ts | views/player/LobbyScreen.tsx, LoginScreen.tsx | types/lobby.ts |
 | Player profile | socket/player-namespace.ts, db/players.ts | views/player/ProfileModal.tsx, TableLobbyScreen.tsx | types/lobby.ts, types/socket-events.ts |
 | Themes | - | themes/*.tsx, themes/types.ts, useTheme.ts, styles/index.css | - |
-| Animations | - | hooks/useTableAnimations.ts, views/table/ChipTrickAnimation.tsx, views/table/DeckShuffleAnimation.tsx, styles/index.css | - |
+| Animations | - | hooks/useTableAnimations.ts, views/table/ChipTrickAnimation.tsx, views/table/DeckShuffleAnimation.tsx, views/table/WinnerBanner.tsx, views/table/RoyalFlushCelebration.tsx, styles/index.css | - |
 | Sound | - | audio/SoundManager.ts, components/SoundToggle.tsx | types/sound.ts |
 | i18n | - | i18n/translations.ts, hooks/useT.ts, components/LanguageToggle.tsx | - |
 | Rebuy/Sit-out | game/GameManager.ts | views/player/RebuyPrompt.tsx | - |

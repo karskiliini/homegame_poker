@@ -48,9 +48,9 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 > tumma ja tunnelmallinen. Tämä vaihe tekee sovelluksesta visuaalisesti vaikuttavan.
 
 ### 1.1 Pöytäteemat
-- [ ] Tumma perusteema Full Tilt -henkisellä värimaailmalla
-- [ ] 4–6 vaihdettavaa pöytäteemaa (esim. Classic Green, Midnight Blue, Vegas Gold, Arctic, Lava)
-- [ ] Teeman vaihto asetuksista lennossa (TV-näkymä päivittyy reaaliajassa)
+- [x] Tumma perusteema Full Tilt -henkisellä värimaailmalla
+- [x] 6 vaihdettavaa pöytäteemaa (basic, cccp, midnight, vegas, arctic, lava)
+- [x] Teeman vaihto asetuksista lennossa (TV-näkymä päivittyy reaaliajassa)
 - [ ] Pöydän felt-tekstuuri ja reunukset CSS/SVG:llä
 - [ ] Custom table felt & card backs — admin valitsee ulkoasun, pelaajat voivat valita oman card backin
 
@@ -72,13 +72,13 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 
 ### 1.4 Pöytäanimaatiot & visuaaliefektit
 - [x] Pakan sekoitusanimaatio käden alussa: pakka ilmestyy pöydän keskelle, sekoitetaan (teemakohtainen sekoitustyyli), kasataan yhteen, jaetaan pelaajille
-- [ ] Dealer-napin siirtoanimaatio käsien välillä
-- [ ] All-in -tilanne: dramaattinen efekti (esim. valaistuksen muutos, pulssi)
-- [ ] Royal Flush / Straight Flush: erikoisanimaatio (confetti/fireworks)
-- [ ] Winner-ilmoitus: bannerianimaatio voittajan kohdalla
-- [ ] Fold-animaatio: kortit liukuvat pois pöydältä
+- [x] Dealer-napin siirtoanimaatio käsien välillä
+- [x] All-in -tilanne: dramaattinen efekti (esim. valaistuksen muutos, pulssi)
+- [x] Royal Flush / Straight Flush: erikoisanimaatio (confetti/fireworks)
+- [x] Winner-ilmoitus: bannerianimaatio voittajan kohdalla
+- [x] Fold-animaatio: kortit liukuvat pois pöydältä
 - [x] Bad beat -animaatio: erikoisefekti suck-outille (Full Tilt -tyylinen räjähdys)
-- [ ] "The Nuts" -ilmoitus: erikoisefekti showdownissa kun pelaajalla on paras mahdollinen käsi
+- [x] "The Nuts" -ilmoitus: erikoisefekti showdownissa kun pelaajalla on paras mahdollinen käsi
 
 ### 1.5 Use caset
  - [ ] Jos pöytä on jo täynnä, mutta käyttäjä haluaa tulla katselijaksi, niin hänellä on mahdollisuus painaa nappia "JOIN WAITING LIST". Hän pääsee jonoon, ja heti kun yksi pelaaja poistuu pöydästä, ensimmäinen waiting list jonosta päätyy automaattisesti istumaan hänen paikalleen. Pelaaja poistetaan waiting list jonosta.
