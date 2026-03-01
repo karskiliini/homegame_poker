@@ -8,6 +8,7 @@ import { VersionInfo } from '../../components/VersionInfo.js';
 import { useT } from '../../hooks/useT.js';
 import { LanguageToggle } from '../../components/LanguageToggle.js';
 import { ThemeToggle } from '../../components/ThemeToggle.js';
+import { ProfileModal } from './ProfileModal.js';
 
 interface TableLobbyScreenProps {
   socket: Socket;
@@ -18,6 +19,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
   const { isTableOpen } = useOpenTables();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState(1000);
   const [creating, setCreating] = useState(false);
   const modalOpenedAt = useRef(0);
@@ -73,7 +75,16 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
               }}
             />
           </div>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
+          <p
+            onClick={() => isConnected && setShowProfileModal(true)}
+            style={{
+              color: 'rgba(255,255,255,0.6)', fontSize: 12,
+              cursor: isConnected ? 'pointer' : 'default',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={(e) => { if (isConnected) e.currentTarget.style.opacity = '0.8'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+          >
             {isConnected
               ? `${t('table_lobby_playing_as')} ${playerName}`
               : t('table_lobby_no_connection')}
@@ -414,6 +425,9 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
             </div>
           </div>
         </div>
+      )}
+      {showProfileModal && (
+        <ProfileModal socket={socket} onClose={() => setShowProfileModal(false)} />
       )}
       <VersionInfo />
     </div>

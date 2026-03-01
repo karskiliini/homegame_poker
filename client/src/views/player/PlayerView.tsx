@@ -118,6 +118,10 @@ export function PlayerView() {
       setAccountBalance(data.balance);
     });
 
+    socket.on(S2C_LOBBY.AVATAR_UPDATED, (data: { avatarId: string }) => {
+      setPlayerAvatar(data.avatarId);
+    });
+
     // Lobby events
     socket.on(S2C_LOBBY.TABLE_LIST, (tables: TableInfo[]) => {
       setTables(tables);
