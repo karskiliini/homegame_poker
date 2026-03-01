@@ -1,5 +1,13 @@
 # User Bug Reports
 
+## [NEW] Bug #12 — 2026-03-01 06:20:04
+**Reporter:** marski
+**Table:** 2fca99d6
+
+ylälaidassa istuvan pelaajan kortit ovat nimikyltin päällä. Pidä huoli että missään kohtaa istuvan pelaavan kortit eivät peitä olennaisia UI komponentteja.
+
+---
+
 ## [DONE] Bug #11 — 2026-03-01 06:16:45
 **Reporter:** marski
 **Table:** 2fca99d6
@@ -24,7 +32,7 @@ jos painan sit out, ja leave table, niin poistuin kyllä pöydästä, mutta avat
 
 ---
 
-## [NEW] Bug #8 — 2026-02-28 23:20:15
+## [DONE] Bug #8 — 2026-02-28 23:20:15
 **Reporter:** marski
 **Table:** 6e240a41
 
