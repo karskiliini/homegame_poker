@@ -71,7 +71,7 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Voittavan käden korttien korostus glow-efektillä
 
 ### 1.4 Pöytäanimaatiot & visuaaliefektit
-- [ ] Pakan sekoitusanimaatio käden alussa: pakka ilmestyy pöydän keskelle, sekoitetaan (teemakohtainen sekoitustyyli), kasataan yhteen, jaetaan pelaajille
+- [x] Pakan sekoitusanimaatio käden alussa: pakka ilmestyy pöydän keskelle, sekoitetaan (teemakohtainen sekoitustyyli), kasataan yhteen, jaetaan pelaajille
 - [ ] Dealer-napin siirtoanimaatio käsien välillä
 - [ ] All-in -tilanne: dramaattinen efekti (esim. valaistuksen muutos, pulssi)
 - [ ] Royal Flush / Straight Flush: erikoisanimaatio (confetti/fireworks)
