@@ -7,7 +7,8 @@ import { readFileSync } from 'fs';
 const pkg = JSON.parse(readFileSync('../package.json', 'utf-8'));
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), mkcert()],
+  // mkcert() disabled until CA installed: run ~/.vite-plugin-mkcert/mkcert -install
+  plugins: [react(), tailwindcss()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

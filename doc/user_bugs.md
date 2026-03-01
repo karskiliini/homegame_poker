@@ -1,5 +1,13 @@
 # User Bug Reports
 
+## [NEW] Bug #23 — 2026-03-01 09:25:19
+**Reporter:** marski
+**Table:** 5058b580
+
+kun painaa check, ja tulee seuraava kortti, niin sinulla näkyy hetken aikaa edellisen kierroksen valintanapit ennenkuin ne päivittyvät oikein.
+
+---
+
 ## [NEW] Bug #22 — 2026-03-01 09:13:23
 **Reporter:** marski2
 **Table:** 826d31bc

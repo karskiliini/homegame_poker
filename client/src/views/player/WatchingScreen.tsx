@@ -44,6 +44,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   const [buyInAmount, setBuyInAmount] = useState(0);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [chatMinimized, setChatMinimized] = useState(true);
+  const buyInOpenedAt = useRef(0);
 
   const table = tables.find(t => t.tableId === watchingTableId);
   const tableMaxBuyIn = table?.stakeLevel.maxBuyIn ?? 200;
@@ -121,12 +122,14 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   const handleSeatClick = useCallback((seatIndex: number) => {
     setSelectedSeat(seatIndex);
     setBuyInAmount(maxBuyIn);
+    buyInOpenedAt.current = Date.now();
     setShowBuyIn(true);
   }, [maxBuyIn]);
 
   const handleSitDown = useCallback(() => {
     setBuyInAmount(maxBuyIn);
     setSelectedSeat(null);
+    buyInOpenedAt.current = Date.now();
     setShowBuyIn(true);
   }, [maxBuyIn]);
 
@@ -282,7 +285,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.7)' }}
-          onClick={() => setShowBuyIn(false)}
+          onClick={() => { if (Date.now() - buyInOpenedAt.current > 300) setShowBuyIn(false); }}
         >
           <div
             className="w-full max-w-xs p-6"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Socket } from 'socket.io-client';
 import { C2S_LOBBY, STAKE_LEVELS } from '@poker/shared';
 import type { StakeLevel } from '@poker/shared';
@@ -20,6 +20,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState(1000);
   const [creating, setCreating] = useState(false);
+  const modalOpenedAt = useRef(0);
   const t = useT();
 
   const handleCreateTable = (stakeLevel: StakeLevel) => {
@@ -79,45 +80,50 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Balance display */}
-          <div
-            className="flex items-center gap-2"
-            style={{
-              padding: '6px 12px',
-              borderRadius: 8,
-              background: 'rgba(0,0,0,0.3)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <span style={{ color: 'var(--ftp-gold)', fontSize: 12, fontWeight: 600 }}>
-              {t('balance_label')}
-            </span>
-            <span className="font-mono" style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>
-              {accountBalance.toLocaleString()}
-            </span>
-            <button
-              onClick={() => setShowDepositModal(true)}
+          {/* Balance + Deposit */}
+          <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2"
               style={{
-                padding: '4px 10px',
-                borderRadius: 6,
+                padding: '6px 12px',
+                borderRadius: 8,
+                background: 'rgba(0,0,0,0.3)',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}
+            >
+              <span style={{ color: 'var(--ftp-gold)', fontSize: 12, fontWeight: 600 }}>
+                {t('balance_label')}
+              </span>
+              <span className="font-mono" style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>
+                {accountBalance.toLocaleString()}
+              </span>
+            </div>
+            <button
+              onPointerDown={(e) => { e.stopPropagation(); modalOpenedAt.current = Date.now(); setShowDepositModal(true); }}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 8,
                 background: 'linear-gradient(180deg, #16A34A, #15803D)',
                 color: 'white',
                 fontWeight: 700,
-                fontSize: 11,
+                fontSize: 14,
                 border: 'none',
                 cursor: 'pointer',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
+                minWidth: 52,
+                minHeight: 44,
+                touchAction: 'manipulation',
               }}
             >
-              +
+              Deposit
             </button>
           </div>
           <ThemeToggle />
           <LanguageToggle />
           {tables.length > 0 && (
             <button
-              onClick={() => isConnected && !creating && setShowCreateModal(true)}
+              onClick={() => { if (isConnected && !creating) { modalOpenedAt.current = Date.now(); setShowCreateModal(true); } }}
               disabled={!isConnected || creating}
               style={{
                 padding: '10px 20px',
@@ -156,7 +162,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
             </div>
           )}
           <button
-            onClick={() => isConnected && !creating && setShowCreateModal(true)}
+            onClick={() => { if (isConnected && !creating) { modalOpenedAt.current = Date.now(); setShowCreateModal(true); } }}
             disabled={!isConnected || creating}
             style={{
               padding: '14px 32px',
@@ -255,7 +261,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.7)' }}
-          onClick={() => setShowCreateModal(false)}
+          onClick={() => { if (Date.now() - modalOpenedAt.current > 300) setShowCreateModal(false); }}
         >
           <div
             className="w-full max-w-sm"
@@ -330,7 +336,7 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.7)' }}
-          onClick={() => setShowDepositModal(false)}
+          onClick={() => { if (Date.now() - modalOpenedAt.current > 300) setShowDepositModal(false); }}
         >
           <div
             className="w-full max-w-xs p-6"
