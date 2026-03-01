@@ -8,7 +8,6 @@ import { LoginScreen } from './LoginScreen.js';
 import { LobbyScreen } from './LobbyScreen.js';
 import { GameScreen } from './GameScreen.js';
 import { TableLobbyScreen } from './TableLobbyScreen.js';
-import { WatchingScreen } from './WatchingScreen.js';
 import { RunItTwicePrompt } from './RunItTwicePrompt.js';
 import { ShowCardsPrompt } from './ShowCardsPrompt.js';
 import { RebuyPrompt } from './RebuyPrompt.js';
@@ -129,7 +128,7 @@ export function PlayerView() {
 
     socket.on(S2C_LOBBY.TABLE_CREATED, (data: { tableId: string }) => {
       setWatchingTableId(data.tableId);
-      setScreen('watching');
+      setScreen('game');
     });
 
     socket.on(S2C_PLAYER.JOINED, (data: { playerId: string; playerToken?: string; tableId: string }) => {
@@ -246,8 +245,15 @@ export function PlayerView() {
     setCurrentTableId(null);
     setLobbyState(null);
     setPrivateState(null);
-    setScreen('watching');
-  }, [setCurrentTableId, setLobbyState, setPrivateState, setScreen, setWatchingTableId]);
+    // Stay on 'game' screen — GameScreen auto-switches to watching mode when privateState is null
+  }, [setCurrentTableId, setLobbyState, setPrivateState, setWatchingTableId]);
+
+  const handleBackToLobby = useCallback(() => {
+    useGameStore.getState().setGameState(null);
+    useGameStore.getState().clearChat();
+    setWatchingTableId(null);
+    setScreen('table_lobby');
+  }, [setWatchingTableId, setScreen]);
 
   const openHistory = useCallback(() => {
     socketRef.current.emit('player:get_history');
@@ -277,14 +283,12 @@ export function PlayerView() {
         return <LoginScreen socket={socketRef.current} />;
       case 'table_lobby':
         return <TableLobbyScreen socket={socketRef.current} />;
-      case 'watching':
-        return <WatchingScreen playerSocket={socketRef.current} />;
       case 'lobby':
         return <LobbyScreen />;
       case 'game':
         return supportsVR
           ? <XRGameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} speechBubble={activeBubble} onSpeechBubbleDone={onBubbleDone} />
-          : <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} speechBubble={activeBubble} onSpeechBubbleDone={onBubbleDone} />;
+          : <GameScreen socket={socketRef.current} onOpenHistory={openHistory} onLeaveTable={handleLeaveTable} onBack={handleBackToLobby} speechBubble={activeBubble} onSpeechBubbleDone={onBubbleDone} />;
       default:
         return <LoginScreen socket={socketRef.current} />;
     }
@@ -292,15 +296,11 @@ export function PlayerView() {
 
   const selectedIdx = selectedHand ? handHistoryData.findIndex(h => h.handId === selectedHand.handId) : -1;
 
-  // Group watching/game under same key so AnimatePresence doesn't animate between them
-  // (both show the same poker table — animating causes a black flash)
-  const transitionKey = (screen === 'watching' || screen === 'game') ? 'table-view' : screen;
-
   return (
     <>
       <AnimatePresence mode="wait">
         <motion.div
-          key={transitionKey}
+          key={screen}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
