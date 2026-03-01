@@ -35,6 +35,7 @@ export const lavaTheme: ThemeConfig = {
   ...basicTheme,
   id: 'lava',
   name: 'Lava',
+  shuffleStyle: 'burst',
   suitColors: { ...basicTheme.suitColors },
   chipColors: {
     white: { ...basicTheme.chipColors.white },

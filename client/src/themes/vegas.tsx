@@ -35,6 +35,7 @@ export const vegasTheme: ThemeConfig = {
   ...basicTheme,
   id: 'vegas',
   name: 'Vegas',
+  shuffleStyle: 'speed',
   suitColors: { ...basicTheme.suitColors },
   chipColors: {
     white: { ...basicTheme.chipColors.white },

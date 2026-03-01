@@ -13,6 +13,7 @@ import { useT } from '../../hooks/useT.js';
 import { useTheme } from '../../themes/useTheme.js';
 import { BadBeatBubble } from './BadBeatBubble.js';
 import { ChipTrickAnimation } from './ChipTrickAnimation.js';
+import { DeckShuffleAnimation } from './DeckShuffleAnimation.js';
 import type { BadBeatData, ChipTrickData } from '../../hooks/useTableAnimations.js';
 
 // Virtual table dimensions — defines the fixed aspect ratio (18:11)
@@ -127,6 +128,8 @@ interface PokerTableProps {
   onChipTrickClick?: () => void;
   /** The 5 cards that make up the winning hand (for glow/dim on individual cards) */
   winningCards?: CardString[];
+  /** Whether the deck shuffle animation is playing */
+  shuffling?: boolean;
 }
 
 // Table center in percentage coordinates
@@ -186,13 +189,14 @@ export function PokerTable({
   speechBubble, onSpeechBubbleDone,
   chipTrick, onChipTrickClick,
   winningCards = [],
+  shuffling,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const numHoleCards = config.gameType === 'PLO' ? 4 : 2;
   const [chipAnimations, setChipAnimations] = useState<ChipAnimation[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
   const t = useT();
-  const { gradients, watermark } = useTheme();
+  const { gradients, watermark, shuffleStyle } = useTheme();
 
   // Dealer button animation state
   const prevDealerSeatRef = useRef<number | null>(null);
@@ -771,6 +775,14 @@ export function PokerTable({
           </>
         );
       })()}
+
+      {/* Deck shuffle animation */}
+      {shuffling && (
+        <DeckShuffleAnimation
+          shuffleStyle={shuffleStyle}
+          onComplete={() => {}}
+        />
+      )}
 
       {/* Waiting message */}
       {phase === 'waiting_for_players' && (

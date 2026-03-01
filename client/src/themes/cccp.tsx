@@ -32,6 +32,7 @@ export const cccpTheme: ThemeConfig = {
   ...basicTheme,
   id: 'cccp',
   name: 'CCCP',
+  shuffleStyle: 'smash',
   // Spread nested objects to ensure deep copy
   suitColors: { ...basicTheme.suitColors },
   chipColors: {

@@ -96,9 +96,9 @@ No CSS Modules, no styled-components, no Sass.
 - **Animation timing:** `--ftp-anim-*` (e.g. `--ftp-anim-card-deal: 350ms`)
 - **Easing:** `--ftp-ease-*` (e.g. `--ftp-ease-overshoot` for pop-in effects)
 
-### Two Rendering Targets
-- **Watching view** (WatchingScreen) — full-screen `w-screen h-screen`, dark radial gradient bg, large text, no scrolling
+### Rendering
 - **Phone view** (GameScreen) — `min-h-screen flex flex-col`, 79vh mini-table + action area, scaled via CSS `transform`
+- **Watching view** (WatchingScreen) — spectator view using same layout as phone view
 
 ### Component Patterns
 - Shared components in `client/src/components/` (Card, CardBack, ChipStack, SoundToggle, BugReport*)

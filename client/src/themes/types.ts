@@ -3,6 +3,9 @@ import type { Suit, ChipDenomination } from '@poker/shared';
 
 export type ThemeId = 'basic' | 'cccp' | 'midnight' | 'vegas' | 'arctic' | 'lava';
 
+/** Shuffle animation style for deck shuffle at hand start */
+export type ShuffleStyle = 'riffle' | 'smash' | 'fan' | 'speed' | 'slide' | 'burst';
+
 /** All --ftp-* CSS custom properties that ThemeApplier writes to :root */
 export interface ThemeCSSVars {
   // Brand
@@ -198,6 +201,7 @@ export interface ThemeAssets {
 export interface ThemeConfig {
   id: ThemeId;
   name: string;
+  shuffleStyle: ShuffleStyle;
   cssVars: ThemeCSSVars;
   suitColors: ThemeSuitColors;
   chipColors: ThemeChipColors;

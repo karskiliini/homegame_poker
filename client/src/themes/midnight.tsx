@@ -29,6 +29,7 @@ export const midnightTheme: ThemeConfig = {
   ...basicTheme,
   id: 'midnight',
   name: 'Midnight',
+  shuffleStyle: 'fan',
   suitColors: { ...basicTheme.suitColors },
   chipColors: {
     white: { ...basicTheme.chipColors.white },

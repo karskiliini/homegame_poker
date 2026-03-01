@@ -13,7 +13,7 @@ poker_softa/
     themes/         # Table themes (basic, cccp, midnight, vegas, arctic, lava)
     views/
       player/       # Phone UI (GameScreen, ActionButtons, Lobby, Login, Watching)
-      table/        # TV UI (PokerTable, PlayerSeat, BetChip, PotDisplay)
+      table/        # Table UI (PokerTable, PlayerSeat, BetChip, PotDisplay, DeckShuffleAnimation)
       history/      # HandHistoryDetail, HandHistoryList
     socket.ts       # Client socket connection
     App.tsx         # Root component
@@ -42,7 +42,7 @@ poker_softa/
 | Player UI | - | views/player/GameScreen.tsx, ActionButtons.tsx, PreActionButtons.tsx | betSizing.ts, preAction.ts |
 | Lobby/Login | socket/player-namespace.ts | views/player/LobbyScreen.tsx, LoginScreen.tsx | types/lobby.ts |
 | Themes | - | themes/*.tsx, themes/types.ts, useTheme.ts, styles/index.css | - |
-| Animations | - | hooks/useTableAnimations.ts, views/table/ChipTrickAnimation.tsx, styles/index.css | - |
+| Animations | - | hooks/useTableAnimations.ts, views/table/ChipTrickAnimation.tsx, views/table/DeckShuffleAnimation.tsx, styles/index.css | - |
 | Sound | - | audio/SoundManager.ts, components/SoundToggle.tsx | types/sound.ts |
 | i18n | - | i18n/translations.ts, hooks/useT.ts, components/LanguageToggle.tsx | - |
 | Rebuy/Sit-out | game/GameManager.ts | views/player/RebuyPrompt.tsx | - |
@@ -59,7 +59,7 @@ poker_softa/
 |------|-------|-------------|
 | server/src/game/GameManager.ts | ~1130 | Main game logic, state machine |
 | server/src/game/HandEngine.ts | ~960 | Hand play, betting rounds |
-| client/src/views/table/PokerTable.tsx | ~930 | TV table rendering |
+| client/src/views/table/PokerTable.tsx | ~930 | Table rendering |
 | client/src/styles/index.css | ~750 | Design tokens, keyframe animations |
 | client/src/views/player/GameScreen.tsx | ~510 | Player phone main view |
 | server/src/socket/player-namespace.ts | ~380 | Player socket event handlers |

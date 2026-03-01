@@ -48,6 +48,7 @@ const arcticWatermark = (
 export const arcticTheme: ThemeConfig = {
   ...basicTheme,
   id: 'arctic',
+  shuffleStyle: 'slide',
   name: 'Arctic',
   suitColors: { ...basicTheme.suitColors },
   chipColors: {

@@ -86,7 +86,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     potAwards, winnerSeats, winningCards, awardingPotIndex,
     timerData, collectingBets, potGrow,
     betChipAnimations, dealCardAnimations,
-    equities, dramaticRiver, badBeat, chipTrick,
+    equities, dramaticRiver, badBeat, chipTrick, shuffling,
   } = useTableAnimations({
     socket: tableSocketRef.current,
     containerRef: tableContainerRef,
@@ -209,6 +209,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
               onSeatClick={handleSeatClick}
               speechBubble={activeBubble}
               onSpeechBubbleDone={onBubbleDone}
+              shuffling={shuffling}
             />
           </div>
         ) : (

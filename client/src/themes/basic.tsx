@@ -18,6 +18,7 @@ const basicWatermark = (
 export const basicTheme: ThemeConfig = {
   id: 'basic',
   name: 'Basic',
+  shuffleStyle: 'riffle',
 
   cssVars: {
     // Brand

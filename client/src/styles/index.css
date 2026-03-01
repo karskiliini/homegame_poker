@@ -105,6 +105,7 @@
   --ftp-anim-fold: 600ms;
   --ftp-anim-bad-beat: 3000ms;
   --ftp-anim-chip-trick: 2500ms;
+  --ftp-anim-shuffle: 1800ms;
 
   /* EASING */
   --ftp-ease-deal: cubic-bezier(0.25, 0.1, 0.25, 1.0);
@@ -744,4 +745,113 @@ input[type="range"].ftp-volume-slider::-webkit-slider-thumb:hover {
 
 .animate-chip-trick-knuckle-roll {
   animation: chip-trick-knuckle-roll var(--ftp-anim-chip-trick) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ============================================================
+   Deck Shuffle Animations
+   ============================================================ */
+
+/* Container: fade in + fade out */
+@keyframes shuffle-container {
+  0% { opacity: 0; transform: scale(0.8); }
+  10% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+
+.animate-shuffle-container {
+  position: relative;
+  width: 100px;
+  height: 72px;
+  animation: shuffle-container var(--ftp-anim-shuffle) ease-in-out forwards;
+}
+
+/* Riffle: classic split & interleave (basic theme) */
+@keyframes shuffle-riffle {
+  0% { transform: translateX(0) translateY(0); }
+  15% { transform: translateX(calc(var(--shuffle-dir) * 30px)) translateY(0); }
+  35% { transform: translateX(calc(var(--shuffle-dir) * 30px)) translateY(-16px); }
+  55% { transform: translateX(calc(var(--shuffle-dir) * 10px)) translateY(-8px); }
+  75% { transform: translateX(0) translateY(-4px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+.animate-shuffle-riffle {
+  animation: shuffle-riffle var(--ftp-anim-shuffle) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Smash: forceful slam together (cccp theme) */
+@keyframes shuffle-smash {
+  0% { transform: translateX(0) rotate(0deg); }
+  10% { transform: translateX(calc(var(--shuffle-dir) * 50px)) rotate(calc(var(--shuffle-dir) * -5deg)); }
+  30% { transform: translateX(calc(var(--shuffle-dir) * 50px)) rotate(calc(var(--shuffle-dir) * 3deg)); }
+  45% { transform: translateX(calc(var(--shuffle-dir) * 2px)) rotate(0deg) scale(1.1); }
+  55% { transform: translateX(calc(var(--shuffle-dir) * 40px)) rotate(calc(var(--shuffle-dir) * -3deg)); }
+  70% { transform: translateX(calc(var(--shuffle-dir) * 3px)) rotate(0deg) scale(1.05); }
+  85% { transform: translateX(0) rotate(0deg) scale(1); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+.animate-shuffle-smash {
+  animation: shuffle-smash var(--ftp-anim-shuffle) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Fan: elegant spread & collect (midnight theme) */
+@keyframes shuffle-fan {
+  0% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(calc(var(--shuffle-dir) * 20px)) rotate(calc(var(--shuffle-dir) * 25deg)); }
+  45% { transform: translateX(calc(var(--shuffle-dir) * 35px)) rotate(calc(var(--shuffle-dir) * 40deg)); }
+  65% { transform: translateX(calc(var(--shuffle-dir) * 20px)) rotate(calc(var(--shuffle-dir) * 15deg)); }
+  85% { transform: translateX(calc(var(--shuffle-dir) * 5px)) rotate(calc(var(--shuffle-dir) * 3deg)); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+.animate-shuffle-fan {
+  animation: shuffle-fan var(--ftp-anim-shuffle) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Speed: rapid professional riffle (vegas theme) */
+@keyframes shuffle-speed {
+  0% { transform: translateX(0) translateY(0); }
+  8% { transform: translateX(calc(var(--shuffle-dir) * 28px)) translateY(-8px); }
+  20% { transform: translateX(0) translateY(-4px); }
+  28% { transform: translateX(calc(var(--shuffle-dir) * 25px)) translateY(-12px); }
+  40% { transform: translateX(0) translateY(-2px); }
+  48% { transform: translateX(calc(var(--shuffle-dir) * 22px)) translateY(-10px); }
+  60% { transform: translateX(0) translateY(-2px); }
+  68% { transform: translateX(calc(var(--shuffle-dir) * 18px)) translateY(-6px); }
+  80% { transform: translateX(0) translateY(0); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+.animate-shuffle-speed {
+  animation: shuffle-speed var(--ftp-anim-shuffle) linear forwards;
+}
+
+/* Slide: smooth gliding motion (arctic theme) */
+@keyframes shuffle-slide {
+  0% { transform: translateX(0) translateY(0) rotate(0deg); }
+  20% { transform: translateX(calc(var(--shuffle-dir) * 35px)) translateY(-3px) rotate(0deg); }
+  40% { transform: translateX(calc(var(--shuffle-dir) * 15px)) translateY(-6px) rotate(calc(var(--shuffle-dir) * 2deg)); }
+  60% { transform: translateX(calc(var(--shuffle-dir) * 30px)) translateY(-3px) rotate(calc(var(--shuffle-dir) * -2deg)); }
+  80% { transform: translateX(calc(var(--shuffle-dir) * 5px)) translateY(-1px) rotate(0deg); }
+  100% { transform: translateX(0) translateY(0) rotate(0deg); }
+}
+
+.animate-shuffle-slide {
+  animation: shuffle-slide var(--ftp-anim-shuffle) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Burst: explosive scatter & reform (lava theme) */
+@keyframes shuffle-burst {
+  0% { transform: translateX(0) translateY(0) rotate(0deg) scale(1); }
+  15% { transform: translateX(calc(var(--shuffle-dir) * 45px)) translateY(-20px) rotate(calc(var(--shuffle-dir) * 15deg)) scale(1.1); }
+  30% { transform: translateX(calc(var(--shuffle-dir) * 50px)) translateY(-30px) rotate(calc(var(--shuffle-dir) * 25deg)) scale(0.95); }
+  50% { transform: translateX(calc(var(--shuffle-dir) * 20px)) translateY(-15px) rotate(calc(var(--shuffle-dir) * 10deg)) scale(1.05); }
+  70% { transform: translateX(calc(var(--shuffle-dir) * 5px)) translateY(-5px) rotate(calc(var(--shuffle-dir) * 2deg)) scale(1); }
+  100% { transform: translateX(0) translateY(0) rotate(0deg) scale(1); }
+}
+
+.animate-shuffle-burst {
+  animation: shuffle-burst var(--ftp-anim-shuffle) cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }

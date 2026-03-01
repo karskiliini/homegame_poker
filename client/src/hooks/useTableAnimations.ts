@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { S2C_TABLE, CHIP_TRICK_DURATION_MS, DELAY_SHOWDOWN_REVEAL_INTERVAL_MS } from '@poker/shared';
+import { SHUFFLE_DURATION_MS } from '../views/table/DeckShuffleAnimation.js';
 import type { GameState, SoundType, CardString, ChipTrickType } from '@poker/shared';
 import { SEAT_POSITIONS, BET_POSITIONS } from '../views/table/PokerTable.js';
 import type { BetChipAnimation, DealCardAnimation } from '../views/table/PokerTable.js';
@@ -56,6 +57,7 @@ interface UseTableAnimationsResult {
   dramaticRiver: boolean;
   badBeat: BadBeatData | null;
   chipTrick: ChipTrickData | null;
+  shuffling: boolean;
 }
 
 let animId = 0;
@@ -81,6 +83,7 @@ export function useTableAnimations({
   const [dramaticRiver, setDramaticRiver] = useState(false);
   const [badBeat, setBadBeat] = useState<BadBeatData | null>(null);
   const [chipTrick, setChipTrick] = useState<ChipTrickData | null>(null);
+  const [shuffling, setShuffling] = useState(false);
 
   // Helper: resolve display position for a seat index (respects rotation)
   const getSeatPos = (seatIndex: number) => {
@@ -162,7 +165,7 @@ export function useTableAnimations({
       }
     };
 
-    const onCardsDealt = (data: {
+    const startDealAnimations = (data: {
       dealerSeatIndex: number;
       seatIndices: number[];
     }) => {
@@ -199,6 +202,18 @@ export function useTableAnimations({
           }, delay);
         }
       }
+    };
+
+    const onCardsDealt = (data: {
+      dealerSeatIndex: number;
+      seatIndices: number[];
+    }) => {
+      // Show shuffle animation first, then deal cards after it finishes
+      setShuffling(true);
+      setTimeout(() => {
+        setShuffling(false);
+        startDealAnimations(data);
+      }, SHUFFLE_DURATION_MS);
     };
 
     const onPotAward = (data: {
@@ -374,5 +389,6 @@ export function useTableAnimations({
     dramaticRiver,
     badBeat,
     chipTrick,
+    shuffling,
   };
 }
