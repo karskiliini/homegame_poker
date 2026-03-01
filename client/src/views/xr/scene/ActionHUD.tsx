@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Html } from '@react-three/drei';
 import type { Socket } from 'socket.io-client';
 import type { PrivatePlayerState, GameConfig } from '@poker/shared';
@@ -14,13 +15,17 @@ interface ActionHUDProps {
 }
 
 export function ActionHUD({ position, socket, privateState, gameConfig, isHandActive }: ActionHUDProps) {
+  // Optimistic action hiding (Bug #23)
+  const [actionSentForTurn, setActionSentForTurn] = useState(false);
+  useEffect(() => { setActionSentForTurn(false); }, [privateState]);
+
   if (!privateState) return null;
 
   const isFolded = privateState.status === 'folded';
   const isSittingOut = privateState.status === 'sitting_out';
   const isBusted = privateState.status === 'busted';
   const isAllIn = privateState.status === 'all_in';
-  const showActions = privateState.isMyTurn && isHandActive && privateState.availableActions.length > 0;
+  const showActions = privateState.isMyTurn && isHandActive && privateState.availableActions.length > 0 && !actionSentForTurn;
 
   return (
     <group position={position}>
@@ -95,6 +100,7 @@ export function ActionHUD({ position, socket, privateState, gameConfig, isHandAc
               bigBlind={gameConfig?.bigBlind ?? 2}
               maxBuyIn={gameConfig?.maxBuyIn ?? 200}
               gameType={gameConfig?.gameType ?? 'NLHE'}
+              onActionSent={() => setActionSentForTurn(true)}
             />
           ) : isSittingOut && privateState.stack > 0 ? (
             <button

@@ -17,11 +17,12 @@ interface ActionButtonsProps {
   bigBlind: number;
   maxBuyIn: number;
   gameType: GameType;
+  onActionSent?: () => void;
 }
 
 export function ActionButtons({
   socket, availableActions, callAmount, minRaise, maxRaise, stack, currentBet,
-  potTotal, bigBlind, maxBuyIn, gameType,
+  potTotal, bigBlind, maxBuyIn, gameType, onActionSent,
 }: ActionButtonsProps) {
   const [raiseAmount, setRaiseAmount] = useState(minRaise);
   const [inputValue, setInputValue] = useState('');
@@ -39,6 +40,7 @@ export function ActionButtons({
   }, [minRaise, maxRaise]);
 
   const sendAction = (action: ActionType, amount?: number) => {
+    onActionSent?.();
     socket.emit(C2S.ACTION, { action, amount });
   };
 

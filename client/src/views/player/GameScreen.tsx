@@ -98,6 +98,15 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   const [preAction, setPreAction] = useState<PreActionType | null>(null);
   const prevIsMyTurn = useRef(false);
 
+  // Optimistic action hiding: hide buttons immediately after player acts,
+  // before server sends updated privateState (Bug #23)
+  const [actionSentForTurn, setActionSentForTurn] = useState(false);
+
+  // Reset optimistic hide when server sends new privateState
+  useEffect(() => {
+    setActionSentForTurn(false);
+  }, [privateState]);
+
   // Auto-action when it becomes our turn
   useEffect(() => {
     if (!privateState) return;
@@ -110,6 +119,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
     setPreAction(null);
 
     if (autoAction) {
+      setActionSentForTurn(true);
       socket.emit(C2S.ACTION, { action: autoAction });
     }
   }, [privateState?.isMyTurn, preAction, privateState?.availableActions, socket]);
@@ -129,7 +139,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   const sitOutNextHand = privateState?.sitOutNextHand ?? false;
   const autoMuck = privateState?.autoMuck ?? false;
   const isHandActive = lobbyState?.phase === 'hand_in_progress';
-  const showActions = privateState?.isMyTurn && isHandActive && (privateState?.availableActions.length ?? 0) > 0;
+  const showActions = privateState?.isMyTurn && isHandActive && (privateState?.availableActions.length ?? 0) > 0 && !actionSentForTurn;
   const showPreActions = !privateState?.isMyTurn && isHandActive && !isFolded && !isSittingOut && !isBusted && !isAllIn && (privateState?.holeCards.length ?? 0) > 0;
 
   const handleChipTrick = useCallback(() => {
@@ -326,6 +336,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               bigBlind={config?.bigBlind ?? 2}
               maxBuyIn={config?.maxBuyIn ?? 200}
               gameType={config?.gameType ?? 'NLHE'}
+              onActionSent={() => setActionSentForTurn(true)}
             />
           ) : showPreActions ? (
             <PreActionButtons preAction={preAction} setPreAction={setPreAction} />
