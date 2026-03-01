@@ -19,7 +19,8 @@ poker_softa/
     socket.ts       # Client socket connection
     App.tsx         # Root component
   server/src/
-    db/             # SQLite (players.ts, bugs.ts)
+    db/             # Database abstraction (types.ts, index.ts)
+      sqlite/       # SQLite implementation (database.ts, player-repo.ts, session-repo.ts, balance-repo.ts, bug-repo.ts)
     evaluation/     # hand-rank.ts, equity.ts, bad-beat.ts
     game/           # GameManager, HandEngine, PotManager, Deck, TableManager
     socket/         # player-namespace.ts, table-namespace.ts
@@ -49,7 +50,7 @@ poker_softa/
 | i18n | - | i18n/translations.ts, hooks/useT.ts, components/LanguageToggle.tsx | - |
 | Rebuy/Sit-out | game/GameManager.ts | views/player/RebuyPrompt.tsx | - |
 | Hand history | - | views/history/HandHistoryDetail.tsx, HandHistoryList.tsx | types/hand-history.ts |
-| Database | db/players.ts, db/bugs.ts | - | - |
+| Database | db/types.ts, db/index.ts, db/sqlite/*.ts | - | - |
 | Chips visual | - | components/ChipStack.tsx, views/table/BetChip.tsx, PotDisplay.tsx | chipUtils.ts |
 | Chat | - | components/ChatWindow.tsx, ChatInput.tsx | types/chat.ts |
 | Run it twice | game/GameManager.ts, HandEngine.ts | views/player/RunItTwicePrompt.tsx | - |
