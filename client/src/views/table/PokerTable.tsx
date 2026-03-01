@@ -278,12 +278,21 @@ export function PokerTable({
     return { x: (dx / len) * scale, y: (dy / len) * scale };
   }, [getDisplaySeatPos]);
 
-  // Compute dealer button position in pixels for a given seat index
+  // Compute dealer button position in pixels for a given seat index.
+  // Places the button on the side of the avatar closest to the table center
+  // so it never overlaps the avatar or goes off-screen.
   const getDealerBtnPos = useCallback((seatIndex: number) => {
     const pos = getDisplaySeatPos(seatIndex);
+    const cx = (pos.x / 100) * TABLE_VIRTUAL_W;
+    const cy = (pos.y / 100) * TABLE_VIRTUAL_H;
+    // Direction from seat toward table center
+    const dx = TABLE_VIRTUAL_W / 2 - cx;
+    const dy = TABLE_VIRTUAL_H / 2 - cy;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    // Place button 52px from seat center toward table center
     return {
-      x: (pos.x / 100) * TABLE_VIRTUAL_W + 42,
-      y: (pos.y / 100) * TABLE_VIRTUAL_H - 16,
+      x: cx + (dx / len) * 52,
+      y: cy + (dy / len) * 52,
     };
   }, [getDisplaySeatPos]);
 
@@ -858,14 +867,14 @@ export function PokerTable({
             style={{
               left: btnPos.x,
               top: btnPos.y,
-              width: 24,
-              height: 24,
+              width: 32,
+              height: 32,
               borderRadius: '50%',
               background: gradients.dealerButton,
               border: '2px solid #F9A825',
               color: '#5D4037',
-              fontSize: 11,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 6px rgba(255,213,79,0.3)',
+              fontSize: 14,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.4), 0 0 8px rgba(255,213,79,0.4)',
               zIndex: 15,
               transform: 'translate(-50%, -50%)',
             }}
@@ -880,14 +889,14 @@ export function PokerTable({
           style={{
             left: dealerMoveAnim.toX,
             top: dealerMoveAnim.toY,
-            width: 24,
-            height: 24,
+            width: 32,
+            height: 32,
             borderRadius: '50%',
             background: gradients.dealerButton,
             border: '2px solid #F9A825',
             color: '#5D4037',
-            fontSize: 11,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 6px rgba(255,213,79,0.3)',
+            fontSize: 14,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.4), 0 0 8px rgba(255,213,79,0.4)',
             zIndex: 15,
             '--start-x': `${dealerMoveAnim.fromX - dealerMoveAnim.toX}px`,
             '--start-y': `${dealerMoveAnim.fromY - dealerMoveAnim.toY}px`,
