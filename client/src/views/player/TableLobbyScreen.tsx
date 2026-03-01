@@ -3,6 +3,7 @@ import type { Socket } from 'socket.io-client';
 import { C2S_LOBBY, STAKE_LEVELS } from '@poker/shared';
 import type { StakeLevel } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
+import { openTableWindow, useOpenTables } from '../../hooks/useTableWindows.js';
 import { VersionInfo } from '../../components/VersionInfo.js';
 import { useT } from '../../hooks/useT.js';
 import { LanguageToggle } from '../../components/LanguageToggle.js';
@@ -13,7 +14,8 @@ interface TableLobbyScreenProps {
 }
 
 export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
-  const { tables, playerName, isConnected, setWatchingTableId, setScreen, accountBalance } = useGameStore();
+  const { tables, playerName, isConnected, accountBalance } = useGameStore();
+  const { isTableOpen } = useOpenTables();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState(1000);
@@ -26,16 +28,14 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
     setShowCreateModal(false);
     socket.emit(C2S_LOBBY.CREATE_TABLE, { stakeLevelId: stakeLevel.id }, (response: { tableId: string }) => {
       setCreating(false);
-      setWatchingTableId(response.tableId);
-      setScreen('watching');
+      openTableWindow(response.tableId);
     });
     // Timeout: if server doesn't respond within 5s, reset state
     setTimeout(() => setCreating(false), 5000);
   };
 
   const handleWatchTable = (tableId: string) => {
-    setWatchingTableId(tableId);
-    setScreen('watching');
+    openTableWindow(tableId);
   };
 
   const handleDeposit = () => {
@@ -222,8 +222,21 @@ export function TableLobbyScreen({ socket }: TableLobbyScreenProps) {
                   fontSize: 14,
                 }}
               >
-                <div style={{ flex: 3, textAlign: 'left', fontWeight: 500 }}>
+                <div className="flex items-center" style={{ flex: 3, textAlign: 'left', fontWeight: 500 }}>
                   {table.name}
+                  {isTableOpen(table.tableId) && (
+                    <span style={{
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      background: '#16A34A',
+                      color: 'white',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      marginLeft: 6,
+                    }}>
+                      OPEN
+                    </span>
+                  )}
                 </div>
                 <div className="font-mono" style={{ flex: 2, textAlign: 'center' }}>
                   {table.stakeLevel.label}
