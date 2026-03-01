@@ -89,30 +89,65 @@ describe('Leave Table -> Spectator flow', () => {
     expect(afterStore.screen).toBe('table_lobby');
   });
 
-  it('player with active status should NOT see Leave Table button', () => {
+  it('only player at table (waiting status, no hand) should see Leave Table button', () => {
+    // Bug: first player joins, status='waiting', no hand active → Leave Table missing
+    useGameStore.setState({
+      privateState: { ...makeSittingOutState(), status: 'waiting' },
+      lobbyState: { phase: 'waiting_for_players' } as any,
+    });
+    const store = useGameStore.getState();
+    const isSittingOut = store.privateState?.status === 'sitting_out';
+    const isHandActive = store.lobbyState?.phase === 'hand_in_progress';
+    // Leave Table should show when sitting out OR no hand active
+    const showLeaveTable = isSittingOut || !isHandActive;
+    expect(showLeaveTable).toBe(true);
+  });
+
+  it('player with active status during hand should NOT see Leave Table button', () => {
     useGameStore.setState({
       privateState: { ...makeSittingOutState(), status: 'active' },
+      lobbyState: { phase: 'hand_in_progress' } as any,
     });
     const store = useGameStore.getState();
     const isSittingOut = store.privateState?.status === 'sitting_out';
-    expect(isSittingOut).toBe(false);
+    const isHandActive = store.lobbyState?.phase === 'hand_in_progress';
+    const showLeaveTable = isSittingOut || !isHandActive;
+    expect(showLeaveTable).toBe(false);
   });
 
-  it('folded player should NOT see Leave Table button', () => {
+  it('folded player during hand should NOT see Leave Table button', () => {
     useGameStore.setState({
       privateState: { ...makeSittingOutState(), status: 'folded' },
+      lobbyState: { phase: 'hand_in_progress' } as any,
     });
     const store = useGameStore.getState();
     const isSittingOut = store.privateState?.status === 'sitting_out';
-    expect(isSittingOut).toBe(false);
+    const isHandActive = store.lobbyState?.phase === 'hand_in_progress';
+    const showLeaveTable = isSittingOut || !isHandActive;
+    expect(showLeaveTable).toBe(false);
   });
 
-  it('busted player should NOT see Leave Table button (they have separate rebuy flow)', () => {
+  it('sitting_out player during hand SHOULD see Leave Table button', () => {
     useGameStore.setState({
-      privateState: { ...makeSittingOutState(), status: 'busted' },
+      privateState: makeSittingOutState(),
+      lobbyState: { phase: 'hand_in_progress' } as any,
     });
     const store = useGameStore.getState();
     const isSittingOut = store.privateState?.status === 'sitting_out';
-    expect(isSittingOut).toBe(false);
+    const isHandActive = store.lobbyState?.phase === 'hand_in_progress';
+    const showLeaveTable = isSittingOut || !isHandActive;
+    expect(showLeaveTable).toBe(true);
+  });
+
+  it('busted player between hands should see Leave Table button', () => {
+    useGameStore.setState({
+      privateState: { ...makeSittingOutState(), status: 'busted' },
+      lobbyState: { phase: 'waiting_for_players' } as any,
+    });
+    const store = useGameStore.getState();
+    const isSittingOut = store.privateState?.status === 'sitting_out';
+    const isHandActive = store.lobbyState?.phase === 'hand_in_progress';
+    const showLeaveTable = isSittingOut || !isHandActive;
+    expect(showLeaveTable).toBe(true);
   });
 });

@@ -242,7 +242,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, onBack, speech
             </button>
           </div>
         )}
-        {!isWatching && onLeaveTable && isSittingOut && (
+        {!isWatching && onLeaveTable && (isSittingOut || !isHandActive) && (
           <div className="absolute top-3 left-3 z-30">
             <button
               onClick={onLeaveTable}
