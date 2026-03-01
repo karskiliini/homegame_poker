@@ -81,10 +81,10 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
       ts.emit(C2S_TABLE.UNWATCH);
       ts.off('connect', handleConnect);
       ts.disconnect();
-      setGameState(null);
-      clearChat();
+      // Don't clear gameState/chat here — preserves table for smooth watching↔game transition.
+      // State is cleared in handleBack when navigating to table lobby.
     };
-  }, [watchingTableId, setGameState, addChatMessage, enqueue, clearChat]);
+  }, [watchingTableId, addChatMessage, enqueue]);
 
   const {
     potAwards, winnerSeats, winningCards, awardingPotIndex,
@@ -115,9 +115,11 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   }, []);
 
   const handleBack = useCallback(() => {
+    setGameState(null);
+    clearChat();
     setWatchingTableId(null);
     setScreen('table_lobby');
-  }, [setWatchingTableId, setScreen]);
+  }, [setGameState, clearChat, setWatchingTableId, setScreen]);
 
   const handleSeatClick = useCallback((seatIndex: number) => {
     setSelectedSeat(seatIndex);

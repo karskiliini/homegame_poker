@@ -292,11 +292,15 @@ export function PlayerView() {
 
   const selectedIdx = selectedHand ? handHistoryData.findIndex(h => h.handId === selectedHand.handId) : -1;
 
+  // Group watching/game under same key so AnimatePresence doesn't animate between them
+  // (both show the same poker table — animating causes a black flash)
+  const transitionKey = (screen === 'watching' || screen === 'game') ? 'table-view' : screen;
+
   return (
     <>
       <AnimatePresence mode="wait">
         <motion.div
-          key={screen}
+          key={transitionKey}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
