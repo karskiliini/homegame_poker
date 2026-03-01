@@ -38,6 +38,7 @@ const en = {
   watching_confirm: 'Confirm',
   watching_cancel: 'Cancel',
   watching_connecting: 'Connecting...',
+  watching_already_seated: 'You are already seated at this table',
 
   // Game
   game_leave_table: 'Leave Table',
@@ -212,6 +213,7 @@ export const translations: Record<Language, Translations> = {
     watching_confirm: 'Vahvista',
     watching_cancel: 'Peruuta',
     watching_connecting: 'Yhdistetaan...',
+    watching_already_seated: 'Olet jo istunut tassa poydassa',
 
     // Game
     game_leave_table: 'Poistu poydasta',

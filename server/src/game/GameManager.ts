@@ -120,6 +120,13 @@ export class GameManager {
     if (buyIn <= 0) return { error: 'Buy-in must be positive' };
     if (!name.trim()) return { error: 'Name is required' };
 
+    // Prevent same player (persistent account) from sitting twice at this table
+    if (persistentId) {
+      for (const p of this.players.values()) {
+        if (p.id === persistentId) return { error: 'Already seated at this table' };
+      }
+    }
+
     let seatIndex = -1;
     if (preferredSeat !== undefined) {
       if (preferredSeat < 0 || preferredSeat >= this.config.maxPlayers) return { error: 'Invalid seat number' };

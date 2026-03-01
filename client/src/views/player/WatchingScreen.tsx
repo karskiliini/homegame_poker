@@ -30,7 +30,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
     gameState, setGameState, tables,
     playerName, playerAvatar,
     chatMessages, addChatMessage, clearChat,
-    accountBalance,
+    accountBalance, persistentPlayerId,
   } = useGameStore();
   const t = useT();
   const { gradients } = useTheme();
@@ -49,6 +49,9 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
   const tableMaxBuyIn = table?.stakeLevel.maxBuyIn ?? 200;
   const maxBuyIn = Math.min(tableMaxBuyIn, accountBalance);
   const canBuyIn = accountBalance > 0;
+
+  // Check if player is already seated at this table (from another browser/tab)
+  const isAlreadySeated = !!(persistentPlayerId && gameState?.players.some(p => p.id === persistentPlayerId));
 
   // Connect table socket and watch
   useEffect(() => {
@@ -206,7 +209,7 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
               dramaticRiver={dramaticRiver}
               badBeat={badBeat}
               chipTrick={chipTrick}
-              onSeatClick={handleSeatClick}
+              onSeatClick={isAlreadySeated ? undefined : handleSeatClick}
               speechBubble={activeBubble}
               onSpeechBubbleDone={onBubbleDone}
               shuffling={shuffling}
@@ -231,35 +234,43 @@ export function WatchingScreen({ playerSocket }: WatchingScreenProps) {
       >
         {/* Sit Down area */}
         <div className="flex flex-col items-center gap-2 py-3">
-          {!canBuyIn && (
-            <span style={{ color: '#EF4444', fontSize: 13, fontWeight: 600 }}>
-              {t('balance_insufficient')}
+          {isAlreadySeated ? (
+            <span style={{ color: 'var(--ftp-gold)', fontSize: 14, fontWeight: 600 }}>
+              {t('watching_already_seated')}
             </span>
+          ) : (
+            <>
+              {!canBuyIn && (
+                <span style={{ color: '#EF4444', fontSize: 13, fontWeight: 600 }}>
+                  {t('balance_insufficient')}
+                </span>
+              )}
+              <button
+                onClick={canBuyIn ? handleSitDown : undefined}
+                disabled={!canBuyIn}
+                style={{
+                  padding: '14px 40px',
+                  borderRadius: 8,
+                  background: canBuyIn
+                    ? 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))'
+                    : '#555',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  border: 'none',
+                  cursor: canBuyIn ? 'pointer' : 'not-allowed',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                  boxShadow: canBuyIn
+                    ? '0 4px 0 var(--ftp-red-dark), 0 6px 12px rgba(0,0,0,0.4)'
+                    : 'none',
+                  opacity: canBuyIn ? 1 : 0.5,
+                }}
+              >
+                {t('watching_sit_down')}
+              </button>
+            </>
           )}
-          <button
-            onClick={canBuyIn ? handleSitDown : undefined}
-            disabled={!canBuyIn}
-            style={{
-              padding: '14px 40px',
-              borderRadius: 8,
-              background: canBuyIn
-                ? 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))'
-                : '#555',
-              color: 'white',
-              fontWeight: 700,
-              fontSize: 16,
-              border: 'none',
-              cursor: canBuyIn ? 'pointer' : 'not-allowed',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              boxShadow: canBuyIn
-                ? '0 4px 0 var(--ftp-red-dark), 0 6px 12px rgba(0,0,0,0.4)'
-                : 'none',
-              opacity: canBuyIn ? 1 : 0.5,
-            }}
-          >
-            {t('watching_sit_down')}
-          </button>
         </div>
 
         {/* Chat */}
