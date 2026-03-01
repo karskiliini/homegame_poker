@@ -8,7 +8,7 @@ import { insertBugReport } from '../db/bugs.js';
 import {
   findPlayerByName, findPlayerById, createPlayer, verifyPassword,
   getPlayerBalance, updateBalance, updateLastLogin, updateAvatar,
-  createSession, findSession,
+  createSession, findSession, logTransaction,
 } from '../db/players.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -147,6 +147,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       }
       const ok = updateBalance(authenticatedPlayerId, data.amount);
       if (ok) {
+        logTransaction(authenticatedPlayerId, 'deposit', data.amount);
         const balance = getPlayerBalance(authenticatedPlayerId);
         socket.emit(S2C_LOBBY.BALANCE_UPDATE, { balance });
       } else {
@@ -196,6 +197,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         // Deduct balance on successful join
         if (authenticatedPlayerId) {
           updateBalance(authenticatedPlayerId, -data.buyIn);
+          logTransaction(authenticatedPlayerId, 'buy_in', -data.buyIn, data.tableId);
           const balance = getPlayerBalance(authenticatedPlayerId);
           socket.emit(S2C_LOBBY.BALANCE_UPDATE, { balance });
         }
@@ -203,9 +205,11 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         // Set up per-player callback to credit balance back when removed
         if (authenticatedPlayerId && result.playerId) {
           const pid = authenticatedPlayerId;
+          const tableIdForCallback = data.tableId;
           gm.setOnPlayerRemoved(result.playerId, (removedPlayerId, remainingStack) => {
             if (remainingStack > 0) {
               updateBalance(pid, remainingStack);
+              logTransaction(pid, 'cash_out', remainingStack, tableIdForCallback);
               const balance = getPlayerBalance(pid);
               socket.emit(S2C_LOBBY.BALANCE_UPDATE, { balance });
             }
@@ -324,6 +328,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         // Deduct balance on successful rebuy
         if (authenticatedPlayerId) {
           updateBalance(authenticatedPlayerId, -data.amount);
+          logTransaction(authenticatedPlayerId, 'rebuy', -data.amount, currentTableId ?? undefined);
           const balance = getPlayerBalance(authenticatedPlayerId);
           socket.emit(S2C_LOBBY.BALANCE_UPDATE, { balance });
         }
