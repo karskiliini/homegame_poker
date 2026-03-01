@@ -18,6 +18,7 @@ import {
 import { HandEngine } from './HandEngine.js';
 import type { HandEngineEvent, HandResult, ShowdownEntry } from './HandEngine.js';
 import { ActionTimer } from './ActionTimer.js';
+import { isNuts, getHandRankKey } from '../evaluation/hand-rank.js';
 import type { HandRecord } from '@poker/shared';
 
 export class GameManager {
@@ -589,7 +590,7 @@ export class GameManager {
     this.storeHandHistory(result);
 
     // Build per-pot award groups for sequential emission
-    const potGroups: { potIndex: number; winningCards?: CardString[]; awards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string; winningHand?: string }[] }[] = [];
+    const potGroups: { potIndex: number; winningCards?: CardString[]; handRank?: string; handName?: string; isNuts?: boolean; awards: { potIndex: number; amount: number; winnerSeatIndex: number; winnerName: string; winningHand?: string }[] }[] = [];
     for (let i = 0; i < result.pots.length; i++) {
       const pot = result.pots[i];
       const awards: typeof potGroups[0]['awards'] = [];
@@ -597,7 +598,30 @@ export class GameManager {
         const hp = result.players.find(p => p.playerId === winner.playerId);
         if (hp) awards.push({ potIndex: i, amount: winner.amount, winnerSeatIndex: hp.seatIndex, winnerName: winner.playerName, winningHand: pot.winningHand });
       }
-      if (awards.length > 0) potGroups.push({ potIndex: i, winningCards: pot.winningCards, awards });
+
+      let handRank: string | undefined;
+      let handName: string | undefined;
+      let nutsResult: boolean | undefined;
+
+      if (result.showdownResults && result.showdownResults.length > 0 && pot.winningCards) {
+        const winnerEntry = result.showdownResults.find(e =>
+          awards.some(a => a.winnerSeatIndex === e.seatIndex) && e.shown
+        );
+        if (winnerEntry) {
+          handRank = getHandRankKey(winnerEntry.handRank);
+          handName = winnerEntry.handName;
+          const winnerPlayer = result.players.find(p => p.seatIndex === winnerEntry.seatIndex);
+          if (winnerPlayer && result.communityCards.length === 5) {
+            nutsResult = isNuts(
+              this.config.gameType as 'NLHE' | 'PLO',
+              result.communityCards,
+              winnerPlayer.holeCards
+            );
+          }
+        }
+      }
+
+      if (awards.length > 0) potGroups.push({ potIndex: i, winningCards: pot.winningCards, handRank, handName, isNuts: nutsResult, awards });
     }
 
     // Emit pot awards sequentially with delays between them
@@ -615,6 +639,9 @@ export class GameManager {
         isLastPot,
         totalPots: potGroups.length,
         winningCards: group.winningCards,
+        handRank: group.handRank,
+        handName: group.handName,
+        isNuts: group.isNuts,
       });
       this.emitSound('chip_win');
 
