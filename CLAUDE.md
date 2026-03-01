@@ -6,7 +6,16 @@ Read `doc/structure.md` before starting any task. It contains:
 - Largest files (hotspots) that most tasks touch
 - Test file organization
 
-This saves significant time vs. searching the codebase from scratch.
+Use it to determine which files to read — never scan the whole repo from scratch. If `doc/structure.md` doesn't cover what you need, ask the user for guidance and update the file with what you learn.
+
+## Documentation Maintenance
+After completing any feature or bug fix, review `doc/` files and update them if your changes made them stale:
+- `doc/structure.md` — update if files were added/removed/renamed or new features introduced
+- `doc/bugs.md` — update if a documented bug was fixed
+- `doc/roadmap.md` — update if a roadmap item was completed
+
+## Code Quality
+Keep changes minimal and elegant. No boilerplate, no verbose patterns. After completing a feature or fix, look for opportunities to simplify, modularize, or clean up — then do it before committing.
 
 ## Package Manager
 Always use `bun` instead of `npm`. This applies to all commands: install, run, build, test, etc.
