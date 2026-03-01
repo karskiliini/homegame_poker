@@ -20,6 +20,15 @@ export interface SessionRecord {
   created_at: string;
 }
 
+export interface TransactionRecord {
+  id: number;
+  player_id: string;
+  type: string;
+  amount: number;
+  table_id: string | null;
+  created_at: string;
+}
+
 const BCRYPT_ROUNDS = 10;
 
 let db: Database.Database;
@@ -52,6 +61,17 @@ function initAllTables(database: Database.Database) {
     CREATE TABLE IF NOT EXISTS sessions (
       token TEXT PRIMARY KEY,
       player_id TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+    )
+  `);
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS balance_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      amount REAL NOT NULL,
+      table_id TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
     )
@@ -112,6 +132,20 @@ export function updateLastLogin(playerId: string): void {
 
 export function updateAvatar(playerId: string, avatarId: string): void {
   getDb().prepare('UPDATE players SET avatar_id = ? WHERE id = ?').run(avatarId, playerId);
+}
+
+// === Balance transaction logging ===
+
+export function logTransaction(playerId: string, type: string, amount: number, tableId?: string): void {
+  getDb().prepare(
+    'INSERT INTO balance_transactions (player_id, type, amount, table_id) VALUES (?, ?, ?, ?)'
+  ).run(playerId, type, amount, tableId ?? null);
+}
+
+export function getTransactions(playerId: string, limit: number = 50): TransactionRecord[] {
+  return getDb().prepare(
+    'SELECT * FROM balance_transactions WHERE player_id = ? ORDER BY id DESC LIMIT ?'
+  ).all(playerId, limit) as TransactionRecord[];
 }
 
 // === Session management ===
