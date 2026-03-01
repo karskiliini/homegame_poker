@@ -1,6 +1,6 @@
 # User Bug Reports
 
-## [NEW] Bug #23 — 2026-03-01 09:25:19
+## [DONE] Bug #23 — 2026-03-01 09:25:19
 **Reporter:** marski
 **Table:** 5058b580
 
@@ -72,7 +72,7 @@ feature: meta quest 3 integraatio. Sivulle voi kirjautua meta quest 3:lla, näky
 
 ---
 
-## [NEW] Bug #14 — 2026-03-01 07:30:55
+## [WONTFIX] Bug #14 — 2026-03-01 07:30:55
 **Reporter:** Anonymous
 **Table:** N/A
 
