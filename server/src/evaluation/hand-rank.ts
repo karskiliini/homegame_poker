@@ -261,6 +261,50 @@ export function evaluateHand(
     : evaluatePLO(holeCards, communityCards);
 }
 
+const RANKS: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+const SUITS: Suit[] = ['h', 'd', 'c', 's'];
+const FULL_DECK: CardString[] = RANKS.flatMap(r => SUITS.map(s => `${r}${s}` as CardString));
+
+const HAND_RANK_KEYS: Record<number, string> = {
+  0: 'high_card', 1: 'pair', 2: 'two_pair', 3: 'three_of_a_kind',
+  4: 'straight', 5: 'flush', 6: 'full_house', 7: 'four_of_a_kind',
+  8: 'straight_flush', 9: 'royal_flush',
+};
+
+export function getHandRankKey(rank: number): string {
+  return HAND_RANK_KEYS[Math.floor(rank / 100000000)] ?? 'high_card';
+}
+
+/** Evaluate a PLO hand using exactly 2 of the given hole cards */
+function evaluatePLOTwo(twoCards: CardString[], board: CardString[]): EvaluationResult {
+  const boardCombos = combinations(board, 3);
+  let best: EvaluationResult | null = null;
+  for (const board3 of boardCombos) {
+    const result = evaluate5([...twoCards, ...board3]);
+    if (!best || result.rank > best.rank) best = result;
+  }
+  return best!;
+}
+
+export function isNuts(
+  gameType: 'NLHE' | 'PLO',
+  board: CardString[],
+  holeCards: CardString[],
+): boolean {
+  const heroRank = evaluateHand(gameType, holeCards, board).rank;
+  const usedCards = new Set([...board, ...holeCards]);
+  const remaining = FULL_DECK.filter(c => !usedCards.has(c));
+  const combos = combinations(remaining, 2);
+
+  for (const combo of combos) {
+    const rank = gameType === 'NLHE'
+      ? evaluateNLHE(combo, board).rank
+      : evaluatePLOTwo(combo, board).rank;
+    if (rank > heroRank) return false;
+  }
+  return true;
+}
+
 export function determineWinners(
   gameType: 'NLHE' | 'PLO',
   players: { playerId: string; holeCards: CardString[] }[],
