@@ -308,7 +308,9 @@ export class GameManager {
       return DELAY_AFTER_STREET_DEALT_MS;
     }
     if (event.type === 'street_dealt' && this.lastProcessedEventType === 'street_dealt') return DELAY_AFTER_STREET_DEALT_MS;
-    if (event.type === 'second_board_dealt' && this.lastProcessedEventType === 'street_dealt') return DELAY_AFTER_STREET_DEALT_MS;
+    // Bug #8 fix: second_board_dealt follows the last equity_update (not street_dealt)
+    // during all-in runout, because each street_dealt is followed by an equity_update.
+    if (event.type === 'second_board_dealt' && (this.lastProcessedEventType === 'street_dealt' || this.lastProcessedEventType === 'equity_update')) return DELAY_ALLIN_RUNOUT_STREET_MS;
     // Showdown after equity_update (the final one)
     if (event.type === 'showdown' && this.lastProcessedEventType === 'equity_update') {
       const delay = this.lastStreetWasDramatic ? DELAY_DRAMATIC_RIVER_MS :
