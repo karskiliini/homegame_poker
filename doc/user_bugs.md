@@ -1,5 +1,29 @@
 # User Bug Reports
 
+## [NEW] Bug #10 — 2026-02-28 23:24:27
+**Reporter:** Anonymous
+**Table:** N/A
+
+kaikki pelaajat painoivat sit out ja lähtivät pois pelistä, paitsi minä. Keskelle pöytää jäi silti edellinen potti. Se potti olisi pitänyt palautua viimeisen käden voittajalle, eikä jäädä pöytään.
+
+---
+
+## [NEW] Bug #9 — 2026-02-28 23:21:51
+**Reporter:** Anonymous
+**Table:** N/A
+
+jos painan sit out, ja leave table, niin poistuin kyllä pöydästä, mutta avatarini jäi edelleen istumaan pöytään, ja varmaankin varasi paikankin vielä muilta pelaajilta.
+
+---
+
+## [NEW] Bug #8 — 2026-02-28 23:20:15
+**Reporter:** marski
+**Table:** 6e240a41
+
+riverin peel ei toimi oiekin muissa tapauksissa kuin silloin kun on menty flopilta all-in. Jos mennään all-in pre-flop, niin river peel toimii väärin. Samoin jos tehdään pre-flop allin run it twice, niin se toimii väärin.
+
+---
+
 ## [DONE] Bug #7 — 2026-02-28 22:04:52
 **Reporter:** marski
 **Table:** 09f11d07
