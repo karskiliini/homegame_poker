@@ -71,8 +71,8 @@ interface GameStore {
   setWatchingTableId: (id: string | null) => void;
 
   // UI state
-  screen: 'login' | 'table_lobby' | 'watching' | 'lobby' | 'game';
-  setScreen: (screen: 'login' | 'table_lobby' | 'watching' | 'lobby' | 'game') => void;
+  screen: 'login' | 'table_lobby' | 'lobby' | 'game';
+  setScreen: (screen: 'login' | 'table_lobby' | 'lobby' | 'game') => void;
   reconnecting: boolean;
   setReconnecting: (reconnecting: boolean) => void;
 

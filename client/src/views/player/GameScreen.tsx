@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
-import { C2S, C2S_TABLE, resolvePreAction, CHIP_TRICK_MIN_STACK } from '@poker/shared';
+import { C2S, C2S_TABLE, C2S_LOBBY, S2C_TABLE, resolvePreAction, CHIP_TRICK_MIN_STACK } from '@poker/shared';
 import type { PreActionType } from '@poker/shared';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { useTableAnimations } from '../../hooks/useTableAnimations.js';
@@ -14,6 +14,10 @@ import { useTheme } from '../../themes/useTheme.js';
 import { ChatInput } from '../../components/ChatInput.js';
 import { ChatWindow } from '../../components/ChatWindow.js';
 import { avatarImageFile } from '../../utils/avatarImageFile.js';
+import { tableSoundManager } from '../../audio/SoundManager.js';
+import { SoundToggle } from '../../components/SoundToggle.js';
+import { LanguageToggle } from '../../components/LanguageToggle.js';
+import { ThemeToggle } from '../../components/ThemeToggle.js';
 import type { ChatMessage } from '@poker/shared';
 
 // Use canonical virtual table dimensions from PokerTable
@@ -24,12 +28,16 @@ interface GameScreenProps {
   socket: Socket;
   onOpenHistory?: () => void;
   onLeaveTable?: () => void;
+  onBack?: () => void;
   speechBubble?: ChatMessage | null;
   onSpeechBubbleDone?: () => void;
 }
 
-export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, onSpeechBubbleDone }: GameScreenProps) {
+export function GameScreen({ socket, onOpenHistory, onLeaveTable, onBack, speechBubble, onSpeechBubbleDone }: GameScreenProps) {
   const { privateState, lobbyState, gameState, setGameState, currentTableId, chatMessages, setPlayerAvatar } = useGameStore();
+  const { watchingTableId, tables, playerName, playerAvatar, accountBalance, persistentPlayerId, addChatMessage } = useGameStore();
+  const isWatching = !privateState;
+
   const tableSocketRef = useRef(createTableSocket());
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -37,31 +45,49 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [chatMinimized, setChatMinimized] = useState(true);
   const [peekingFoldedCards, setPeekingFoldedCards] = useState(false);
+
+  // Buy-in state (watching mode)
+  const [showBuyIn, setShowBuyIn] = useState(false);
+  const [buyInAmount, setBuyInAmount] = useState(0);
+  const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
+  const buyInOpenedAt = useRef(0);
+
+  const activeTableId = currentTableId || watchingTableId;
+  const table = tables.find(t => t.tableId === activeTableId);
+  const tableMaxBuyIn = table?.stakeLevel.maxBuyIn ?? 200;
+  const maxBuyIn = Math.min(tableMaxBuyIn, accountBalance);
+  const canBuyIn = accountBalance > 0;
+  const isAlreadySeated = !!(persistentPlayerId && gameState?.players.some(p => p.id === persistentPlayerId));
   const t = useT();
   const { gradients, assets } = useTheme();
   const avatarIds = useMemo(() => Array.from({ length: assets.avatarCount }, (_, i) => String(i + 1)), [assets.avatarCount]);
 
   // Connect table socket and watch the current table
   useEffect(() => {
+    if (!activeTableId) return;
     const ts = tableSocketRef.current;
     ts.connect();
 
     const handleConnect = () => {
-      if (currentTableId) {
-        ts.emit(C2S_TABLE.WATCH, { tableId: currentTableId });
-      }
+      ts.emit(C2S_TABLE.WATCH, { tableId: activeTableId });
     };
 
     ts.on('connect', handleConnect);
-    if (ts.connected && currentTableId) {
-      ts.emit(C2S_TABLE.WATCH, { tableId: currentTableId });
+    if (ts.connected) {
+      ts.emit(C2S_TABLE.WATCH, { tableId: activeTableId });
     }
 
+    const handleChat = (msg: ChatMessage) => {
+      addChatMessage(msg);
+    };
+    ts.on(S2C_TABLE.CHAT_MESSAGE, handleChat);
+
     return () => {
+      ts.off(S2C_TABLE.CHAT_MESSAGE, handleChat);
       ts.off('connect', handleConnect);
       ts.disconnect();
     };
-  }, [currentTableId]);
+  }, [activeTableId, addChatMessage]);
 
   // Animation hook — sound disabled (PlayerView handles sound via /player namespace)
   const seatRotation = privateState?.seatIndex;
@@ -75,7 +101,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
     socket: tableSocketRef.current,
     containerRef: tableContainerRef,
     setGameState,
-    enableSound: false,
+    enableSound: isWatching,
     seatRotation,
   });
 
@@ -149,9 +175,36 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
     }
   }, [socket, privateState?.stack]);
 
-  const handleSeatChange = useCallback((seatIndex: number) => {
-    socket.emit(C2S.CHANGE_SEAT, { seatIndex });
-  }, [socket]);
+  const handleSeatClick = useCallback((seatIndex: number) => {
+    if (isWatching && !isAlreadySeated) {
+      setSelectedSeat(seatIndex);
+      setBuyInAmount(maxBuyIn);
+      buyInOpenedAt.current = Date.now();
+      setShowBuyIn(true);
+    } else if (isSittingOut || isBusted) {
+      socket.emit(C2S.CHANGE_SEAT, { seatIndex });
+    }
+  }, [isWatching, isAlreadySeated, maxBuyIn, isSittingOut, isBusted, socket]);
+
+  const handleSitDown = useCallback(() => {
+    setBuyInAmount(maxBuyIn);
+    setSelectedSeat(null);
+    buyInOpenedAt.current = Date.now();
+    setShowBuyIn(true);
+  }, [maxBuyIn]);
+
+  const handleConfirmSitDown = useCallback(() => {
+    if (!activeTableId || buyInAmount <= 0) return;
+    socket.emit(C2S_LOBBY.JOIN_TABLE, {
+      tableId: activeTableId,
+      name: playerName,
+      buyIn: buyInAmount,
+      avatarId: playerAvatar,
+      ...(selectedSeat !== null ? { seatIndex: selectedSeat } : {}),
+    });
+    setShowBuyIn(false);
+    setSelectedSeat(null);
+  }, [activeTableId, buyInAmount, socket, playerName, playerAvatar, selectedSeat]);
 
   const config = gameState?.config;
 
@@ -169,8 +222,27 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
           background: gradients.phoneRadialBackground,
         }}
       >
-        {/* Top-left: Leave Table (only when sitting out) */}
-        {onLeaveTable && isSittingOut && (
+        {/* Top-left: Back (watching) or Leave Table (sitting out) */}
+        {isWatching && onBack && (
+          <div className="absolute top-3 left-3 z-30">
+            <button
+              onClick={onBack}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 6,
+                background: 'rgba(255,255,255,0.1)',
+                color: 'var(--ftp-text-secondary)',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              {t('watching_back')}
+            </button>
+          </div>
+        )}
+        {!isWatching && onLeaveTable && isSittingOut && (
           <div className="absolute top-3 left-3 z-30">
             <button
               onClick={onLeaveTable}
@@ -187,6 +259,15 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
             >
               {t('game_leave_table')}
             </button>
+          </div>
+        )}
+
+        {/* Top-right: Controls (watching mode only -- in playing mode, PlayerView shows these) */}
+        {isWatching && (
+          <div className="absolute top-3 right-3 z-30 flex items-center gap-3">
+            <ThemeToggle />
+            <LanguageToggle />
+            <SoundToggle soundManager={tableSoundManager} />
           </div>
         )}
 
@@ -218,7 +299,7 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
               equities={equities}
               dramaticRiver={dramaticRiver}
               badBeat={badBeat}
-              onSeatClick={(isSittingOut || isBusted) ? handleSeatChange : undefined}
+              onSeatClick={(isWatching && !isAlreadySeated) || (!isWatching && (isSittingOut || isBusted)) ? handleSeatClick : undefined}
               onMyAvatarClick={() => !isFolded && setShowAvatarPicker(true)}
               onMyAvatarHoverStart={() => isFolded && setPeekingFoldedCards(true)}
               onMyAvatarHoverEnd={() => setPeekingFoldedCards(false)}
@@ -249,223 +330,262 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
           paddingBottom: 'max(4px, env(safe-area-inset-bottom))',
         }}
       >
-        {/* Cards + stack row */}
-        <div className="flex items-center justify-center gap-4">
-          {privateState && privateState.holeCards.length > 0 && (!isFolded || showFoldedCards) ? (
-            <>
-              <div className="flex" style={{ gap: privateState.holeCards.length > 2 ? 4 : 8 }}>
-                {privateState.holeCards.map((card, i) => (
-                  <div
-                    key={i}
-                    className={showFoldedCards ? 'animate-card-peek' : 'animate-card-flip'}
+        {isWatching ? (
+          <>
+            {/* Sit Down area */}
+            <div className="flex flex-col items-center gap-2 py-3">
+              {isAlreadySeated ? (
+                <span style={{ color: 'var(--ftp-gold)', fontSize: 14, fontWeight: 600 }}>
+                  {t('watching_already_seated')}
+                </span>
+              ) : (
+                <>
+                  {!canBuyIn && (
+                    <span style={{ color: '#EF4444', fontSize: 13, fontWeight: 600 }}>
+                      {t('balance_insufficient')}
+                    </span>
+                  )}
+                  <button
+                    onClick={canBuyIn ? handleSitDown : undefined}
+                    disabled={!canBuyIn}
                     style={{
-                      animationDelay: `${i * 120}ms`,
+                      padding: '14px 40px', borderRadius: 8,
+                      background: canBuyIn ? 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))' : '#555',
+                      color: 'white', fontWeight: 700, fontSize: 16, border: 'none',
+                      cursor: canBuyIn ? 'pointer' : 'not-allowed',
+                      textTransform: 'uppercase', letterSpacing: 1,
+                      boxShadow: canBuyIn ? '0 4px 0 var(--ftp-red-dark), 0 6px 12px rgba(0,0,0,0.4)' : 'none',
+                      opacity: canBuyIn ? 1 : 0.5,
                     }}
                   >
-                    <CardComponent card={card} size={privateState.holeCards.length > 2 ? 'md' : 'lg'} />
+                    {t('watching_sit_down')}
+                  </button>
+                </>
+              )}
+            </div>
+            <ChatWindow messages={chatMessages} minimized={chatMinimized} onToggleMinimize={() => setChatMinimized(m => !m)} />
+          </>
+        ) : (
+          <>
+            {/* Cards + stack row */}
+            <div className="flex items-center justify-center gap-4">
+              {privateState && privateState.holeCards.length > 0 && (!isFolded || showFoldedCards) ? (
+                <>
+                  <div className="flex" style={{ gap: privateState.holeCards.length > 2 ? 4 : 8 }}>
+                    {privateState.holeCards.map((card, i) => (
+                      <div
+                        key={i}
+                        className={showFoldedCards ? 'animate-card-peek' : 'animate-card-flip'}
+                        style={{
+                          animationDelay: `${i * 120}ms`,
+                        }}
+                      >
+                        <CardComponent card={card} size={privateState.holeCards.length > 2 ? 'md' : 'lg'} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="text-right ml-2">
-                <div style={{ color: 'var(--ftp-text-secondary)', fontSize: 12 }}>{t('game_stack')}</div>
-                <div
-                  className="font-mono font-bold tabular-nums"
-                  style={{ color: '#FFFFFF', fontSize: 20 }}
-                >
-                  {privateState.stack.toLocaleString()}
+                  <div className="text-right ml-2">
+                    <div style={{ color: 'var(--ftp-text-secondary)', fontSize: 12 }}>{t('game_stack')}</div>
+                    <div
+                      className="font-mono font-bold tabular-nums"
+                      style={{ color: '#FFFFFF', fontSize: 20 }}
+                    >
+                      {privateState.stack.toLocaleString()}
+                    </div>
+                    {privateState.potTotal > 0 && (
+                      <div
+                        className="font-mono tabular-nums"
+                        style={{ color: '#EAB308', fontSize: 13 }}
+                      >
+                        {t('game_pot')} {privateState.potTotal.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : isFolded && privateState && privateState.holeCards.length > 0 ? (
+                <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13, padding: 8 }}>
+                  {t('game_folded')}
                 </div>
-                {privateState.potTotal > 0 && (
-                  <div
-                    className="font-mono tabular-nums"
-                    style={{ color: '#EAB308', fontSize: 13 }}
-                  >
-                    {t('game_pot')} {privateState.potTotal.toLocaleString()}
+              ) : (
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, padding: 8 }}>
+                  {t('game_waiting_cards')}
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="mt-1">
+              {isSittingOut && (privateState?.stack ?? 0) > 0 ? (
+                <div className="text-center py-2 space-y-2">
+                  <div style={{ color: 'var(--ftp-text-muted)', fontSize: 14 }}>
+                    {t('game_sitting_out')}
                   </div>
-                )}
-              </div>
-            </>
-          ) : isFolded && privateState && privateState.holeCards.length > 0 ? (
-            <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13, padding: 8 }}>
-              {t('game_folded')}
+                  <button
+                    onClick={() => socket.emit(C2S.SIT_IN)}
+                    className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-base"
+                  >
+                    {t('game_sit_in')}
+                  </button>
+                </div>
+              ) : isAllIn ? (
+                <div className="text-center py-2">
+                  <div className="font-bold" style={{ color: '#EAB308', fontSize: 16 }}>
+                    ALL IN
+                  </div>
+                </div>
+              ) : (isBusted || isSittingOut || (privateState?.stack ?? 0) <= 0) ? (
+                <div className="text-center py-2 space-y-2">
+                  <div style={{ color: 'var(--ftp-text-muted)', fontSize: 14 }}>
+                    {isBusted ? t('game_busted') : t('game_sitting_out')}
+                  </div>
+                  <button
+                    onClick={() => socket.emit(C2S.REBUY, { amount: config?.maxBuyIn ?? 200 })}
+                    className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-base"
+                  >
+                    {t('game_rebuy')} {config?.maxBuyIn ?? 200}
+                  </button>
+                </div>
+              ) : showActions && privateState ? (
+                <ActionButtons
+                  socket={socket}
+                  availableActions={privateState.availableActions}
+                  callAmount={privateState.callAmount}
+                  minRaise={privateState.minRaise}
+                  maxRaise={privateState.maxRaise}
+                  stack={privateState.stack}
+                  currentBet={privateState.currentBet}
+                  potTotal={privateState.potTotal}
+                  bigBlind={config?.bigBlind ?? 2}
+                  maxBuyIn={config?.maxBuyIn ?? 200}
+                  gameType={config?.gameType ?? 'NLHE'}
+                  onActionSent={() => setActionSentForTurn(true)}
+                />
+              ) : showPreActions ? (
+                <PreActionButtons preAction={preAction} setPreAction={setPreAction} />
+              ) : (
+                <div className="text-center py-2">
+                  <div style={{
+                    color: isFolded ? 'var(--ftp-text-muted)' : 'var(--ftp-text-secondary)',
+                    fontSize: 14,
+                  }}>
+                    {isFolded ? t('game_folded') : t('game_waiting_turn')}
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, padding: 8 }}>
-              {t('game_waiting_cards')}
-            </div>
-          )}
-        </div>
 
-        {/* Actions */}
-        <div className="mt-1">
-          {isSittingOut && (privateState?.stack ?? 0) > 0 ? (
-            <div className="text-center py-2 space-y-2">
-              <div style={{ color: 'var(--ftp-text-muted)', fontSize: 14 }}>
-                {t('game_sitting_out')}
+            {/* Sit Out button (between hands or folded) */}
+            {!isSittingOut && !isBusted && (!isHandActive || isFolded) && (
+              <div className="flex justify-center mt-1">
+                <button
+                  onClick={() => socket.emit(C2S.SIT_OUT)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: 6,
+                    background: 'rgba(255,255,255,0.08)',
+                    color: 'var(--ftp-text-secondary)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  {t('game_sit_out')}
+                </button>
               </div>
-              <button
-                onClick={() => socket.emit(C2S.SIT_IN)}
-                className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-base"
-              >
-                {t('game_sit_in')}
-              </button>
-            </div>
-          ) : isAllIn ? (
-            <div className="text-center py-2">
-              <div className="font-bold" style={{ color: '#EAB308', fontSize: 16 }}>
-                ALL IN
-              </div>
-            </div>
-          ) : (isBusted || isSittingOut || (privateState?.stack ?? 0) <= 0) ? (
-            <div className="text-center py-2 space-y-2">
-              <div style={{ color: 'var(--ftp-text-muted)', fontSize: 14 }}>
-                {isBusted ? t('game_busted') : t('game_sitting_out')}
-              </div>
-              <button
-                onClick={() => socket.emit(C2S.REBUY, { amount: config?.maxBuyIn ?? 200 })}
-                className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold text-base"
-              >
-                {t('game_rebuy')} {config?.maxBuyIn ?? 200}
-              </button>
-            </div>
-          ) : showActions && privateState ? (
-            <ActionButtons
-              socket={socket}
-              availableActions={privateState.availableActions}
-              callAmount={privateState.callAmount}
-              minRaise={privateState.minRaise}
-              maxRaise={privateState.maxRaise}
-              stack={privateState.stack}
-              currentBet={privateState.currentBet}
-              potTotal={privateState.potTotal}
-              bigBlind={config?.bigBlind ?? 2}
-              maxBuyIn={config?.maxBuyIn ?? 200}
-              gameType={config?.gameType ?? 'NLHE'}
-              onActionSent={() => setActionSentForTurn(true)}
-            />
-          ) : showPreActions ? (
-            <PreActionButtons preAction={preAction} setPreAction={setPreAction} />
-          ) : (
-            <div className="text-center py-2">
-              <div style={{
-                color: isFolded ? 'var(--ftp-text-muted)' : 'var(--ftp-text-secondary)',
-                fontSize: 14,
-              }}>
-                {isFolded ? t('game_folded') : t('game_waiting_turn')}
-              </div>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* Sit Out button (between hands or folded) */}
-        {!isSittingOut && !isBusted && (!isHandActive || isFolded) && (
-          <div className="flex justify-center mt-1">
-            <button
-              onClick={() => socket.emit(C2S.SIT_OUT)}
-              style={{
-                padding: '10px 16px',
-                borderRadius: 6,
-                background: 'rgba(255,255,255,0.08)',
-                color: 'var(--ftp-text-secondary)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            >
-              {t('game_sit_out')}
-            </button>
-          </div>
+            {/* Sit Out Next Hand + Auto-Muck checkboxes */}
+            {!isSittingOut && !isBusted && (privateState?.stack ?? 0) > 0 && (
+              <div className="flex justify-center gap-3 mt-1">
+                <button
+                  onClick={() => socket.emit(C2S.SIT_OUT_NEXT_HAND)}
+                  className="flex items-center gap-2"
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 6,
+                    background: sitOutNextHand ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
+                    border: sitOutNextHand ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 3,
+                      border: sitOutNextHand ? '2px solid #EAB308' : '2px solid rgba(255,255,255,0.3)',
+                      background: sitOutNextHand ? '#EAB308' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease',
+                      fontSize: 13,
+                      color: '#000',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {sitOutNextHand && '\u2713'}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      color: sitOutNextHand ? '#EAB308' : 'var(--ftp-text-muted)',
+                      fontWeight: sitOutNextHand ? 600 : 400,
+                    }}
+                  >
+                    Sit Out Next Hand
+                  </span>
+                </button>
+                <button
+                  onClick={() => socket.emit(C2S.AUTO_MUCK)}
+                  className="flex items-center gap-2"
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 6,
+                    background: autoMuck ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
+                    border: autoMuck ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 3,
+                      border: autoMuck ? '2px solid #EAB308' : '2px solid rgba(255,255,255,0.3)',
+                      background: autoMuck ? '#EAB308' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease',
+                      fontSize: 13,
+                      color: '#000',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {autoMuck && '\u2713'}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      color: autoMuck ? '#EAB308' : 'var(--ftp-text-muted)',
+                      fontWeight: autoMuck ? 600 : 400,
+                    }}
+                  >
+                    Auto-Muck
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* Chat */}
+            <ChatWindow messages={chatMessages} minimized={chatMinimized} onToggleMinimize={() => setChatMinimized(m => !m)} />
+            <ChatInput socket={socket} />
+          </>
         )}
-
-        {/* Sit Out Next Hand + Auto-Muck checkboxes */}
-        {!isSittingOut && !isBusted && (privateState?.stack ?? 0) > 0 && (
-          <div className="flex justify-center gap-3 mt-1">
-            <button
-              onClick={() => socket.emit(C2S.SIT_OUT_NEXT_HAND)}
-              className="flex items-center gap-2"
-              style={{
-                padding: '8px 14px',
-                borderRadius: 6,
-                background: sitOutNextHand ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
-                border: sitOutNextHand ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.1)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <div
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 3,
-                  border: sitOutNextHand ? '2px solid #EAB308' : '2px solid rgba(255,255,255,0.3)',
-                  background: sitOutNextHand ? '#EAB308' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease',
-                  fontSize: 13,
-                  color: '#000',
-                  fontWeight: 700,
-                }}
-              >
-                {sitOutNextHand && '\u2713'}
-              </div>
-              <span
-                style={{
-                  fontSize: 13,
-                  color: sitOutNextHand ? '#EAB308' : 'var(--ftp-text-muted)',
-                  fontWeight: sitOutNextHand ? 600 : 400,
-                }}
-              >
-                Sit Out Next Hand
-              </span>
-            </button>
-            <button
-              onClick={() => socket.emit(C2S.AUTO_MUCK)}
-              className="flex items-center gap-2"
-              style={{
-                padding: '8px 14px',
-                borderRadius: 6,
-                background: autoMuck ? 'rgba(234, 179, 8, 0.15)' : 'transparent',
-                border: autoMuck ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid rgba(255,255,255,0.1)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <div
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 3,
-                  border: autoMuck ? '2px solid #EAB308' : '2px solid rgba(255,255,255,0.3)',
-                  background: autoMuck ? '#EAB308' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease',
-                  fontSize: 13,
-                  color: '#000',
-                  fontWeight: 700,
-                }}
-              >
-                {autoMuck && '\u2713'}
-              </div>
-              <span
-                style={{
-                  fontSize: 13,
-                  color: autoMuck ? '#EAB308' : 'var(--ftp-text-muted)',
-                  fontWeight: autoMuck ? 600 : 400,
-                }}
-              >
-                Auto-Muck
-              </span>
-            </button>
-          </div>
-        )}
-
-        {/* Chat */}
-        <ChatWindow messages={chatMessages} minimized={chatMinimized} onToggleMinimize={() => setChatMinimized(m => !m)} />
-        <ChatInput socket={socket} />
       </div>
 
       {/* Avatar picker modal */}
@@ -523,6 +643,93 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, speechBubble, 
                   />
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Buy-in modal (watching mode) */}
+      {showBuyIn && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.7)' }}
+          onClick={() => { if (Date.now() - buyInOpenedAt.current > 300) setShowBuyIn(false); }}
+        >
+          <div
+            className="w-full max-w-xs p-6"
+            style={{
+              background: 'var(--ftp-bg-lobby)',
+              borderRadius: 12,
+              border: '1px solid var(--ftp-lobby-border)',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-bold mb-1" style={{ color: '#FFFFFF', fontSize: 18 }}>
+              {t('watching_buy_in')}
+            </h2>
+            <p className="mb-4" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
+              {table?.name} &mdash; {table?.stakeLevel.label}
+              {selectedSeat !== null && (
+                <span style={{ color: 'var(--ftp-gold)', marginLeft: 8 }}>
+                  {t('table_seat')} {selectedSeat + 1}
+                </span>
+              )}
+            </p>
+            <input
+              type="number"
+              value={buyInAmount}
+              onChange={(e) => setBuyInAmount(Number(e.target.value))}
+              min={1}
+              max={maxBuyIn}
+              className="w-full mb-4"
+              style={{
+                padding: '10px 14px',
+                borderRadius: 6,
+                background: '#FFFFFF',
+                color: 'var(--ftp-lobby-text)',
+                border: '1px solid var(--ftp-lobby-border)',
+                fontSize: 16,
+                outline: 'none',
+              }}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowBuyIn(false)}
+                className="flex-1 py-3 rounded-lg"
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  color: 'var(--ftp-text-secondary)',
+                  border: '1px solid var(--ftp-lobby-border)',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}
+              >
+                {t('watching_cancel')}
+              </button>
+              <button
+                onClick={handleConfirmSitDown}
+                disabled={buyInAmount <= 0 || buyInAmount > maxBuyIn}
+                className="flex-1 py-3 rounded-lg"
+                style={{
+                  background: buyInAmount <= 0 || buyInAmount > maxBuyIn
+                    ? '#555'
+                    : 'linear-gradient(180deg, var(--ftp-red), var(--ftp-red-dark))',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  border: 'none',
+                  cursor: buyInAmount <= 0 || buyInAmount > maxBuyIn ? 'not-allowed' : 'pointer',
+                  textTransform: 'uppercase',
+                  boxShadow: buyInAmount > 0 && buyInAmount <= maxBuyIn
+                    ? '0 2px 0 var(--ftp-red-dark)'
+                    : 'none',
+                }}
+              >
+                {t('watching_confirm')}
+              </button>
             </div>
           </div>
         </div>
