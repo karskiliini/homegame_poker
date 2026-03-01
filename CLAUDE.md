@@ -1,5 +1,13 @@
 # Project Guidelines
 
+## Codebase Structure
+Read `doc/structure.md` before starting any task. It contains:
+- Directory structure and feature-to-file mapping
+- Largest files (hotspots) that most tasks touch
+- Test file organization
+
+This saves significant time vs. searching the codebase from scratch.
+
 ## Package Manager
 Always use `bun` instead of `npm`. This applies to all commands: install, run, build, test, etc.
 - `bun install` instead of `npm install`
