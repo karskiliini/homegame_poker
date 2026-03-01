@@ -4,18 +4,13 @@ import { dirname, resolve } from 'path';
 import type { Namespace } from 'socket.io';
 import { C2S, C2S_LOBBY, S2C_PLAYER, S2C_LOBBY, STAKE_LEVELS } from '@poker/shared';
 import type { TableManager } from '../game/TableManager.js';
-import { insertBugReport } from '../db/bugs.js';
-import {
-  findPlayerByName, findPlayerById, createPlayer, verifyPassword,
-  getPlayerBalance, updateBalance, updateLastLogin, updateAvatar,
-  createSession, findSession, logTransaction, getTransactions,
-} from '../db/players.js';
+import type { Database } from '../db/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf-8'));
 const SERVER_VERSION: string = pkg.version;
 
-export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager) {
+export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager, db: Database) {
   nsp.on('connection', (socket) => {
     console.log(`Player socket connected: ${socket.id}`);
 
@@ -41,7 +36,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
 
     socket.on(C2S_LOBBY.CHECK_NAME, (data: { name: string }) => {
       if (!data.name || typeof data.name !== 'string') return;
-      const player = findPlayerByName(data.name.trim());
+      const player = db.players.findByName(data.name.trim());
       socket.emit(S2C_LOBBY.NAME_STATUS, { exists: !!player });
     });
 
@@ -59,16 +54,16 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Password is required' });
         return;
       }
-      const existing = findPlayerByName(name);
+      const existing = db.players.findByName(name);
       if (existing) {
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Name already taken' });
         return;
       }
       try {
-        const player = await createPlayer(name, data.password, data.avatarId || '1');
+        const player = await db.players.create(name, data.password, data.avatarId || '1');
         authenticatedPlayerId = player.id;
         authenticatedPlayerName = player.name;
-        const sessionToken = createSession(player.id);
+        const sessionToken = db.sessions.create(player.id);
         socket.emit(S2C_LOBBY.AUTH_SUCCESS, {
           playerId: player.id,
           name: player.name,
@@ -86,20 +81,20 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Name and password required' });
         return;
       }
-      const player = findPlayerByName(data.name.trim());
+      const player = db.players.findByName(data.name.trim());
       if (!player) {
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Player not found' });
         return;
       }
-      const valid = await verifyPassword(player, data.password);
+      const valid = await db.players.verifyPassword(player, data.password);
       if (!valid) {
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Wrong password' });
         return;
       }
-      updateLastLogin(player.id);
+      db.players.updateLastLogin(player.id);
       authenticatedPlayerId = player.id;
       authenticatedPlayerName = player.name;
-      const sessionToken = createSession(player.id);
+      const sessionToken = db.sessions.create(player.id);
       socket.emit(S2C_LOBBY.AUTH_SUCCESS, {
         playerId: player.id,
         name: player.name,
@@ -114,17 +109,17 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Session token required' });
         return;
       }
-      const session = findSession(data.sessionToken);
+      const session = db.sessions.find(data.sessionToken);
       if (!session) {
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Invalid or expired session' });
         return;
       }
-      const player = findPlayerById(session.player_id);
+      const player = db.players.findById(session.player_id);
       if (!player) {
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Player not found' });
         return;
       }
-      updateLastLogin(player.id);
+      db.players.updateLastLogin(player.id);
       authenticatedPlayerId = player.id;
       authenticatedPlayerName = player.name;
       socket.emit(S2C_LOBBY.AUTH_SUCCESS, {
@@ -145,10 +140,10 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         socket.emit(S2C_LOBBY.ERROR, { message: 'Invalid amount' });
         return;
       }
-      const ok = updateBalance(authenticatedPlayerId, data.amount);
+      const ok = db.balance.update(authenticatedPlayerId, data.amount);
       if (ok) {
-        logTransaction(authenticatedPlayerId, 'deposit', data.amount);
-        const balance = getPlayerBalance(authenticatedPlayerId);
+        db.balance.logTransaction(authenticatedPlayerId, 'deposit', data.amount);
+        const balance = db.balance.get(authenticatedPlayerId);
         socket.emit(S2C_LOBBY.BALANCE_UPDATE, { balance });
       } else {
         socket.emit(S2C_LOBBY.ERROR, { message: 'Deposit failed' });
@@ -160,9 +155,9 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Not authenticated' });
         return;
       }
-      const player = findPlayerById(authenticatedPlayerId);
+      const player = db.players.findById(authenticatedPlayerId);
       if (!player) return;
-      const transactions = getTransactions(authenticatedPlayerId).map(t => ({
+      const transactions = db.balance.getTransactions(authenticatedPlayerId).map(t => ({
         id: t.id,
         type: t.type,
         amount: t.amount,
@@ -182,7 +177,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         socket.emit(S2C_LOBBY.AUTH_ERROR, { message: 'Not authenticated' });
         return;
       }
-      updateAvatar(authenticatedPlayerId, data.avatarId);
+      db.players.updateAvatar(authenticatedPlayerId, data.avatarId);
       socket.emit(S2C_LOBBY.AVATAR_UPDATED, { avatarId: data.avatarId });
     });
 
@@ -214,7 +209,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
 
       // If authenticated, check and deduct balance
       if (authenticatedPlayerId) {
-        const balance = getPlayerBalance(authenticatedPlayerId);
+        const balance = db.balance.get(authenticatedPlayerId);
         if (balance < data.buyIn) {
           socket.emit(S2C_PLAYER.ERROR, { message: 'Insufficient balance' });
           return;
@@ -227,9 +222,9 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       } else {
         // Deduct balance on successful join
         if (authenticatedPlayerId) {
-          updateBalance(authenticatedPlayerId, -data.buyIn);
-          logTransaction(authenticatedPlayerId, 'buy_in', -data.buyIn, data.tableId);
-          const balance = getPlayerBalance(authenticatedPlayerId);
+          db.balance.update(authenticatedPlayerId, -data.buyIn);
+          db.balance.logTransaction(authenticatedPlayerId, 'buy_in', -data.buyIn, data.tableId);
+          const balance = db.balance.get(authenticatedPlayerId);
           socket.emit(S2C_LOBBY.BALANCE_UPDATE, { balance });
         }
 
@@ -239,9 +234,9 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
           const tableIdForCallback = data.tableId;
           gm.setOnPlayerRemoved(result.playerId, (removedPlayerId, remainingStack) => {
             if (remainingStack > 0) {
-              updateBalance(pid, remainingStack);
-              logTransaction(pid, 'cash_out', remainingStack, tableIdForCallback);
-              const balance = getPlayerBalance(pid);
+              db.balance.update(pid, remainingStack);
+              db.balance.logTransaction(pid, 'cash_out', remainingStack, tableIdForCallback);
+              const balance = db.balance.get(pid);
               socket.emit(S2C_LOBBY.BALANCE_UPDATE, { balance });
             }
           });
@@ -294,7 +289,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
         currentTableId = targetTableId;
         socket.leave('lobby');
         // Restore auth state from persistent player ID stored in the database
-        const player = findPlayerById(data.playerId);
+        const player = db.players.findById(data.playerId);
         if (player) {
           authenticatedPlayerId = player.id;
           authenticatedPlayerName = player.name;
@@ -345,7 +340,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
 
       // If authenticated, check and deduct balance
       if (authenticatedPlayerId) {
-        const balance = getPlayerBalance(authenticatedPlayerId);
+        const balance = db.balance.get(authenticatedPlayerId);
         if (balance < data.amount) {
           socket.emit(S2C_PLAYER.ERROR, { message: 'Insufficient balance' });
           return;
@@ -358,9 +353,9 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       } else {
         // Deduct balance on successful rebuy
         if (authenticatedPlayerId) {
-          updateBalance(authenticatedPlayerId, -data.amount);
-          logTransaction(authenticatedPlayerId, 'rebuy', -data.amount, currentTableId ?? undefined);
-          const balance = getPlayerBalance(authenticatedPlayerId);
+          db.balance.update(authenticatedPlayerId, -data.amount);
+          db.balance.logTransaction(authenticatedPlayerId, 'rebuy', -data.amount, currentTableId ?? undefined);
+          const balance = db.balance.get(authenticatedPlayerId);
           socket.emit(S2C_LOBBY.BALANCE_UPDATE, { balance });
         }
 
@@ -407,7 +402,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
       gm.updatePlayerAvatar(socket.id, data.avatarId);
       // Also update in DB if authenticated
       if (authenticatedPlayerId) {
-        updateAvatar(authenticatedPlayerId, data.avatarId);
+        db.players.updateAvatar(authenticatedPlayerId, data.avatarId);
       }
     });
 
@@ -444,7 +439,7 @@ export function setupPlayerNamespace(nsp: Namespace, tableManager: TableManager)
           name = gm.getPlayerName(socket.id) || 'Anonymous';
         }
       }
-      insertBugReport(data.description, name, currentTableId ?? undefined);
+      db.bugs.insert(data.description, name, currentTableId ?? undefined);
       socket.emit(S2C_PLAYER.BUG_REPORTED);
     });
 

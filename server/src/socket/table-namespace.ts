@@ -1,9 +1,9 @@
 import type { Namespace } from 'socket.io';
 import { S2C_TABLE, S2C_LOBBY, C2S_TABLE, C2S, S2C_PLAYER } from '@poker/shared';
 import type { TableManager } from '../game/TableManager.js';
-import { insertBugReport } from '../db/bugs.js';
+import type { Database } from '../db/index.js';
 
-export function setupTableNamespace(nsp: Namespace, tableManager: TableManager) {
+export function setupTableNamespace(nsp: Namespace, tableManager: TableManager, db: Database) {
   nsp.on('connection', (socket) => {
     console.log(`Table display connected: ${socket.id}`);
 
@@ -60,7 +60,7 @@ export function setupTableNamespace(nsp: Namespace, tableManager: TableManager) 
 
     socket.on(C2S.REPORT_BUG, (data: { description: string }) => {
       if (!data.description || typeof data.description !== 'string') return;
-      insertBugReport(data.description, 'Spectator', currentTableId ?? undefined);
+      db.bugs.insert(data.description, 'Spectator', currentTableId ?? undefined);
       socket.emit(S2C_PLAYER.BUG_REPORTED);
     });
   });
