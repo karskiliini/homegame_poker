@@ -657,6 +657,12 @@ export class GameManager {
     setTimeout(() => {
       if (this.phase === 'hand_complete') {
         this.phase = 'waiting_for_players';
+        // Clear previous hand's visual state so stale pots/cards don't linger on the table
+        this.currentPots = [];
+        this.currentCommunityCards = [];
+        this.currentSecondBoard = [];
+        this.currentShowdownEntries = [];
+        this.handEngine = null;
         this.processPendingRemovals();
         // Process pending sit-out-next-hand requests
         for (const socketId of [...this.pendingSitOutNextHand]) {

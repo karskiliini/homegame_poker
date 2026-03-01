@@ -8,7 +8,7 @@ jokaisella pöydällä pitää olla equity counter, joka näyttää prosenttien 
 
 ---
 
-## [NEW] Bug #21 — 2026-03-01 08:57:05
+## [DONE] Bug #21 — 2026-03-01 08:57:05
 **Reporter:** marski2
 **Table:** 826d31bc
 
@@ -96,7 +96,7 @@ bugi: istuin samaan pöytään kahdesta eri selaimesta samalla käyttäjätunnuk
 
 ---
 
-## [NEW] Bug #10 — 2026-02-28 23:24:27
+## [DONE] Bug #10 — 2026-02-28 23:24:27
 **Reporter:** Anonymous
 **Table:** N/A
 
