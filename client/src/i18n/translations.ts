@@ -168,6 +168,18 @@ const en = {
   balance_deposit_cancel: 'Cancel',
   balance_insufficient: 'Insufficient balance',
   balance_deposit_success: 'Deposit successful.',
+
+  // Profile
+  profile_title: 'Profile',
+  profile_change_avatar: 'Change Avatar',
+  profile_balance: 'Balance',
+  profile_history: 'Transaction History',
+  profile_no_history: 'No transactions yet',
+  profile_txn_deposit: 'Deposit',
+  profile_txn_buy_in: 'Buy-in',
+  profile_txn_cash_out: 'Cash-out',
+  profile_txn_rebuy: 'Rebuy',
+  profile_close: 'Close',
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -343,6 +355,18 @@ export const translations: Record<Language, Translations> = {
     balance_deposit_cancel: 'Peruuta',
     balance_insufficient: 'Saldo ei riita',
     balance_deposit_success: 'Talletus suoritettu.',
+
+    // Profile
+    profile_title: 'Profiili',
+    profile_change_avatar: 'Vaihda avatar',
+    profile_balance: 'Saldo',
+    profile_history: 'Tapahtumahistoria',
+    profile_no_history: 'Ei tapahtumia',
+    profile_txn_deposit: 'Talletus',
+    profile_txn_buy_in: 'Buy-in',
+    profile_txn_cash_out: 'Cash-out',
+    profile_txn_rebuy: 'Rebuy',
+    profile_close: 'Sulje',
   },
 };
 
