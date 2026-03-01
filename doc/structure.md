@@ -12,7 +12,7 @@ poker_softa/
     styles/         # index.css (design tokens, animations)
     themes/         # Table themes (basic, cccp, midnight, vegas, arctic, lava)
     views/
-      player/       # Phone UI (GameScreen, ActionButtons, Lobby, Login, Watching)
+      player/       # Phone UI (GameScreen, ActionButtons, Lobby, Login)
       table/        # Table UI (PokerTable, PlayerSeat, BetChip, PotDisplay, DeckShuffleAnimation)
       xr/           # WebXR/VR view (XRGameScreen, XRScene, scene components)
       history/      # HandHistoryDetail, HandHistoryList
@@ -40,7 +40,7 @@ poker_softa/
 | Hand evaluation | evaluation/hand-rank.ts, equity.ts, bad-beat.ts | - | types/card.ts, utils/card-utils.ts |
 | Socket comms | socket/player-namespace.ts, table-namespace.ts | socket.ts | types/socket-events.ts |
 | Table mgmt | game/TableManager.ts | views/table/PokerTable.tsx, PlayerSeat.tsx | types/lobby.ts |
-| Player UI | - | views/player/GameScreen.tsx, ActionButtons.tsx, PreActionButtons.tsx | betSizing.ts, preAction.ts |
+| Player UI (game + watching) | - | views/player/GameScreen.tsx, ActionButtons.tsx, PreActionButtons.tsx | betSizing.ts, preAction.ts |
 | Lobby/Login | socket/player-namespace.ts | views/player/LobbyScreen.tsx, LoginScreen.tsx | types/lobby.ts |
 | Player profile | socket/player-namespace.ts, db/players.ts | views/player/ProfileModal.tsx, TableLobbyScreen.tsx | types/lobby.ts, types/socket-events.ts |
 | Themes | - | themes/*.tsx, themes/types.ts, useTheme.ts, styles/index.css | - |
@@ -53,7 +53,6 @@ poker_softa/
 | Chips visual | - | components/ChipStack.tsx, views/table/BetChip.tsx, PotDisplay.tsx | chipUtils.ts |
 | Chat | - | components/ChatWindow.tsx, ChatInput.tsx | types/chat.ts |
 | Run it twice | game/GameManager.ts, HandEngine.ts | views/player/RunItTwicePrompt.tsx | - |
-| Watching view | - | views/player/WatchingScreen.tsx | - |
 | WebXR/VR | - | views/xr/XRGameScreen.tsx, XRScene.tsx, scene/*.tsx, useXRDetection.ts | - |
 
 ## Hotspots (largest files)
@@ -64,11 +63,11 @@ poker_softa/
 | server/src/game/HandEngine.ts | ~960 | Hand play, betting rounds |
 | client/src/views/table/PokerTable.tsx | ~930 | Table rendering |
 | client/src/styles/index.css | ~750 | Design tokens, keyframe animations |
-| client/src/views/player/GameScreen.tsx | ~510 | Player phone main view |
+| client/src/views/player/GameScreen.tsx | ~740 | Player phone view (game + spectator) |
 | server/src/socket/player-namespace.ts | ~380 | Player socket event handlers |
 
 ## Tests
 
 - **Server**: `server/src/__tests__/` — 33 test files
-- **Client**: `client/src/__tests__/` — 5 test files
+- **Client**: `client/src/__tests__/` — 4 test files
 - Run: `bun run test` (vitest)
