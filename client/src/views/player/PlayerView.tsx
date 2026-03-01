@@ -43,7 +43,7 @@ export function PlayerView() {
   const socketRef = useRef(createPlayerSocket());
   const {
     screen, setScreen, setConnected, setServerVersion,
-    setLobbyState, setPrivateState,
+    setLobbyState, privateState, setPrivateState,
     setTables, setPlayerId, setCurrentTableId, setStakeLevels,
     setWatchingTableId,
     setReconnecting,
@@ -310,8 +310,8 @@ export function PlayerView() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Top-right controls (visible during game) */}
-      {screen === 'game' && handHistoryView === 'none' && (
+      {/* Top-right controls (visible during game, when seated — GameScreen shows its own in watching mode) */}
+      {screen === 'game' && handHistoryView === 'none' && privateState && (
         <TopRightControls openHistory={openHistory} />
       )}
 
