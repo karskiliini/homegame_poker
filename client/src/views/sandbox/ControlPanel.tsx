@@ -1,6 +1,10 @@
 import { useRef, useState } from 'react';
 import type { Scenario } from './types.js';
 import { OVERLAY_CATEGORIES, type OverlayCategory } from './PointsOverlay.js';
+import {
+  SEAT_POSITIONS, BET_POSITIONS, POT_CENTER, COMMUNITY_CARDS_POS,
+  GAME_INFO_POS, WINNING_HAND_POS, DEALER_BTN_OFFSET, CARD_OFFSET_DISTANCE, DECK_POS,
+} from '../table/PokerTable.js';
 
 interface ControlPanelProps {
   scenarios: Scenario[];
@@ -353,6 +357,67 @@ export function ControlPanel({
       >
         {applyStatus ?? 'Apply to Server'}
       </button>
+
+      {/* Export buttons */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <CopyButton
+          label="Copy Positions"
+          getData={() => JSON.stringify({
+            SEAT_POSITIONS,
+            BET_POSITIONS,
+            POT_CENTER,
+            COMMUNITY_CARDS_POS,
+            GAME_INFO_POS,
+            WINNING_HAND_POS,
+            DECK_POS,
+            DEALER_BTN_OFFSET: DEALER_BTN_OFFSET.distance,
+            CARD_OFFSET_DISTANCE: CARD_OFFSET_DISTANCE.distance,
+          }, null, 2)}
+        />
+        <CopyButton
+          label="Copy Delays"
+          getData={() => {
+            if (!scenario) return '{}';
+            const delays: Record<string, number> = {};
+            scenario.steps.forEach((s, i) => {
+              const key = s.delayKey || s.name;
+              delays[key] = delayOverrides.get(i) ?? s.delayAfterMs;
+            });
+            return JSON.stringify(delays, null, 2);
+          }}
+        />
+      </div>
     </div>
+  );
+}
+
+function CopyButton({ label, getData }: { label: string; getData: () => string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleClick = async () => {
+    try {
+      await navigator.clipboard.writeText(getData());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Fallback: log to console
+      console.log(label + ':', getData());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      style={{
+        flex: 1, padding: '6px 0', borderRadius: 6, fontSize: 11, fontWeight: 600,
+        background: copied ? '#4a4' : '#333',
+        color: copied ? '#fff' : '#888',
+        border: '1px solid #555', cursor: 'pointer',
+      }}
+    >
+      {copied ? 'Copied!' : label}
+    </button>
   );
 }

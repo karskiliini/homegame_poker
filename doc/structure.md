@@ -14,6 +14,7 @@ poker_softa/
     views/
       player/       # Phone UI (GameScreen, ActionButtons, Lobby, Login)
       table/        # Table UI (PokerTable, PlayerSeat, BetChip, PotDisplay, DeckShuffleAnimation)
+      sandbox/      # Animation sandbox (AnimationSandbox, ControlPanel, PointsOverlay, MockSocket, AnimationDriver, scenarios)
       xr/           # WebXR/VR view (XRGameScreen, XRScene, scene components)
       history/      # HandHistoryDetail, HandHistoryList
     socket.ts       # Client socket connection
@@ -55,6 +56,7 @@ poker_softa/
 | Chat | - | components/ChatWindow.tsx, ChatInput.tsx | types/chat.ts |
 | Run it twice | game/GameManager.ts, HandEngine.ts | views/player/RunItTwicePrompt.tsx | - |
 | WebXR/VR | - | views/xr/XRGameScreen.tsx, XRScene.tsx, scene/*.tsx, useXRDetection.ts | - |
+| Animation sandbox | app.ts (REST endpoints) | views/sandbox/*.tsx, /sandbox route | animationConfig.ts |
 
 ## Hotspots (largest files)
 
