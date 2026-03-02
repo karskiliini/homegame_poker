@@ -8,17 +8,13 @@ const AnimationSandbox = lazy(() =>
   import('./views/sandbox/AnimationSandbox.js').then(m => ({ default: m.AnimationSandbox })),
 );
 
-const sandboxEnabled = import.meta.env.VITE_SANDBOX_ENABLED === 'true';
-
 export function App() {
   return (
     <>
       <ThemeApplier />
       <Routes>
         <Route path="/table/:tableId" element={<TableWindowView />} />
-        {sandboxEnabled && (
-          <Route path="/sandbox" element={<Suspense><AnimationSandbox /></Suspense>} />
-        )}
+        <Route path="/sandbox" element={<Suspense><AnimationSandbox /></Suspense>} />
         <Route path="/*" element={<PlayerView />} />
       </Routes>
     </>
