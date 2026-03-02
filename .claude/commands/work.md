@@ -4,7 +4,7 @@ Jatkuva kehityslooppi: korjaa bugit ensin, sitten kehitä uusia ominaisuuksia. *
 
 ### Prosessi
 
-1. **Synkronoi layout-positiot** — Aja `/sync-layout` ensin. Tämä hakee sandbox-editorissa muokatut positiot palvelimen tietokannasta ja päivittää ne lähdetiedostoon.
+1. **Synkronoi layout-positiot** — Aja `/sync-layout` ensin. Tämä hakee UI-editorissa muokatut positiot palvelimen tietokannasta ja päivittää ne lähdetiedostoon.
 
 2. **Hae user-bugit** — Aja `/fetch_user_bugs` ennen jokaista iteraatiota. Tämä hakee käyttäjien raportoimat bugit etätietokannasta ja kirjoittaa ne `doc/user_bugs.md`-tiedostoon.
 

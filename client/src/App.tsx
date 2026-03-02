@@ -14,7 +14,7 @@ export function App() {
       <ThemeApplier />
       <Routes>
         <Route path="/table/:tableId" element={<TableWindowView />} />
-        <Route path="/sandbox" element={<Suspense><AnimationSandbox /></Suspense>} />
+        <Route path="/editor" element={<Suspense><AnimationSandbox /></Suspense>} />
         <Route path="/*" element={<PlayerView />} />
       </Routes>
     </>
