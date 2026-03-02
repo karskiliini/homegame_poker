@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { S2C_TABLE, CHIP_TRICK_DURATION_MS, DELAY_SHOWDOWN_REVEAL_INTERVAL_MS } from '@poker/shared';
 import { SHUFFLE_DURATION_MS } from '../views/table/DeckShuffleAnimation.js';
 import type { GameState, SoundType, CardString, ChipTrickType } from '@poker/shared';
-import { SEAT_POSITIONS, BET_POSITIONS, DECK_POSITION } from '../views/table/PokerTable.js';
+import { SEAT_POSITIONS, BET_POSITIONS, DECK_POS } from '../views/table/PokerTable.js';
 import type { BetChipAnimation, DealCardAnimation } from '../views/table/PokerTable.js';
 import { tableSoundManager } from '../audio/SoundManager.js';
 
@@ -195,8 +195,8 @@ export function useTableAnimations({
         for (let i = 0; i < data.seatIndices.length; i++) {
           const seatIndex = data.seatIndices[i];
           const seatPos = getSeatPos(seatIndex);
-          const startX = ((DECK_POSITION.x - seatPos.x) / 100) * rect.width;
-          const startY = ((DECK_POSITION.y - seatPos.y) / 100) * rect.height;
+          const startX = ((DECK_POS.x - seatPos.x) / 100) * rect.width;
+          const startY = ((DECK_POS.y - seatPos.y) / 100) * rect.height;
 
           const cardIndex = round * data.seatIndices.length + i;
           const delay = cardIndex * 120;
