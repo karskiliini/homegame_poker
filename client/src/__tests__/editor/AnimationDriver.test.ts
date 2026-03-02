@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MockSocket } from '../../views/sandbox/MockSocket.js';
-import { AnimationDriver } from '../../views/sandbox/AnimationDriver.js';
-import type { Scenario } from '../../views/sandbox/types.js';
+import { MockSocket } from '../../views/editor/MockSocket.js';
+import { AnimationDriver } from '../../views/editor/AnimationDriver.js';
+import type { Scenario } from '../../views/editor/types.js';
 
 const testScenario: Scenario = {
   id: 'test',

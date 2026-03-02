@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { MockSocket } from '../../views/sandbox/MockSocket.js';
+import { MockSocket } from '../../views/editor/MockSocket.js';
 
 describe('MockSocket', () => {
   it('delivers events to listeners', () => {

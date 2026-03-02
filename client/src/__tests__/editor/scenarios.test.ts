@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SCENARIOS } from '../../views/sandbox/scenarios.js';
+import { SCENARIOS } from '../../views/editor/scenarios.js';
 
 describe('Scenarios', () => {
   it('has 10 preset scenarios', () => {
