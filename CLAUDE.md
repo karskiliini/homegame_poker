@@ -31,7 +31,8 @@ Use Test-Driven Development. For use-case testing:
 3. Verify the implementation matches the test
 4. If it doesn't match, fix until it does
 
-If you get stuck debugging test failures with a lower-end model, escalate to the best available model (currently Opus 4.6) for the debugging session.
+## Running Tests
+Always use `/test` (or `/test <filter>`) to run tests. This dispatches a Haiku subagent which runs vitest and reports results — saving cost and latency vs running tests in the main Opus session. Debugging failures is still done in the main session.
 
 ## Starting a New Task
 Always fetch and check out the latest `main` before starting any new task: `git fetch origin && git checkout main && git pull origin main`. This ensures you're building on the most up-to-date code and avoids unnecessary merge conflicts.
@@ -78,35 +79,3 @@ The app runs on two separate services that must ALWAYS be deployed together:
 
 The client connects to Railway via `VITE_SERVER_URL` env var (set in Vercel dashboard, baked into bundle at build time). Deploying only one service causes client–server version mismatch bugs. Always use `/deploy` which handles both.
 
-## Design System
-
-### Token Namespace
-All design tokens are CSS custom properties with `--ftp-` prefix, defined in `client/src/styles/index.css` under `:root`. Always use these tokens — never hardcode colors or timing values.
-
-### Styling Approach (3 layers)
-1. **Tailwind CSS v4** — layout utilities (`flex`, `grid`, `fixed`, `gap-*`, `w-full`, `min-h-screen`). No `tailwind.config.js` — v4 CSS-first config via `@import "tailwindcss"`.
-2. **Inline `style={{}}` props** — dominant for poker-specific visuals (table, seats, cards, chips, buttons). Use `var(--ftp-*)` for tokens. Complex gradients and programmatic mutations go here.
-3. **Global animation classes** — keyframe animations defined in `index.css` as `.animate-*` classes (e.g. `.animate-winner-glow`, `.animate-chip-fly`, `.animate-card-flip`).
-
-No CSS Modules, no styled-components, no Sass.
-
-### Key Token Groups
-- **Colors:** `--ftp-red`, `--ftp-bg-*`, `--ftp-felt-*`, `--ftp-gold-*`, `--ftp-text-*`
-- **Action buttons:** `--ftp-btn-fold`, `--ftp-btn-check`, `--ftp-btn-call`, `--ftp-btn-raise` (each with `-dark` and `-shadow`)
-- **Cards:** 4-color deck — spade=#000, heart=#CC0000, diamond=#0066CC (blue), club=#008800 (green)
-- **Chips:** `--ftp-chip-white/red/green/black/blue`
-- **Animation timing:** `--ftp-anim-*` (e.g. `--ftp-anim-card-deal: 350ms`)
-- **Easing:** `--ftp-ease-*` (e.g. `--ftp-ease-overshoot` for pop-in effects)
-
-### Rendering
-- **Phone view** (GameScreen) — `min-h-screen flex flex-col`, 79vh mini-table + action area, scaled via CSS `transform`
-- **Watching view** (WatchingScreen) — spectator view using same layout as phone view
-
-### Component Patterns
-- Shared components in `client/src/components/` (Card, CardBack, ChipStack, SoundToggle, BugReport*)
-- Size variants via prop (`sm | md | lg`) mapped to pixel lookup objects
-- Modals use `fixed inset-0 bg-black/70 z-50` overlay pattern
-- No icon library — only inline SVG and emoji avatars
-- No external image assets — everything is CSS gradients, inline SVG, or emoji
-- Typography: system font `'Helvetica Neue', Arial, sans-serif`; `font-mono` (Tailwind) for all numbers
-- Framer Motion only for screen transitions (`AnimatePresence` + `motion.div`) and card-fold exit animations

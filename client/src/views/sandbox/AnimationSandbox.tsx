@@ -112,7 +112,10 @@ export function AnimationSandbox() {
 
   return (
     <div style={{ width: '100%', height: '100vh', background: '#0a0a0a' }}>
-      <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
+      <div ref={containerRef} style={{
+        width: 'calc(100% - 372px)', height: '100%', position: 'relative',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
         {gameState ? (
           <PokerTable
             gameState={gameState}

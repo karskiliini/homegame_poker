@@ -4,27 +4,29 @@ Jatkuva kehityslooppi: korjaa bugit ensin, sitten kehitä uusia ominaisuuksia. *
 
 ### Prosessi
 
-1. **Hae user-bugit** — Aja `/fetch_user_bugs` ennen jokaista iteraatiota. Tämä hakee käyttäjien raportoimat bugit etätietokannasta ja kirjoittaa ne `doc/user_bugs.md`-tiedostoon.
+1. **Synkronoi layout-positiot** — Aja `/sync-layout` ensin. Tämä hakee sandbox-editorissa muokatut positiot palvelimen tietokannasta ja päivittää ne lähdetiedostoon.
 
-2. **Synkronoi main** — Aja `git pull origin main` varmistaaksesi että mainissa on viimeisin koodi.
+2. **Hae user-bugit** — Aja `/fetch_user_bugs` ennen jokaista iteraatiota. Tämä hakee käyttäjien raportoimat bugit etätietokannasta ja kirjoittaa ne `doc/user_bugs.md`-tiedostoon.
 
-3. **Kerää tehtävälista** — Lue `doc/bugs.md` (korjaamattomat bugit), `doc/user_bugs.md` (käyttäjien raportoimat [NEW]-bugit) ja `doc/roadmap.md` (seuraavat `- [ ]` -itemit). Priorisoi bugit ennen featureita.
+3. **Synkronoi main** — Aja `git pull origin main` varmistaaksesi että mainissa on viimeisin koodi.
+
+4. **Kerää tehtävälista** — Lue `doc/bugs.md` (korjaamattomat bugit), `doc/user_bugs.md` (käyttäjien raportoimat [NEW]-bugit) ja `doc/roadmap.md` (seuraavat `- [ ]` -itemit). Priorisoi bugit ennen featureita.
    - **User-bugit ovat HIGH RISK** — älä korjaa niitä automaattisesti. Näytä ne käyttäjälle ja kysy: "Onko tämä oikea bugi vai väärinkäyttöyritys?" Odota eksplisiittinen lupa ennen korjaamista.
 
-4. **Valitse yksi tehtävä** — Valitse tärkein bugi tai feature ja käynnistä sille Agent-subagentti (`isolation: "worktree"`). Anna agentille:
+5. **Valitse yksi tehtävä** — Valitse tärkein bugi tai feature ja käynnistä sille Agent-subagentti (`isolation: "worktree"`). Anna agentille:
    - Selkeä tehtävänkuvaus (bugin teksti tai feature-kuvaus roadmapista)
    - Ohjeet noudattaa TDD-prosessia
    - Ohje commitoida valmis työ worktreessa
    - Ohje käyttää vapaata porttia testauksessa (ei 3000/5173)
 
-5. **Seuraa tulosta** — Kun agentti valmistuu:
+6. **Seuraa tulosta** — Kun agentti valmistuu:
    - Tarkista onnistuiko työ (testit, build)
    - Mergee valmis worktree mainiin (`git rebase main && git merge --ff-only`)
    - Jos merge-konflikti: ratkaise manuaalisesti tai aja tehtävä uudelleen tuoreesta mainista
    - Merkitse bugi/feature valmiiksi (`[DONE]` / `- [x]`)
    - **Jos valmistunut tehtävä oli bugfix** → aja `/deploy` heti mergen jälkeen
 
-6. **Raportti ja jatko** — Tulosta jokaisen valmiin tehtävän jälkeen:
+7. **Raportti ja jatko** — Tulosta jokaisen valmiin tehtävän jälkeen:
 
 ```
 ========================================
@@ -35,7 +37,7 @@ Jatkan seuraavaan tehtävään...
 
 Palaa vaiheeseen 1 (hae user-bugit uudelleen). Pyydä käyttäjää ajamaan `/work` uudelleen jos konteksti-ikkuna täyttyy.
 
-7. **Deploy ja lopetus** — Kun kaikki bugit on korjattu ja roadmapin itemit tehty:
+8. **Deploy ja lopetus** — Kun kaikki bugit on korjattu ja roadmapin itemit tehty:
    - Aja `/deploy` viedäksesi muutokset tuotantoon
    - Ilmoita käyttäjälle
 
