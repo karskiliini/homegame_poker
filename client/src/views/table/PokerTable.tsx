@@ -23,6 +23,9 @@ import type { BadBeatData, ChipTrickData, WinnerBannerData } from '../../hooks/u
 export const TABLE_VIRTUAL_W = 900;
 export const TABLE_VIRTUAL_H = 550;
 
+// Deck position on the table (percentage-based) — used for shuffle animation and card deal origin
+export const DECK_POSITION = { x: 50, y: 42 };
+
 // Seat positions around an oval table (percentage-based, for 10 seats)
 export const SEAT_POSITIONS: { x: number; y: number }[] = [
   { x: 50, y: 92 },   // 0: bottom center
