@@ -175,6 +175,8 @@ interface PlayerSeatProps {
   winningCards?: CardString[];
   /** Whether a showdown is active (winners are being displayed) */
   showdownActive?: boolean;
+  /** Whether deal animation is still in progress for this seat */
+  dealPending?: boolean;
 }
 
 function useDcCountdown(disconnectedAt: number | null): string | null {
@@ -205,7 +207,7 @@ function useDcCountdown(disconnectedAt: number | null): string | null {
   return remaining;
 }
 
-export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardOffset, onAvatarClick, onAvatarHoverStart, onAvatarHoverEnd, onChipTrickClick, winningCards, showdownActive }: PlayerSeatProps) {
+export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, foldDirection, equity, numHoleCards = 2, cardOffset, onAvatarClick, onAvatarHoverStart, onAvatarHoverEnd, onChipTrickClick, winningCards, showdownActive, dealPending }: PlayerSeatProps) {
   const { gradients, assets } = useTheme();
   const isActive = player.isCurrentActor;
   const isFolded = player.status === 'folded';
@@ -223,8 +225,8 @@ export function PlayerSeat({ player, isWinner, timerSeconds, timerMax = 30, fold
   const timerColor = timerPercent > 60 ? 'var(--ftp-timer-safe)' :
     timerPercent > 25 ? 'var(--ftp-timer-warning)' : 'var(--ftp-timer-critical)';
 
-  // Show card backs when player has cards but they're not revealed
-  const showCardBacks = player.hasCards && !player.holeCards && !isFolded;
+  // Show card backs when player has cards but they're not revealed (and deal animation is done)
+  const showCardBacks = player.hasCards && !player.holeCards && !isFolded && !dealPending;
 
   // Pick a random fold animation variant when cards are dealt (showCardBacks becomes true)
   const foldVariantRef = useRef(0);

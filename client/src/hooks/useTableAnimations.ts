@@ -90,8 +90,10 @@ interface UseTableAnimationsResult {
   allInSpotlight: boolean;
   winnerBanners: WinnerBannerData[];
   celebration: { type: 'royal_flush' | 'straight_flush'; seatIndex: number } | null;
+  dealPendingSeats: Set<number>;
 }
 
+const EMPTY_SET = new Set<number>();
 let animId = 0;
 
 export function useTableAnimations({
@@ -118,6 +120,7 @@ export function useTableAnimations({
   const [allInSpotlight, setAllInSpotlight] = useState(false);
   const [winnerBanners, setWinnerBanners] = useState<WinnerBannerData[]>([]);
   const [celebration, setCelebration] = useState<{ type: 'royal_flush' | 'straight_flush'; seatIndex: number } | null>(null);
+  const [dealPendingSeats, setDealPendingSeats] = useState<Set<number>>(EMPTY_SET);
 
   // Helper: resolve display position for a seat index (respects rotation)
   const getSeatPos = (seatIndex: number) => {
@@ -192,6 +195,8 @@ export function useTableAnimations({
       }
     };
 
+    const DEAL_FLY_DURATION = 400; // matches CSS animation duration (~350ms + buffer)
+
     const startDealAnimations = (data: {
       dealerSeatIndex: number;
       seatIndices: number[];
@@ -199,6 +204,11 @@ export function useTableAnimations({
       const current = gameStateRef.current;
       const isPLO = current?.config?.gameType === 'PLO';
       const rounds = isPLO ? 4 : 2;
+
+      // Track last card landing time per seat so we know when to clear pending
+      const seatLastLandTime = new Map<number, number>();
+      const allAnimIds: number[] = [];
+
       for (let round = 0; round < rounds; round++) {
         for (let i = 0; i < data.seatIndices.length; i++) {
           const seatIndex = data.seatIndices[i];
@@ -206,27 +216,44 @@ export function useTableAnimations({
 
           const cardIndex = round * data.seatIndices.length + i;
           const delay = cardIndex * 120;
+          const landTime = delay + DEAL_FLY_DURATION;
+          seatLastLandTime.set(seatIndex, Math.max(seatLastLandTime.get(seatIndex) ?? 0, landTime));
+
+          const id = animId++;
+          allAnimIds.push(id);
 
           setTimeout(() => {
-            const anim: DealCardAnimation = {
-              id: animId++,
-              seatIndex,
-              startX,
-              startY,
-            };
+            const anim: DealCardAnimation = { id, seatIndex, startX, startY };
             setDealCardAnimations(prev => [...prev, anim]);
-            setTimeout(() => {
-              setDealCardAnimations(prev => prev.filter(a => a.id !== anim.id));
-            }, 400);
+            // Animation stays in DOM (CSS fill-mode: both keeps it in place)
           }, delay);
         }
       }
+
+      // For each seat, clear pending + remove its animation cards when its last card lands
+      for (const [seatIndex, landTime] of seatLastLandTime) {
+        setTimeout(() => {
+          setDealPendingSeats(prev => {
+            const next = new Set(prev);
+            next.delete(seatIndex);
+            return next.size === 0 ? EMPTY_SET : next;
+          });
+        }, landTime);
+      }
+
+      // Clean up all animation card elements after the very last card has landed
+      const maxLandTime = Math.max(...seatLastLandTime.values());
+      setTimeout(() => {
+        setDealCardAnimations(prev => prev.filter(a => !allAnimIds.includes(a.id)));
+      }, maxLandTime);
     };
 
     const onCardsDealt = (data: {
       dealerSeatIndex: number;
       seatIndices: number[];
     }) => {
+      // Block static card backs for all seats that will receive cards
+      setDealPendingSeats(new Set(data.seatIndices));
       // Show shuffle animation first, then deal cards after it finishes
       setShuffling(true);
       setTimeout(() => {
@@ -378,6 +405,7 @@ export function useTableAnimations({
       setAllInSpotlight(false);
       setWinnerBanners([]);
       setCelebration(null);
+      setDealPendingSeats(EMPTY_SET);
       // Keep winner glow visible for 2s after hand result so players can see who won
       setTimeout(() => {
         setWinnerSeats([]);
@@ -438,5 +466,6 @@ export function useTableAnimations({
     allInSpotlight,
     winnerBanners,
     celebration,
+    dealPendingSeats,
   };
 }

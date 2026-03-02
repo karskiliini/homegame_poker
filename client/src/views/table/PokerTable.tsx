@@ -116,6 +116,8 @@ interface PokerTableProps {
   winnerBanners?: WinnerBannerData[];
   /** Royal/Straight flush celebration data */
   celebration?: { type: 'royal_flush' | 'straight_flush'; seatIndex: number } | null;
+  /** Seats where deal animation is still in progress (suppresses static card backs) */
+  dealPendingSeats?: Set<number>;
 }
 
 // Table center in percentage coordinates
@@ -179,6 +181,7 @@ export function PokerTable({
   allInSpotlight,
   winnerBanners = [],
   celebration,
+  dealPendingSeats,
 }: PokerTableProps) {
   const { players, communityCards, secondBoard, pots, phase, handNumber, config } = gameState;
   const numHoleCards = config.gameType === 'PLO' ? 4 : 2;
@@ -849,6 +852,7 @@ export function PokerTable({
                   onChipTrickClick={myPlayerId && player?.id === myPlayerId ? onChipTrickClick : undefined}
                   winningCards={winningCards}
                   showdownActive={winnerSeats.length > 0}
+                  dealPending={dealPendingSeats?.has(seatIndex)}
                 />
                 {badBeat && badBeat.loserSeatIndex === seatIndex && (
                   <BadBeatBubble seatIndex={seatIndex} playerName={badBeat.playerName} />

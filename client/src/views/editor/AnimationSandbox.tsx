@@ -135,6 +135,7 @@ export function AnimationSandbox() {
             allInSpotlight={animations.allInSpotlight}
             winnerBanners={animations.winnerBanners}
             celebration={animations.celebration}
+            dealPendingSeats={animations.dealPendingSeats}
           />
         ) : (
           <div style={{
