@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { SCENARIOS } from '../../views/sandbox/scenarios.js';
 
 describe('Scenarios', () => {
-  it('has 8 preset scenarios', () => {
-    expect(SCENARIOS).toHaveLength(8);
+  it('has 10 preset scenarios', () => {
+    expect(SCENARIOS).toHaveLength(10);
   });
 
   it('every scenario has at least 3 steps', () => {

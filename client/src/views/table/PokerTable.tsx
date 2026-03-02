@@ -55,7 +55,25 @@ export const BET_POSITIONS: { x: number; y: number }[] = [
 ];
 
 // Pot center position (percentage)
-const POT_CENTER = { x: 50, y: 58 };
+export const POT_CENTER = { x: 50, y: 58 };
+
+// Community cards center (percentage). Y is adjustable; X is always 50%.
+export const COMMUNITY_CARDS_POS = { x: 50, y: 42 };
+
+// Game info position (percentage). Y is adjustable; X is always 50%.
+export const GAME_INFO_POS = { x: 50, y: 13 };
+
+// Winning hand text position (percentage)
+export const WINNING_HAND_POS = { x: 50, y: 63 };
+
+// Dealer button offset from seat toward center (px)
+export const DEALER_BTN_OFFSET = { distance: 52 };
+
+// Card offset from seat toward center (px)
+export const CARD_OFFSET_DISTANCE = { distance: 65 };
+
+// Deck / shuffle animation position (percentage)
+export const DECK_POS = { x: 50, y: 42 };
 
 interface PotAward {
   potIndex: number;
@@ -246,8 +264,8 @@ export function PokerTable({
     if (!potAwards || potAwards.length === 0 || !tableRef.current) return;
 
     const rect = tableRef.current.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height * 0.58;
+    const centerX = (POT_CENTER.x / 100) * rect.width;
+    const centerY = (POT_CENTER.y / 100) * rect.height;
 
     const newAnims: ChipAnimation[] = potAwards.map(award => {
       const seatPos = getDisplaySeatPos(award.winnerSeatIndex);
@@ -277,8 +295,8 @@ export function PokerTable({
     const dx = (TABLE_CENTER.x - pos.x) / 100 * TABLE_VIRTUAL_W;
     const dy = (TABLE_CENTER.y - pos.y) / 100 * TABLE_VIRTUAL_H;
     const len = Math.sqrt(dx * dx + dy * dy);
-    if (len === 0) return { x: 0, y: -65 };
-    const dist = 65;
+    const dist = CARD_OFFSET_DISTANCE.distance;
+    if (len === 0) return { x: 0, y: -dist };
     return { x: Math.round((dx / len) * dist), y: Math.round((dy / len) * dist) };
   }, [getDisplaySeatPos]);
 
@@ -304,10 +322,11 @@ export function PokerTable({
     const dx = TABLE_VIRTUAL_W / 2 - cx;
     const dy = TABLE_VIRTUAL_H / 2 - cy;
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    // Place button 52px from seat center toward table center
+    // Place button N px from seat center toward table center
+    const d = DEALER_BTN_OFFSET.distance;
     return {
-      x: cx + (dx / len) * 52,
-      y: cy + (dy / len) * 52,
+      x: cx + (dx / len) * d,
+      y: cy + (dy / len) * d,
     };
   }, [getDisplaySeatPos]);
 
@@ -431,7 +450,7 @@ export function PokerTable({
       )}
 
       {/* Game info */}
-      <div className="absolute top-[13%] left-1/2 -translate-x-1/2 text-center">
+      <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: `${GAME_INFO_POS.y}%` }}>
         <div
           className="tracking-wider"
           style={{
@@ -457,7 +476,7 @@ export function PokerTable({
         if (!hasRIT) {
           // Single board — render normally
           return (
-            <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2" style={allInSpotlight ? { zIndex: 30 } : undefined}>
+            <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ top: `${COMMUNITY_CARDS_POS.y}%`, ...(allInSpotlight ? { zIndex: 30 } : {}) }}>
               <CommunityCards
                 cards={communityCards}
                 winningCards={winningCards}
@@ -480,7 +499,7 @@ export function PokerTable({
         const hasWinners = winningCards.length > 0;
 
         return (
-          <div className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2" style={allInSpotlight ? { zIndex: 30 } : undefined}>
+          <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ top: `${COMMUNITY_CARDS_POS.y}%`, ...(allInSpotlight ? { zIndex: 30 } : {}) }}>
             <div className="flex gap-2 items-center">
               {/* Shared pre-all-in cards — centered */}
               {sharedCards.map((card) => (
@@ -530,7 +549,7 @@ export function PokerTable({
 
       {/* Pots */}
       {pots.length > 0 && (
-        <div className="absolute top-[58%] left-1/2 -translate-x-1/2">
+        <div className="absolute left-1/2 -translate-x-1/2" style={{ top: `${POT_CENTER.y}%` }}>
           <PotDisplay pots={pots} bigBlind={config.bigBlind} playerNames={playerNames} potGrow={potGrow} awardingPotIndex={awardingPotIndex} />
         </div>
       )}
@@ -540,7 +559,7 @@ export function PokerTable({
         <div
           className="absolute left-1/2 -translate-x-1/2"
           style={{
-            top: '63%',
+            top: `${WINNING_HAND_POS.y}%`,
             zIndex: 30,
             textAlign: 'center',
           }}
@@ -690,8 +709,8 @@ export function PokerTable({
           key={anim.id}
           className="absolute pointer-events-none"
           style={{
-            left: '50%',
-            top: '58%',
+            left: `${POT_CENTER.x}%`,
+            top: `${POT_CENTER.y}%`,
             zIndex: 50,
           }}
         >

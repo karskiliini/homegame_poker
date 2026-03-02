@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { setAnimDelays, getAnimConfig, resetAnimDelays } from '@poker/shared';
 import type { Database } from './db/index.js';
 
 export function createApp(db: Database) {
@@ -7,6 +8,15 @@ export function createApp(db: Database) {
   app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
   app.use(express.json());
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/api/animation-config', (_req, res) => res.json(getAnimConfig()));
+  app.post('/api/animation-config', (req, res) => {
+    setAnimDelays(req.body);
+    res.json(getAnimConfig());
+  });
+  app.post('/api/animation-config/reset', (_req, res) => {
+    resetAnimDelays();
+    res.json(getAnimConfig());
+  });
   app.get('/api/bugs', (_req, res) => res.json(db.bugs.getAll()));
   app.post('/api/bugs/archive', (req, res) => {
     const { ids } = req.body;

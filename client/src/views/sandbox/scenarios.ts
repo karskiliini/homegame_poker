@@ -749,6 +749,194 @@ const chipMovements: Scenario = {
   ],
 };
 
+// ─── 9. Board 1 Peels ──────────────────────────────────────────────────────
+// Isolated community card reveal animations: flop (3 cards), turn, river, dramatic river
+const boardPeels: Scenario = {
+  id: 'board-peels',
+  name: 'Board 1 Peels',
+  description: 'Isolated community card deal animations: flop, turn, river, dramatic river peel',
+  steps: [
+    step('Setup (Preflop)', S2C_TABLE.GAME_STATE, mockGameState({
+      currentStreet: 'preflop',
+      communityCards: [],
+      players: [
+        mockPlayer({ seatIndex: 0, isDealer: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketAces }),
+        mockPlayer({ seatIndex: 4, isBigBlind: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketKings }),
+      ],
+      pots: [{ amount: 400, eligible: ['player-0', 'player-4'] }],
+    }), 500),
+
+    step('All-In Showdown', S2C_TABLE.ALLIN_SHOWDOWN, {
+      entries: [
+        { seatIndex: 0, cards: HANDS.pocketAces },
+        { seatIndex: 4, cards: HANDS.pocketKings },
+      ],
+    }, DELAY_AFTER_ALLIN_SHOWDOWN_MS, 'DELAY_AFTER_ALLIN_SHOWDOWN_MS'),
+
+    step('Equity', S2C_TABLE.EQUITY_UPDATE, {
+      equities: { 0: 82, 4: 18 },
+    }, 500),
+
+    // ── Flop peel: 0→3 cards ──
+    step('Flop State', S2C_TABLE.GAME_STATE, mockGameState({
+      currentStreet: 'flop',
+      communityCards: ['Qs', 'Js', 'Ts'] as CardString[],
+      players: [
+        mockPlayer({ seatIndex: 0, isDealer: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketAces }),
+        mockPlayer({ seatIndex: 4, isBigBlind: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketKings }),
+      ],
+      pots: [{ amount: 400, eligible: ['player-0', 'player-4'] }],
+    }), 200),
+
+    step('Flop Deal', S2C_TABLE.STREET_DEAL, {
+      street: 'flop', cards: ['Qs', 'Js', 'Ts'] as CardString[],
+    }, DELAY_ALLIN_RUNOUT_STREET_MS, 'DELAY_ALLIN_RUNOUT_STREET_MS'),
+
+    step('Equity After Flop', S2C_TABLE.EQUITY_UPDATE, {
+      equities: { 0: 55, 4: 45 },
+    }, 500),
+
+    // ── Turn peel: 3→4 cards ──
+    step('Turn State', S2C_TABLE.GAME_STATE, mockGameState({
+      currentStreet: 'turn',
+      communityCards: ['Qs', 'Js', 'Ts', 'Kc'] as CardString[],
+      players: [
+        mockPlayer({ seatIndex: 0, isDealer: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketAces }),
+        mockPlayer({ seatIndex: 4, isBigBlind: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketKings }),
+      ],
+      pots: [{ amount: 400, eligible: ['player-0', 'player-4'] }],
+    }), 200),
+
+    step('Turn Deal', S2C_TABLE.STREET_DEAL, {
+      street: 'turn', cards: ['Qs', 'Js', 'Ts', 'Kc'] as CardString[],
+    }, DELAY_ALLIN_RUNOUT_STREET_MS, 'DELAY_ALLIN_RUNOUT_STREET_MS'),
+
+    step('Equity After Turn', S2C_TABLE.EQUITY_UPDATE, {
+      equities: { 0: 30, 4: 70 },
+    }, 500),
+
+    // ── River peel (dramatic!): 4→5 cards ──
+    step('River State', S2C_TABLE.GAME_STATE, mockGameState({
+      currentStreet: 'river',
+      communityCards: ['Qs', 'Js', 'Ts', 'Kc', '2d'] as CardString[],
+      players: [
+        mockPlayer({ seatIndex: 0, isDealer: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketAces }),
+        mockPlayer({ seatIndex: 4, isBigBlind: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketKings }),
+      ],
+      pots: [{ amount: 400, eligible: ['player-0', 'player-4'] }],
+    }), 200),
+
+    step('River Deal (Dramatic Peel)', S2C_TABLE.STREET_DEAL, {
+      street: 'river',
+      cards: ['Qs', 'Js', 'Ts', 'Kc', '2d'] as CardString[],
+      dramatic: true,
+    }, DELAY_DRAMATIC_RIVER_MS, 'DELAY_DRAMATIC_RIVER_MS'),
+
+    step('Pot Award', S2C_TABLE.POT_AWARD, {
+      awards: [{ potIndex: 0, amount: 400, winnerSeatIndex: 4, winnerName: 'Diana', winningHand: 'Straight, Ace to Ten' }],
+      potIndex: 0,
+      isLastPot: true,
+      totalPots: 1,
+      winningCards: ['Kh', 'Kd', 'Qs', 'Js', 'Ts'] as CardString[],
+      handRank: 'straight',
+      handName: 'Straight',
+      isNuts: false,
+    }, DELAY_POT_AWARD_MS, 'DELAY_POT_AWARD_MS'),
+
+    step('Hand Complete', S2C_TABLE.HAND_RESULT, {}, 0),
+  ],
+};
+
+// ─── 10. Board 2 Peel (Run It Twice) ────────────────────────────────────────
+// Focused on the second board appearing after board 1 completes
+const board2Peel: Scenario = {
+  id: 'board2-peel',
+  name: 'Board 2 Peel',
+  description: 'Run It Twice: board 1 runout, then second board appears with peel animation',
+  steps: [
+    step('Setup (Flop)', S2C_TABLE.GAME_STATE, mockGameState({
+      currentStreet: 'flop',
+      communityCards: ['9c', '4d', '2h'] as CardString[],
+      players: [
+        mockPlayer({ seatIndex: 0, isDealer: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketAces }),
+        mockPlayer({ seatIndex: 4, isBigBlind: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketKings }),
+      ],
+      pots: [{ amount: 400, eligible: ['player-0', 'player-4'] }],
+    }), 500),
+
+    step('All-In Showdown', S2C_TABLE.ALLIN_SHOWDOWN, {
+      entries: [
+        { seatIndex: 0, cards: HANDS.pocketAces },
+        { seatIndex: 4, cards: HANDS.pocketKings },
+      ],
+    }, DELAY_AFTER_ALLIN_SHOWDOWN_MS, 'DELAY_AFTER_ALLIN_SHOWDOWN_MS'),
+
+    step('Equity', S2C_TABLE.EQUITY_UPDATE, {
+      equities: { 0: 88, 4: 12 },
+    }, 500),
+
+    // Board 1: turn peel
+    step('Board 1 Turn State', S2C_TABLE.GAME_STATE, mockGameState({
+      currentStreet: 'turn',
+      communityCards: ['9c', '4d', '2h', 'Js'] as CardString[],
+      players: [
+        mockPlayer({ seatIndex: 0, isDealer: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketAces }),
+        mockPlayer({ seatIndex: 4, isBigBlind: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketKings }),
+      ],
+      pots: [{ amount: 400, eligible: ['player-0', 'player-4'] }],
+    }), 200),
+
+    step('Board 1 Turn Deal', S2C_TABLE.STREET_DEAL, {
+      street: 'turn', cards: ['9c', '4d', '2h', 'Js'] as CardString[],
+    }, DELAY_ALLIN_RUNOUT_STREET_MS, 'DELAY_ALLIN_RUNOUT_STREET_MS'),
+
+    // Board 1: river peel
+    step('Board 1 River State', S2C_TABLE.GAME_STATE, mockGameState({
+      currentStreet: 'river',
+      communityCards: ['9c', '4d', '2h', 'Js', '5c'] as CardString[],
+      players: [
+        mockPlayer({ seatIndex: 0, isDealer: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketAces }),
+        mockPlayer({ seatIndex: 4, isBigBlind: true, stack: 0, status: 'all_in', holeCards: HANDS.pocketKings }),
+      ],
+      pots: [{ amount: 400, eligible: ['player-0', 'player-4'] }],
+    }), 200),
+
+    step('Board 1 River Deal', S2C_TABLE.STREET_DEAL, {
+      street: 'river', cards: ['9c', '4d', '2h', 'Js', '5c'] as CardString[],
+    }, DELAY_ALLIN_RUNOUT_STREET_MS, 'DELAY_ALLIN_RUNOUT_STREET_MS'),
+
+    // Board 1 award
+    step('Board 1 Award', S2C_TABLE.POT_AWARD, {
+      awards: [{ potIndex: 0, amount: 200, winnerSeatIndex: 0, winnerName: 'Alice', winningHand: 'Pair of Aces' }],
+      potIndex: 0,
+      isLastPot: false,
+      totalPots: 2,
+      handRank: 'pair',
+      handName: 'Pair',
+      isNuts: false,
+    }, DELAY_BETWEEN_POT_AWARDS_MS, 'DELAY_BETWEEN_POT_AWARDS_MS'),
+
+    // Board 2: second board peel — this is the key animation
+    step('Board 2 Dealt', S2C_TABLE.SECOND_BOARD_DEALT, {
+      cards: ['9c', '4d', '2h', 'Kc', 'Qd'] as CardString[],
+    }, 2500),
+
+    // Board 2 award
+    step('Board 2 Award', S2C_TABLE.POT_AWARD, {
+      awards: [{ potIndex: 1, amount: 200, winnerSeatIndex: 4, winnerName: 'Diana', winningHand: 'Three Kings' }],
+      potIndex: 1,
+      isLastPot: true,
+      totalPots: 2,
+      winningCards: ['Kh', 'Kd', 'Kc'] as CardString[],
+      handRank: 'three_of_a_kind',
+      handName: 'Three of a Kind',
+      isNuts: false,
+    }, DELAY_POT_AWARD_MS, 'DELAY_POT_AWARD_MS'),
+
+    step('Hand Complete', S2C_TABLE.HAND_RESULT, {}, 0),
+  ],
+};
+
 export const SCENARIOS: Scenario[] = [
   basicHand,
   dramaticRiver,
@@ -758,4 +946,6 @@ export const SCENARIOS: Scenario[] = [
   badBeat,
   royalFlush,
   chipMovements,
+  boardPeels,
+  board2Peel,
 ];

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { CardBack } from '../../components/CardBack.js';
 import type { ShuffleStyle } from '../../themes/types.js';
-import { DECK_POSITION } from './PokerTable.js';
+import { DECK_POS } from './PokerTable.js';
 
 /** Duration of the full shuffle animation in ms */
 export const SHUFFLE_DURATION_MS = 1800;
@@ -35,8 +35,8 @@ export function DeckShuffleAnimation({ shuffleStyle, onComplete }: DeckShuffleAn
     <div
       className="absolute pointer-events-none"
       style={{
-        left: `${DECK_POSITION.x}%`,
-        top: `${DECK_POSITION.y}%`,
+        left: `${DECK_POS.x}%`,
+        top: `${DECK_POS.y}%`,
         transform: 'translate(-50%, -50%)',
         zIndex: 40,
       }}

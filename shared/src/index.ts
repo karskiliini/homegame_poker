@@ -13,3 +13,5 @@ export * from './chipUtils.js';
 export * from './avatars.js';
 export * from './preAction.js';
 export * from './betSizing.js';
+export { getAnimDelay, setAnimDelays, resetAnimDelays, getAnimConfig } from './animationConfig.js';
+export type { AnimationConfigKey } from './animationConfig.js';

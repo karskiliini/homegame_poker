@@ -118,4 +118,61 @@ describe('AnimationDriver', () => {
     vi.advanceTimersByTime(400);
     expect(hB).toHaveBeenCalled();
   });
+
+  it('solo step loops the same step repeatedly', () => {
+    const socket = new MockSocket();
+    const hB = vi.fn();
+    socket.on('evt:b', hB);
+    const driver = new AnimationDriver(socket, testScenario);
+    driver.setSoloSteps(new Set([1]));
+    driver.play();
+    expect(hB).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(200);
+    expect(hB).toHaveBeenCalledTimes(2);
+    vi.advanceTimersByTime(200);
+    expect(hB).toHaveBeenCalledTimes(3);
+  });
+
+  it('solo step with 0 delay uses minimum 500ms', () => {
+    const socket = new MockSocket();
+    const hC = vi.fn();
+    socket.on('evt:c', hC);
+    const driver = new AnimationDriver(socket, testScenario);
+    driver.setSoloSteps(new Set([2])); // step 3 has delayAfterMs: 0
+    driver.play();
+    expect(hC).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(100);
+    expect(hC).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(400);
+    expect(hC).toHaveBeenCalledTimes(2);
+  });
+
+  it('multi-step solo loops through selected steps in order', () => {
+    const socket = new MockSocket();
+    const hA = vi.fn();
+    const hC = vi.fn();
+    socket.on('evt:a', hA);
+    socket.on('evt:c', hC);
+    const driver = new AnimationDriver(socket, testScenario);
+    driver.setSoloSteps(new Set([0, 2])); // steps 0 and 2
+    driver.play();
+    // Starts with step 0
+    expect(hA).toHaveBeenCalledTimes(1);
+    expect(hC).toHaveBeenCalledTimes(0);
+    // After step 0 delay (100ms), plays step 2
+    vi.advanceTimersByTime(100);
+    expect(hC).toHaveBeenCalledTimes(1);
+    // Step 2 has 0ms delay → uses 500ms min, then loops back to step 0
+    vi.advanceTimersByTime(500);
+    expect(hA).toHaveBeenCalledTimes(2);
+  });
+
+  it('clearing solo steps resumes normal playback', () => {
+    const socket = new MockSocket();
+    const driver = new AnimationDriver(socket, testScenario);
+    driver.setSoloSteps(new Set([1]));
+    expect(driver.soloSteps.size).toBe(1);
+    driver.setSoloSteps(new Set());
+    expect(driver.soloSteps.size).toBe(0);
+  });
 });
