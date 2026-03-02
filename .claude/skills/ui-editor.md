@@ -1,21 +1,25 @@
-name: sandbox-editor
-description: Use when modifying the Animation Sandbox / UI editor view. Provides complete file map, component architecture, layout constants, and styling patterns so you can skip exploration and go straight to editing.
+name: ui-editor
+description: Use when modifying the UI editor view (/editor route). Provides complete file map, component architecture, layout constants, and styling patterns so you can skip exploration and go straight to editing.
 
-# Animation Sandbox — Editor Context
+# UI Editor — Context
 
 ## File Map
 
 | File | Purpose |
 |------|---------|
-| `client/src/views/sandbox/AnimationSandbox.tsx` | Main entry: layout container, state management, wires PokerTable + ControlPanel + PointsOverlay |
-| `client/src/views/sandbox/ControlPanel.tsx` | Right sidebar (fixed, 340px, z-50): scenario selector, playback, speed, edit points toggle, step list, delay sliders, apply/export buttons |
-| `client/src/views/sandbox/PointsOverlay.tsx` | Draggable dots overlay (absolute, z-40): seat/bet/pot/community/deck/info/dealer/card positions. Mutates position objects in-place. |
-| `client/src/views/sandbox/AnimationDriver.ts` | Playback engine: step-by-step scenario execution, speed control, solo mode, delay overrides |
-| `client/src/views/sandbox/scenarios.ts` | Predefined test scenarios (large file) |
-| `client/src/views/sandbox/MockSocket.ts` | Simple EventEmitter to simulate Socket.IO |
-| `client/src/views/sandbox/types.ts` | `ScenarioStep`, `Scenario` types |
+| `client/src/views/editor/AnimationSandbox.tsx` | Main entry: layout container, state management, wires PokerTable + ControlPanel + PointsOverlay |
+| `client/src/views/editor/ControlPanel.tsx` | Right sidebar (fixed, 340px, z-50): scenario selector, playback, speed, edit points toggle, step list, delay sliders, apply/export buttons |
+| `client/src/views/editor/PointsOverlay.tsx` | Draggable dots overlay (absolute, z-40): seat/bet/pot/community/deck/info/dealer/card positions. Mutates position objects in-place. |
+| `client/src/views/editor/AnimationDriver.ts` | Playback engine: step-by-step scenario execution, speed control, solo mode, delay overrides |
+| `client/src/views/editor/scenarios.ts` | Predefined test scenarios (large file) |
+| `client/src/views/editor/MockSocket.ts` | Simple EventEmitter to simulate Socket.IO |
+| `client/src/views/editor/types.ts` | `ScenarioStep`, `Scenario` types |
 | `client/src/views/table/PokerTable.tsx` | The actual poker table component (900x550 virtual, shared with production views) |
 | `client/src/views/table/layout-positions.ts` | Position data: SEAT_POSITIONS[10], BET_POSITIONS[10], POT_CENTER, COMMUNITY_CARDS_POS, GAME_INFO_POS, WINNING_HAND_POS, DEALER_BTN_OFFSET, CARD_OFFSET_DISTANCE, DECK_POS |
+
+## Route
+
+`/editor` in `client/src/App.tsx` — lazy-loaded `AnimationSandbox` component.
 
 ## Layout Architecture
 

@@ -125,7 +125,7 @@ export function ControlPanel({
           backdropFilter: 'blur(8px)',
         }}
       >
-        Sandbox Controls
+        Editor Controls
       </button>
     );
   }
@@ -150,7 +150,7 @@ export function ControlPanel({
     >
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontWeight: 700, fontSize: 16 }}>Animation Sandbox</div>
+        <div style={{ fontWeight: 700, fontSize: 16 }}>UI Editor</div>
         <button
           onClick={() => setCollapsed(true)}
           style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 16 }}

@@ -5,7 +5,7 @@ import { TableWindowView } from './views/player/TableWindowView.js';
 import { ThemeApplier } from './themes/ThemeApplier.js';
 
 const AnimationSandbox = lazy(() =>
-  import('./views/sandbox/AnimationSandbox.js').then(m => ({ default: m.AnimationSandbox })),
+  import('./views/editor/AnimationSandbox.js').then(m => ({ default: m.AnimationSandbox })),
 );
 
 export function App() {
