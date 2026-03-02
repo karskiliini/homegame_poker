@@ -22,8 +22,6 @@ interface XRGameScreenProps {
 export function XRGameScreen({ socket, onLeaveTable }: XRGameScreenProps) {
   const { privateState, gameState, setGameState, currentTableId } = useGameStore();
   const tableSocketRef = useRef(createTableSocket());
-  // Dummy container ref for useTableAnimations (chip-fly animations are skipped in VR)
-  const dummyContainerRef = useRef<HTMLDivElement>(null);
 
   // Connect table socket and watch the current table
   useEffect(() => {
@@ -52,7 +50,6 @@ export function XRGameScreen({ socket, onLeaveTable }: XRGameScreenProps) {
     winnerSeats, winningCards,
   } = useTableAnimations({
     socket: tableSocketRef.current,
-    containerRef: dummyContainerRef,
     setGameState,
     enableSound: false,
     seatRotation,
@@ -60,8 +57,6 @@ export function XRGameScreen({ socket, onLeaveTable }: XRGameScreenProps) {
 
   return (
     <div style={{ width: '100vw', height: '100dvh', position: 'relative' }}>
-      {/* Hidden dummy div for useTableAnimations containerRef */}
-      <div ref={dummyContainerRef} style={{ display: 'none' }} />
 
       <Canvas
         camera={{ position: [0, 1.6, 0], fov: 75 }}

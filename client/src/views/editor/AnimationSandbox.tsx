@@ -32,7 +32,6 @@ export function AnimationSandbox() {
 
   const animations = useTableAnimations({
     socket: mockSocket,
-    containerRef,
     setGameState: (s: GameState) => setGameState(s),
     enableSound: false,
   });

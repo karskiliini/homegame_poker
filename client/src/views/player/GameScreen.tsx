@@ -99,7 +99,6 @@ export function GameScreen({ socket, onOpenHistory, onLeaveTable, onBack, speech
     allInSpotlight, winnerBanners, celebration,
   } = useTableAnimations({
     socket: tableSocketRef.current,
-    containerRef: tableContainerRef,
     setGameState,
     enableSound: isWatching,
     seatRotation,

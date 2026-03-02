@@ -1,10 +1,32 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { S2C_TABLE, CHIP_TRICK_DURATION_MS, DELAY_SHOWDOWN_REVEAL_INTERVAL_MS } from '@poker/shared';
 import { SHUFFLE_DURATION_MS } from '../views/table/DeckShuffleAnimation.js';
 import type { GameState, SoundType, CardString, ChipTrickType } from '@poker/shared';
 import { SEAT_POSITIONS, BET_POSITIONS, DECK_POS } from '../views/table/PokerTable.js';
+import { TABLE_VIRTUAL_W, TABLE_VIRTUAL_H } from '../views/table/PokerTable.js';
 import type { BetChipAnimation, DealCardAnimation } from '../views/table/PokerTable.js';
 import { tableSoundManager } from '../audio/SoundManager.js';
+
+/** Pure function: compute deal animation start offset in virtual-table pixels */
+export function computeDealStartOffset(seatIndex: number, seatRotation?: number) {
+  const displayIdx = seatRotation != null ? (seatIndex - seatRotation + 10) % 10 : seatIndex;
+  const seatPos = SEAT_POSITIONS[displayIdx];
+  return {
+    startX: ((DECK_POS.x - seatPos.x) / 100) * TABLE_VIRTUAL_W,
+    startY: ((DECK_POS.y - seatPos.y) / 100) * TABLE_VIRTUAL_H,
+  };
+}
+
+/** Pure function: compute bet chip fly start offset in virtual-table pixels */
+export function computeBetChipStartOffset(seatIndex: number, seatRotation?: number) {
+  const displayIdx = seatRotation != null ? (seatIndex - seatRotation + 10) % 10 : seatIndex;
+  const seatPos = SEAT_POSITIONS[displayIdx];
+  const betPos = BET_POSITIONS[displayIdx];
+  return {
+    startX: ((seatPos.x - betPos.x) / 100) * TABLE_VIRTUAL_W,
+    startY: ((seatPos.y - betPos.y) / 100) * TABLE_VIRTUAL_H,
+  };
+}
 
 interface PotAward {
   potIndex: number;
@@ -22,7 +44,6 @@ interface CollectingBet {
 
 interface UseTableAnimationsOptions {
   socket: { on: Function; off?: Function };
-  containerRef: RefObject<HTMLDivElement | null>;
   setGameState: (state: GameState) => void;
   enableSound?: boolean;
   /** When set, positions are rotated so this seat appears at bottom */
@@ -75,7 +96,6 @@ let animId = 0;
 
 export function useTableAnimations({
   socket,
-  containerRef,
   setGameState,
   enableSound = true,
   seatRotation,
@@ -155,14 +175,7 @@ export function useTableAnimations({
       isAllIn: boolean;
     }) => {
       if (['bet', 'call', 'raise', 'all_in'].includes(data.action) && data.amount > 0) {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const rect = container.getBoundingClientRect();
-        const seatPos = getSeatPos(data.seatIndex);
-        const betPos = getBetPos(data.seatIndex);
-        const startX = ((seatPos.x - betPos.x) / 100) * rect.width;
-        const startY = ((seatPos.y - betPos.y) / 100) * rect.height;
+        const { startX, startY } = computeBetChipStartOffset(data.seatIndex, seatRotation);
 
         const anim: BetChipAnimation = {
           id: animId++,
@@ -183,20 +196,13 @@ export function useTableAnimations({
       dealerSeatIndex: number;
       seatIndices: number[];
     }) => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-
       const current = gameStateRef.current;
       const isPLO = current?.config?.gameType === 'PLO';
       const rounds = isPLO ? 4 : 2;
       for (let round = 0; round < rounds; round++) {
         for (let i = 0; i < data.seatIndices.length; i++) {
           const seatIndex = data.seatIndices[i];
-          const seatPos = getSeatPos(seatIndex);
-          const startX = ((DECK_POS.x - seatPos.x) / 100) * rect.width;
-          const startY = ((DECK_POS.y - seatPos.y) / 100) * rect.height;
+          const { startX, startY } = computeDealStartOffset(seatIndex, seatRotation);
 
           const cardIndex = round * data.seatIndices.length + i;
           const delay = cardIndex * 120;
