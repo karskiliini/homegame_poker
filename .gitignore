@@ -11,3 +11,4 @@ study_res/
 .claude/worktrees/
 .worktrees/
 *.tmp
+ios/.build/
