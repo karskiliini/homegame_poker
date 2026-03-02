@@ -349,7 +349,7 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Event sourcing: kaikki tapahtumat tallentuvat → täydellinen uudelleentoisto mahdollinen
 
 ### 10.3 Testauksen laajentaminen
-- [ ] E2E-testit Playwrightilla (client + server yhdessä)
+- [x] E2E-testit Playwrightilla (client + server yhdessä)
 - [ ] Load testing: 10 pelaajaa samanaikaisesti, 100 kättä
 - [ ] PLO-spesifiset testit
 - [ ] Turnaus-flow-testit

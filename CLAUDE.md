@@ -31,6 +31,8 @@ Use Test-Driven Development. For use-case testing:
 3. Verify the implementation matches the test
 4. If it doesn't match, fix until it does
 
+If you get stuck debugging test failures with a lower-end model, escalate to the best available model (currently Opus 4.6) for the debugging session.
+
 ## Starting a New Task
 Always fetch and check out the latest `main` before starting any new task: `git fetch origin && git checkout main && git pull origin main`. This ensures you're building on the most up-to-date code and avoids unnecessary merge conflicts.
 

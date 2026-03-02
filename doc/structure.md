@@ -31,7 +31,9 @@ poker_softa/
     types/          # game, hand, card, socket-events, lobby, sound, hand-history, chat
     utils/          # card-utils.ts
     betSizing.ts, preAction.ts, chipUtils.ts, constants.ts, avatars.ts
+  e2e/              # Playwright E2E tests (helpers.ts, login.spec.ts, table-lobby.spec.ts, game-flow.spec.ts)
   doc/              # Documentation, bugs, roadmap
+  playwright.config.ts  # Playwright config (dual webServer: backend + Vite client)
 ```
 
 ## Feature-to-File Mapping
@@ -73,4 +75,6 @@ poker_softa/
 
 - **Server**: `server/src/__tests__/` — 33 test files
 - **Client**: `client/src/__tests__/` — 4 test files
-- Run: `bun run test` (vitest)
+- **E2E**: `e2e/` — Playwright tests (login, table-lobby, game-flow)
+- Run unit tests: `bun run test` (vitest)
+- Run E2E tests: `bun run test:e2e` (playwright, requires `bun run build` first)

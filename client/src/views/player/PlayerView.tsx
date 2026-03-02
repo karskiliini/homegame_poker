@@ -102,7 +102,13 @@ export function PlayerView() {
       if (data.sessionToken) {
         saveAuthSession(data.sessionToken);
       }
-      setScreen('table_lobby');
+      // Only navigate to table_lobby from login/lobby. During socket reconnects
+      // (e.g. transport upgrade polling→ws), AUTH_SUCCESS fires again — don't
+      // navigate away from game screen.
+      const currentScreen = useGameStore.getState().screen;
+      if (currentScreen === 'login' || currentScreen === 'lobby') {
+        setScreen('table_lobby');
+      }
     });
 
     socket.on(S2C_LOBBY.AUTH_ERROR, (data: { message: string }) => {
