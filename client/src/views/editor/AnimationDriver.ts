@@ -74,6 +74,17 @@ export class AnimationDriver {
     this.play();
   }
 
+  seekTo(targetIndex: number) {
+    this.stop();
+    const clamped = Math.min(targetIndex, this.scenario.steps.length - 1);
+    for (let i = 0; i <= clamped; i++) {
+      const step = this.scenario.steps[i];
+      this.socket.emit(step.event, step.data);
+    }
+    this._currentStepIndex = clamped;
+    this.onStepChange?.(clamped);
+  }
+
   private sortedSoloSteps(): number[] {
     return [...this._soloSteps].sort((a, b) => a - b);
   }
