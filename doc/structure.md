@@ -14,7 +14,7 @@ poker_softa/
     views/
       player/       # Phone UI (GameScreen, ActionButtons, Lobby, Login)
       table/        # Table UI (PokerTable, PlayerSeat, BetChip, PotDisplay, DeckShuffleAnimation)
-      editor/       # UI editor (AnimationSandbox, ControlPanel, PointsOverlay, MockSocket, AnimationDriver, scenarios)
+      editor/       # UI editor (AnimationSandbox, ControlPanel, TimelineBar, PointsOverlay, MockSocket, AnimationDriver, scenarios)
       xr/           # WebXR/VR view (XRGameScreen, XRScene, scene components)
       history/      # HandHistoryDetail, HandHistoryList
     socket.ts       # Client socket connection
