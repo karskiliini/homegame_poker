@@ -5,6 +5,7 @@ import { MockSocket } from './MockSocket.js';
 import { AnimationDriver } from './AnimationDriver.js';
 import { SCENARIOS } from './scenarios.js';
 import { ControlPanel } from './ControlPanel.js';
+import { TimelineBar } from './TimelineBar.js';
 import { PointsOverlay, type OverlayCategory } from './PointsOverlay.js';
 import type { GameState } from '@poker/shared';
 
@@ -109,64 +110,81 @@ export function AnimationSandbox() {
     setActiveOverlays(new Set());
   }, []);
 
+  const handleSeek = useCallback((stepIndex: number) => {
+    const driver = driverRef.current;
+    if (!driver) return;
+    driver.seekTo(stepIndex);
+    setCurrentStep(stepIndex);
+    setIsPlaying(false);
+  }, []);
+
   return (
-    <div style={{ width: '100%', height: '100vh', background: '#0a0a0a' }}>
-      <div ref={containerRef} style={{
-        width: 'calc(100% - 372px)', height: '100%', position: 'relative',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {gameState ? (
-          <PokerTable
-            gameState={gameState}
-            potAwards={animations.potAwards}
-            winnerSeats={animations.winnerSeats}
-            awardingPotIndex={animations.awardingPotIndex}
-            timerData={animations.timerData}
-            collectingBets={animations.collectingBets}
-            potGrow={animations.potGrow}
-            betChipAnimations={animations.betChipAnimations}
-            dealCardAnimations={animations.dealCardAnimations}
-            equities={animations.equities}
-            dramaticRiver={animations.dramaticRiver}
-            badBeat={animations.badBeat}
-            chipTrick={animations.chipTrick}
-            winningCards={animations.winningCards}
-            shuffling={animations.shuffling}
-            allInSpotlight={animations.allInSpotlight}
-            winnerBanners={animations.winnerBanners}
-            celebration={animations.celebration}
-            dealPendingSeats={animations.dealPendingSeats}
-          />
-        ) : (
-          <div style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 20 }}>
-              Select a scenario and press Play
+    <div style={{ width: '100%', height: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column' }}>
+      {/* Top row: Table + ControlPanel */}
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        <div ref={containerRef} style={{
+          flex: 1, position: 'relative',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {gameState ? (
+            <PokerTable
+              gameState={gameState}
+              potAwards={animations.potAwards}
+              winnerSeats={animations.winnerSeats}
+              awardingPotIndex={animations.awardingPotIndex}
+              timerData={animations.timerData}
+              collectingBets={animations.collectingBets}
+              potGrow={animations.potGrow}
+              betChipAnimations={animations.betChipAnimations}
+              dealCardAnimations={animations.dealCardAnimations}
+              equities={animations.equities}
+              dramaticRiver={animations.dramaticRiver}
+              badBeat={animations.badBeat}
+              chipTrick={animations.chipTrick}
+              winningCards={animations.winningCards}
+              shuffling={animations.shuffling}
+              allInSpotlight={animations.allInSpotlight}
+              winnerBanners={animations.winnerBanners}
+              celebration={animations.celebration}
+              dealPendingSeats={animations.dealPendingSeats}
+            />
+          ) : (
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 20 }}>
+                Select a scenario and press Play
+              </div>
             </div>
-          </div>
-        )}
-        {activeOverlays.size > 0 && <PointsOverlay activeCategories={activeOverlays} />}
+          )}
+          {activeOverlays.size > 0 && <PointsOverlay activeCategories={activeOverlays} />}
+        </div>
+        <ControlPanel
+          scenarios={SCENARIOS}
+          scenarioIndex={scenarioIndex}
+          currentStep={currentStep}
+          soloSteps={soloSteps}
+          delayOverrides={delayOverrides}
+          onScenarioChange={handleScenarioChange}
+          onSoloSteps={handleSoloSteps}
+          onDelayChange={handleDelayChange}
+          activeOverlays={activeOverlays}
+          onToggleOverlay={handleToggleOverlay}
+          onClearOverlays={handleClearOverlays}
+        />
       </div>
-      <ControlPanel
-        scenarios={SCENARIOS}
-        scenarioIndex={scenarioIndex}
+      {/* Bottom row: Timeline */}
+      <TimelineBar
+        scenario={SCENARIOS[scenarioIndex]}
         currentStep={currentStep}
         isPlaying={isPlaying}
         speed={speed}
-        soloSteps={soloSteps}
-        delayOverrides={delayOverrides}
         onPlay={handlePlay}
         onPause={handlePause}
         onRestart={handleRestart}
         onSpeedChange={handleSpeedChange}
-        onScenarioChange={handleScenarioChange}
-        onSoloSteps={handleSoloSteps}
-        onDelayChange={handleDelayChange}
-        activeOverlays={activeOverlays}
-        onToggleOverlay={handleToggleOverlay}
-        onClearOverlays={handleClearOverlays}
+        onSeek={handleSeek}
       />
     </div>
   );

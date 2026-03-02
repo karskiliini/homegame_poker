@@ -10,14 +10,8 @@ interface ControlPanelProps {
   scenarios: Scenario[];
   scenarioIndex: number;
   currentStep: number;
-  isPlaying: boolean;
-  speed: number;
   soloSteps: Set<number>;
   delayOverrides: Map<number, number>;
-  onPlay: () => void;
-  onPause: () => void;
-  onRestart: () => void;
-  onSpeedChange: (speed: number) => void;
   onScenarioChange: (index: number) => void;
   onSoloSteps: (steps: Set<number>) => void;
   onDelayChange: (stepIndex: number, delayMs: number) => void;
@@ -27,8 +21,8 @@ interface ControlPanelProps {
 }
 
 export function ControlPanel({
-  scenarios, scenarioIndex, currentStep, isPlaying, speed, soloSteps, delayOverrides,
-  onPlay, onPause, onRestart, onSpeedChange, onScenarioChange, onSoloSteps, onDelayChange,
+  scenarios, scenarioIndex, currentStep, soloSteps, delayOverrides,
+  onScenarioChange, onSoloSteps, onDelayChange,
   activeOverlays, onToggleOverlay, onClearOverlays,
 }: ControlPanelProps) {
   const scenario = scenarios[scenarioIndex];
@@ -141,7 +135,7 @@ export function ControlPanel({
         color: '#fff',
         fontSize: 14,
         backdropFilter: 'blur(8px)',
-        maxHeight: 'calc(100vh - 32px)',
+        maxHeight: 'calc(100vh - 112px)',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
@@ -172,49 +166,6 @@ export function ControlPanel({
           <option key={s.id} value={i}>{s.name}</option>
         ))}
       </select>
-
-      {/* Playback controls */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          onClick={isPlaying ? onPause : onPlay}
-          style={{
-            flex: 1, padding: '8px 0', borderRadius: 6, fontSize: 13, fontWeight: 600,
-            background: isPlaying ? '#c44' : '#4a4', color: '#fff', border: 'none', cursor: 'pointer',
-          }}
-        >
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
-        <button
-          onClick={onRestart}
-          style={{
-            flex: 1, padding: '8px 0', borderRadius: 6, fontSize: 13, fontWeight: 600,
-            background: '#555', color: '#fff', border: 'none', cursor: 'pointer',
-          }}
-        >
-          Restart
-        </button>
-      </div>
-
-      {/* Speed control */}
-      <div>
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>Speed</div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {[0.25, 0.5, 1, 2].map(s => (
-            <button
-              key={s}
-              onClick={() => onSpeedChange(s)}
-              style={{
-                flex: 1, padding: '4px 0', borderRadius: 4, fontSize: 12,
-                background: speed === s ? '#4a4' : '#333', color: '#fff',
-                border: speed === s ? '1px solid #6c6' : '1px solid #555',
-                cursor: 'pointer',
-              }}
-            >
-              {s}x
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Edit Points dropdown */}
       <div>

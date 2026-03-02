@@ -25,7 +25,7 @@ export function TimelineBar({
 
   return (
     <div style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+      width: '100%', flexShrink: 0,
       height: 80,
       background: 'rgba(0,0,0,0.9)',
       borderTop: '1px solid #333',
