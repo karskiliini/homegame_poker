@@ -17,6 +17,17 @@ export function createApp(db: Database) {
     resetAnimDelays();
     res.json(getAnimConfig());
   });
+
+  // Layout positions — stored in DB, synced to source code via CLI skill
+  app.get('/api/layout-positions', (_req, res) => {
+    const data = db.layout.getPositions();
+    res.json(data ?? { error: 'no positions saved yet' });
+  });
+  app.post('/api/layout-positions', (req, res) => {
+    db.layout.savePositions(req.body);
+    res.json({ ok: true });
+  });
+
   app.get('/api/bugs', (_req, res) => res.json(db.bugs.getAll()));
   app.post('/api/bugs/archive', (req, res) => {
     const { ids } = req.body;

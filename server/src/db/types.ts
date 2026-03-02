@@ -61,9 +61,27 @@ export interface BugRepository {
   archive(ids: number[]): number;
 }
 
+export interface LayoutPositions {
+  SEAT_POSITIONS: { x: number; y: number }[];
+  BET_POSITIONS: { x: number; y: number }[];
+  POT_CENTER: { x: number; y: number };
+  COMMUNITY_CARDS_POS: { x: number; y: number };
+  GAME_INFO_POS: { x: number; y: number };
+  WINNING_HAND_POS: { x: number; y: number };
+  DECK_POS: { x: number; y: number };
+  DEALER_BTN_OFFSET: number;
+  CARD_OFFSET_DISTANCE: number;
+}
+
+export interface LayoutRepository {
+  getPositions(): LayoutPositions | null;
+  savePositions(data: LayoutPositions): void;
+}
+
 export interface Database {
   players: PlayerRepository;
   sessions: SessionRepository;
   balance: BalanceRepository;
   bugs: BugRepository;
+  layout: LayoutRepository;
 }

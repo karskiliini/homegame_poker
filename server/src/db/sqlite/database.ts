@@ -6,6 +6,7 @@ import { createPlayerRepo } from './player-repo.js';
 import { createSessionRepo } from './session-repo.js';
 import { createBalanceRepo } from './balance-repo.js';
 import { createBugRepo } from './bug-repo.js';
+import { createLayoutRepo } from './layout-repo.js';
 
 function initSchema(db: BetterSqlite3.Database) {
   db.exec(`
@@ -48,6 +49,13 @@ function initSchema(db: BetterSqlite3.Database) {
       archived INTEGER DEFAULT 0
     )
   `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS layout_config (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      positions TEXT NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
   // Migration: add archived column if table already exists without it
   const cols = db.prepare("PRAGMA table_info(bug_reports)").all() as { name: string }[];
   if (!cols.some(c => c.name === 'archived')) {
@@ -62,6 +70,7 @@ function createFromSqlite(db: BetterSqlite3.Database): Database {
     sessions: createSessionRepo(db),
     balance: createBalanceRepo(db),
     bugs: createBugRepo(db),
+    layout: createLayoutRepo(db),
   };
 }
 

@@ -17,63 +17,19 @@ import { DeckShuffleAnimation } from './DeckShuffleAnimation.js';
 import { WinnerBanner } from './WinnerBanner.js';
 import { RoyalFlushCelebration } from './RoyalFlushCelebration.js';
 import type { BadBeatData, ChipTrickData, WinnerBannerData } from '../../hooks/useTableAnimations.js';
+export {
+  SEAT_POSITIONS, BET_POSITIONS, POT_CENTER, COMMUNITY_CARDS_POS,
+  GAME_INFO_POS, WINNING_HAND_POS, DEALER_BTN_OFFSET, CARD_OFFSET_DISTANCE, DECK_POS,
+} from './layout-positions.js';
+import {
+  SEAT_POSITIONS, BET_POSITIONS, POT_CENTER, COMMUNITY_CARDS_POS,
+  GAME_INFO_POS, WINNING_HAND_POS, DEALER_BTN_OFFSET, CARD_OFFSET_DISTANCE, DECK_POS,
+} from './layout-positions.js';
 
 // Virtual table dimensions — defines the fixed aspect ratio (18:11)
 // Both watching and phone views use these to scale the table via CSS transform
 export const TABLE_VIRTUAL_W = 900;
 export const TABLE_VIRTUAL_H = 550;
-
-// Deck position on the table (percentage-based) — used for shuffle animation and card deal origin
-export const DECK_POSITION = { x: 50, y: 42 };
-
-// Seat positions around an oval table (percentage-based, for 10 seats)
-export const SEAT_POSITIONS: { x: number; y: number }[] = [
-  { x: 50, y: 92 },   // 0: bottom center
-  { x: 18, y: 82 },   // 1: bottom left
-  { x: 3, y: 55 },    // 2: left
-  { x: 3, y: 30 },    // 3: upper left
-  { x: 18, y: 12 },   // 4: top left
-  { x: 50, y: 8 },    // 5: top center
-  { x: 82, y: 12 },   // 6: top right
-  { x: 97, y: 30 },   // 7: upper right
-  { x: 97, y: 55 },   // 8: right
-  { x: 82, y: 82 },   // 9: bottom right
-];
-
-// Bet chip positions: 40% of the way from seat to center (50%, 50%)
-export const BET_POSITIONS: { x: number; y: number }[] = [
-  { x: 50, y: 75 },   // 0
-  { x: 31, y: 69 },   // 1
-  { x: 22, y: 53 },   // 2
-  { x: 22, y: 38 },   // 3
-  { x: 31, y: 27 },   // 4
-  { x: 50, y: 25 },   // 5
-  { x: 69, y: 27 },   // 6
-  { x: 78, y: 38 },   // 7
-  { x: 78, y: 53 },   // 8
-  { x: 69, y: 69 },   // 9
-];
-
-// Pot center position (percentage)
-export const POT_CENTER = { x: 50, y: 58 };
-
-// Community cards center (percentage). Y is adjustable; X is always 50%.
-export const COMMUNITY_CARDS_POS = { x: 50, y: 42 };
-
-// Game info position (percentage). Y is adjustable; X is always 50%.
-export const GAME_INFO_POS = { x: 50, y: 13 };
-
-// Winning hand text position (percentage)
-export const WINNING_HAND_POS = { x: 50, y: 63 };
-
-// Dealer button offset from seat toward center (px)
-export const DEALER_BTN_OFFSET = { distance: 52 };
-
-// Card offset from seat toward center (px)
-export const CARD_OFFSET_DISTANCE = { distance: 65 };
-
-// Deck / shuffle animation position (percentage)
-export const DECK_POS = { x: 50, y: 42 };
 
 interface PotAward {
   potIndex: number;

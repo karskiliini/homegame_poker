@@ -59,38 +59,56 @@ export function ControlPanel({
   };
 
   const applyToServer = async () => {
-    if (!scenario) return;
-    const config: Record<string, number> = {};
-    scenario.steps.forEach((s, i) => {
-      if (s.delayKey) {
-        const val = delayOverrides.get(i);
-        if (val != null) {
-          config[s.delayKey] = val;
+    const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+    const results: string[] = [];
+
+    // Send delay overrides
+    if (scenario) {
+      const config: Record<string, number> = {};
+      scenario.steps.forEach((s, i) => {
+        if (s.delayKey) {
+          const val = delayOverrides.get(i);
+          if (val != null) config[s.delayKey] = val;
+        }
+      });
+      if (Object.keys(config).length > 0) {
+        try {
+          const res = await fetch(`${serverUrl}/api/animation-config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config),
+          });
+          results.push(res.ok ? 'delays' : 'delays:err');
+        } catch {
+          results.push('delays:unreachable');
         }
       }
-    });
-
-    if (Object.keys(config).length === 0) {
-      setApplyStatus('No changes');
-      setTimeout(() => setApplyStatus(null), 1500);
-      return;
     }
 
+    // Save layout positions to DB (synced to source via /sync-layout skill)
     try {
-      const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
-      const res = await fetch(`${serverUrl}/api/animation-config`, {
+      const res = await fetch(`${serverUrl}/api/layout-positions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: JSON.stringify({
+          SEAT_POSITIONS,
+          BET_POSITIONS,
+          POT_CENTER,
+          COMMUNITY_CARDS_POS,
+          GAME_INFO_POS,
+          WINNING_HAND_POS,
+          DECK_POS,
+          DEALER_BTN_OFFSET: DEALER_BTN_OFFSET.distance,
+          CARD_OFFSET_DISTANCE: CARD_OFFSET_DISTANCE.distance,
+        }),
       });
-      if (res.ok) {
-        setApplyStatus('Applied!');
-      } else {
-        setApplyStatus('Error');
-      }
+      results.push(res.ok ? 'positions' : 'positions:err');
     } catch {
-      setApplyStatus('Server unreachable');
+      results.push('positions:unreachable');
     }
+
+    const hasError = results.some(r => r.includes(':'));
+    setApplyStatus(hasError ? `Error (${results.join(', ')})` : 'Applied!');
     setTimeout(() => setApplyStatus(null), 2000);
   };
 
