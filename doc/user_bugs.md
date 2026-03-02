@@ -1,5 +1,37 @@
 # User Bug Reports
 
+## [NEW] Bug #R4 — 2026-03-02 06:42:48
+**Reporter:** marski2
+**Table:** af224e0f
+
+much or show näkymä pitää kadota pelaajalta välittömästi kun kortit on muckattu (Eli jos pelaaja ei ehtinyt painaa kumpaakaan muck tai show).
+
+---
+
+## [NEW] Bug #R3 — 2026-03-02 06:42:02
+**Reporter:** marski2
+**Table:** af224e0f
+
+jos pelaaja ei ehtinyt toimia ajoissa, niin hän menee sellaiseen "away" tilaan jossa hän siirtyy automaattisesti käden jälkeen sit-out tilaan, ja aina kun tulee hänen vuoronsa, niin hän joko checkaa (mikäli pystyy checkaamaan) välittömästi, tai mikäli joku korottaa niin hän kippaa korttinsa. Tälle pelaajalle tulee näkyviin ainoastaan yksi nappi "I'm back", jota painamalla hän palautuu takaisin normaalitilaan.
+
+---
+
+## [NEW] Bug #R2 — 2026-03-02 06:40:29
+**Reporter:** marski2
+**Table:** af224e0f
+
+showdownin jälkeen, ensimmäisen näyttövuorossa olevan pelaajan kortit täytyy näkyä välittömästi. Sitten yksintein kaikkien seuraavien pelaajien korttien käsittely, kunnes kaikki kortit on käsitelty. Animoi ne pelaajat jotka kippaavat kätensä (koska heillä oli huonompi käsi kuin edellinen paras). Jätä näkyviin kaikki ne kädet jotka on näytetty. Sitten odotetaan muutama sekunti ja kaikki heittävät kortit pois animoituna.
+
+---
+
+## [NEW] Bug #R1 — 2026-03-02 06:38:49
+**Reporter:** marski2
+**Table:** af224e0f
+
+kun painaa nappia fold/check/bet, niin napit katoavat näkyvistä (mikä on oikein), mutta koko UI putoaa samalla alaspäin. UI:n asetelman ei pidä muuttua näissä tilanteissa.
+
+---
+
 ## [DONE] Bug #23 — 2026-03-01 09:25:19
 **Reporter:** marski
 **Table:** 5058b580
