@@ -70,6 +70,7 @@ final class I18n {
             "game_folded": "Folded",
             "game_waiting_turn": "Waiting for your turn...",
             "game_hand_history": "Hand History",
+            "game_auto_muck": "Auto-Muck Losers",
 
             // Action buttons
             "action_fold": "FOLD",
@@ -156,6 +157,7 @@ final class I18n {
             "table_side_pot": "Side Pot",
 
             // Chat
+            "chat_title": "Chat",
             "chat_placeholder": "Type a message...",
             "chat_send": "Send",
 
@@ -164,6 +166,10 @@ final class I18n {
             "auth_checking": "Checking...",
             "auth_back": "Back",
             "auth_password": "PASSWORD",
+            "auth_password_label": "PASSWORD",
+            "auth_password_placeholder": "Enter your password",
+            "auth_name": "NAME",
+            "auth_register": "Register",
             "auth_choose_password": "Choose a password",
             "auth_confirm_password": "Confirm password",
             "auth_enter_password": "Enter your password",
@@ -191,6 +197,9 @@ final class I18n {
             "profile_balance": "Balance",
             "profile_history": "Transaction History",
             "profile_no_history": "No transactions yet",
+            "profile_settings": "Settings",
+            "profile_language": "Language",
+            "profile_logout": "Log Out",
             "profile_txn_deposit": "Deposit",
             "profile_txn_buy_in": "Buy-in",
             "profile_txn_cash_out": "Cash-out",
@@ -251,6 +260,7 @@ final class I18n {
             "game_folded": "Folded",
             "game_waiting_turn": "Odotetaan vuoroasi...",
             "game_hand_history": "Kasihistoria",
+            "game_auto_muck": "Piilota haviavat kortit",
 
             // Action buttons
             "action_fold": "FOLD",
@@ -337,6 +347,7 @@ final class I18n {
             "table_side_pot": "Sivupotti",
 
             // Chat
+            "chat_title": "Chat",
             "chat_placeholder": "Kirjoita viesti...",
             "chat_send": "Laheta",
 
@@ -345,6 +356,10 @@ final class I18n {
             "auth_checking": "Tarkistetaan...",
             "auth_back": "Takaisin",
             "auth_password": "SALASANA",
+            "auth_password_label": "SALASANA",
+            "auth_password_placeholder": "Syota salasanasi",
+            "auth_name": "NIMI",
+            "auth_register": "Rekisteroidy",
             "auth_choose_password": "Valitse salasana",
             "auth_confirm_password": "Vahvista salasana",
             "auth_enter_password": "Syota salasanasi",
@@ -372,6 +387,9 @@ final class I18n {
             "profile_balance": "Saldo",
             "profile_history": "Tapahtumahistoria",
             "profile_no_history": "Ei tapahtumia",
+            "profile_settings": "Asetukset",
+            "profile_language": "Kieli",
+            "profile_logout": "Kirjaudu ulos",
             "profile_txn_deposit": "Talletus",
             "profile_txn_buy_in": "Buy-in",
             "profile_txn_cash_out": "Cash-out",

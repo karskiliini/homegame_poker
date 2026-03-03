@@ -88,7 +88,7 @@ struct LobbyView: View {
                 CreateTableSheet()
             }
             .sheet(isPresented: $showProfile) {
-                Text("Profile") // Placeholder — Task 12
+                ProfileView()
             }
             .alert(i18n.t("watching_buy_in"), isPresented: .init(
                 get: { selectedTable != nil },

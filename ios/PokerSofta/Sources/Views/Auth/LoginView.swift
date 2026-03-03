@@ -5,7 +5,6 @@ struct LoginView: View {
     @Environment(I18n.self) private var i18n
     @State private var name = ""
     @State private var password = ""
-    @State private var nameExists: Bool?
     @State private var showRegister = false
     @State private var checkTask: Task<Void, Never>?
 
@@ -33,17 +32,15 @@ struct LoginView: View {
                             .autocorrectionDisabled()
                             .onChange(of: name) { _, newValue in
                                 checkTask?.cancel()
-                                guard !newValue.trimmingCharacters(in: .whitespaces).isEmpty else {
-                                    nameExists = nil
-                                    return
-                                }
+                                vm.socket.nameStatus = nil
+                                guard !newValue.trimmingCharacters(in: .whitespaces).isEmpty else { return }
                                 checkTask = Task {
                                     try? await Task.sleep(for: .milliseconds(500))
                                     guard !Task.isCancelled else { return }
                                     vm.socket.checkName(newValue.trimmingCharacters(in: .whitespaces))
                                 }
                             }
-                        if let exists = nameExists {
+                        if let exists = vm.socket.nameStatus {
                             Text(exists ? i18n.t("auth_welcome_back") : i18n.t("auth_new_player"))
                                 .font(.caption)
                                 .foregroundStyle(exists ? .green : .blue)

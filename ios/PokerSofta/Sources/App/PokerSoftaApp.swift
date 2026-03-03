@@ -22,11 +22,13 @@ struct RootView: View {
         Group {
             switch vm.route {
             case .login:
-                Text("Login") // Placeholder — Task 9
+                LoginView()
             case .lobby:
-                Text("Lobby") // Placeholder — Task 10
-            case .game:
-                Text("Game") // Placeholder — Task 11
+                LobbyView()
+            case .game(let tableId):
+                NavigationStack {
+                    GameView(tableId: tableId)
+                }
             }
         }
         .onChange(of: vm.socket.authState != nil) { _, isAuthed in

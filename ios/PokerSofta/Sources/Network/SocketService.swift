@@ -15,6 +15,7 @@ final class SocketService {
 
     // Lobby state
     var tables: [TableInfo] = []
+    var nameStatus: Bool? // true = name exists, false = new name
 
     // Game state (when at a table)
     var gameState: GameState?
@@ -43,6 +44,7 @@ final class SocketService {
 
     private let manager: SocketManager
     private var playerSocket: SocketIOClient
+    private var tableSocket: SocketIOClient
     private let decoder: JSONDecoder
 
     init(serverURL: String) {
@@ -57,11 +59,13 @@ final class SocketService {
         ])
 
         playerSocket = manager.socket(forNamespace: "/player")
+        tableSocket = manager.socket(forNamespace: "/table")
 
         decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-        setupEventHandlers()
+        setupPlayerEventHandlers()
+        setupTableEventHandlers()
     }
 
     // MARK: - Connection
@@ -71,7 +75,27 @@ final class SocketService {
     }
 
     func disconnect() {
+        unwatchTable()
         playerSocket.disconnect()
+    }
+
+    // MARK: - Table Socket
+
+    func watchTable(_ tableId: String) {
+        tableSocket.connect()
+        tableSocket.on(clientEvent: .connect) { [weak self] _, _ in
+            self?.tableSocket.emit(C2STable.watch, ["tableId": tableId])
+        }
+        if tableSocket.status == .connected {
+            tableSocket.emit(C2STable.watch, ["tableId": tableId])
+        }
+    }
+
+    func unwatchTable() {
+        if tableSocket.status == .connected {
+            tableSocket.emit(C2STable.unwatch)
+        }
+        tableSocket.disconnect()
     }
 
     // MARK: - Auth Actions
@@ -116,6 +140,7 @@ final class SocketService {
 
     func leaveTable() {
         playerSocket.emit(C2SLobby.leaveTable)
+        unwatchTable()
         currentTableId = nil
         gameState = nil
         privateState = nil
@@ -192,13 +217,12 @@ final class SocketService {
         playerSocket.emit(C2S.reconnect, data)
     }
 
-    // MARK: - Event Handlers (private)
+    // MARK: - Player Event Handlers
 
-    private func setupEventHandlers() {
+    private func setupPlayerEventHandlers() {
         playerSocket.on(clientEvent: .connect) { [weak self] _, _ in
             self?.isConnected = true
             self?.connectionError = nil
-            // Auto-reconnect with saved token
             if let token = KeychainHelper.load() {
                 self?.sessionAuth(token: token)
             }
@@ -236,6 +260,12 @@ final class SocketService {
             KeychainHelper.delete()
         }
 
+        // Name check
+        playerSocket.on(S2CLobby.nameStatus) { [weak self] data, _ in
+            guard let dict = data.first as? [String: Any] else { return }
+            self?.nameStatus = dict["exists"] as? Bool
+        }
+
         // Lobby events
         playerSocket.on(S2CLobby.tableList) { [weak self] data, _ in
             guard let self else { return }
@@ -256,15 +286,18 @@ final class SocketService {
             }
         }
 
-        // Player joined a table
+        // Player joined a table — start watching
         playerSocket.on(S2CPlayer.joined) { [weak self] data, _ in
-            guard let dict = data.first as? [String: Any] else { return }
-            self?.playerId = dict["playerId"] as? String
-            self?.playerToken = dict["playerToken"] as? String
-            self?.currentTableId = dict["tableId"] as? String
+            guard let self, let dict = data.first as? [String: Any] else { return }
+            self.playerId = dict["playerId"] as? String
+            self.playerToken = dict["playerToken"] as? String
+            if let tableId = dict["tableId"] as? String {
+                self.currentTableId = tableId
+                self.watchTable(tableId)
+            }
         }
 
-        // Game state events
+        // Private state
         playerSocket.on(S2CPlayer.privateState) { [weak self] data, _ in
             guard let self, let state: PrivatePlayerState = self.decodeFirst(data) else { return }
             self.privateState = state
@@ -323,9 +356,12 @@ final class SocketService {
         }
 
         playerSocket.on(S2CPlayer.reconnected) { [weak self] data, _ in
-            guard let dict = data.first as? [String: Any] else { return }
-            self?.playerId = dict["playerId"] as? String
-            self?.currentTableId = dict["tableId"] as? String
+            guard let self, let dict = data.first as? [String: Any] else { return }
+            self.playerId = dict["playerId"] as? String
+            if let tableId = dict["tableId"] as? String {
+                self.currentTableId = tableId
+                self.watchTable(tableId)
+            }
         }
 
         playerSocket.on(S2CPlayer.reconnectFailed) { [weak self] _, _ in
@@ -343,6 +379,24 @@ final class SocketService {
                   let typeStr = dict["sound"] as? String,
                   let sound = SoundType(rawValue: typeStr) else { return }
             SoundManager.shared.play(sound)
+        }
+    }
+
+    // MARK: - Table Event Handlers
+
+    private func setupTableEventHandlers() {
+        tableSocket.on(S2CTable.gameState) { [weak self] data, _ in
+            guard let self, let state: GameState = self.decodeFirst(data) else { return }
+            self.gameState = state
+        }
+
+        tableSocket.on(S2CTable.chatMessage) { [weak self] data, _ in
+            guard let self, let msg: ChatMessage = self.decodeFirst(data) else { return }
+            // Avoid duplicates (player namespace also receives chat)
+            if !self.chatMessages.contains(where: { $0.id == msg.id }) {
+                self.chatMessages.append(msg)
+                self.unreadChatCount += 1
+            }
         }
     }
 

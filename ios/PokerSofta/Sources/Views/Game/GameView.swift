@@ -73,13 +73,13 @@ struct GameView: View {
             }
         }
         .sheet(isPresented: $showChat) {
-            Text("Chat") // Placeholder -- Task 13
+            ChatView()
         }
         .sheet(isPresented: $showHistory) {
-            Text("History") // Placeholder -- Task 14
+            HandHistoryList()
         }
         .sheet(isPresented: $showBugReport) {
-            Text("Bug Report") // Placeholder -- Task 15
+            BugReportView()
         }
         .alert(i18n.t("rebuy_title"), isPresented: .init(
             get: { vm.socket.showRebuyPrompt },
