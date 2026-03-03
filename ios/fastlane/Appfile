@@ -1,0 +1,4 @@
+# App identifier and Apple ID — fill in before first TestFlight upload
+# app_identifier("com.yourcompany.pokersofta")
+# apple_id("your@email.com")
+# team_id("XXXXXXXXXX")

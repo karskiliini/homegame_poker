@@ -425,6 +425,16 @@ tuki useille kielille. Default: Suomi, vaihtoehtona Englanti. Pieni lippukuvake 
 - [ ] Puhelinnäkymä toimii kaikilla laitteilla (iPhone SE → iPad)
 - [ ] Landscape-tuki puhelimessa (valinnainen)
 
+### 13.4 Natiivi iOS-sovellus
+- [x] SwiftUI-pohjainen iOS-client (iPhone), yhdistää samaan Socket.IO-backendiin
+- [x] Kirjautuminen ja rekisteröityminen (Keychain-tallennus)
+- [x] Lobby: pöytien selaus, pöydän luonti, liittyminen
+- [x] Pelinäkymä: minipöytä, hole cards, action bar (fold/check/call/raise slider)
+- [x] Chat, käsihistoria, profiili, bug report
+- [x] Pre-action-napit, bet sizing -apunapit, haptiikka
+- [x] i18n (EN/FI), chip stack -visualisointi
+- [x] Yksikkötestit (Models, Utilities)
+
 ---
 
 ## Prioriteettijärjestys (suositus)
