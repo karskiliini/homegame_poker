@@ -341,8 +341,8 @@ final class SocketService {
         playerSocket.on(S2CPlayer.sound) { data, _ in
             guard let dict = data.first as? [String: Any],
                   let typeStr = dict["sound"] as? String,
-                  let _ = SoundType(rawValue: typeStr) else { return }
-            // TODO: play sound via SoundManager (Task 16)
+                  let sound = SoundType(rawValue: typeStr) else { return }
+            SoundManager.shared.play(sound)
         }
     }
 
